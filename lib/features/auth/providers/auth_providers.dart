@@ -36,3 +36,36 @@
 //     }
 //   }
 // }
+
+import 'dart:async';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+/// Auth State (simple bool: loggedIn or not)
+class AuthNotifier extends StateNotifier<bool> {
+  AuthNotifier() : super(false);
+
+  final _controller = StreamController<bool>.broadcast();
+
+  Stream<bool> get authStateChanges => _controller.stream;
+
+  void login() {
+    state = true;
+    _controller.add(true);
+  }
+
+  void logout() {
+    state = false;
+    _controller.add(false);
+  }
+
+  @override
+  void dispose() {
+    _controller.close();
+    super.dispose();
+  }
+}
+
+final authProvider =
+StateNotifierProvider<AuthNotifier, bool>((ref) => AuthNotifier());
+
+

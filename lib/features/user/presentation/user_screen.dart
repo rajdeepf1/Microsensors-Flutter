@@ -21,7 +21,8 @@ class UsersScreen extends HookConsumerWidget {
     }, []);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Users")),
+      appBar: AppBar(title: const Text("Users"),backgroundColor: Colors.purple,),
+
       body: switch (state) {
         ApiLoading() => const Center(child: CircularProgressIndicator()),
         ApiData<List<UserModel>>(data: final users) => ListView.builder(
