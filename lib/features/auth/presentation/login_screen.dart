@@ -163,6 +163,7 @@ class LoginScreen extends HookConsumerWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text("Entered OTP: $otp")),
                             );
+                            context.go("/home");
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
