@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:video_player/video_player.dart';
 import '../../auth/providers/auth_providers.dart';
 
 class SplashScreen extends HookConsumerWidget {
@@ -11,8 +12,18 @@ class SplashScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final loggedIn = ref.watch(authProvider);
 
+    final controller = useMemoized(
+          () => VideoPlayerController.asset("assets/videos/splash.mp4"),
+    );
+    final videoPlayer = useState<VideoPlayerController?>(null);
+
+
     useEffect(() {
-      Future.delayed(const Duration(seconds: 2), () {
+      controller.initialize().then((_) {
+        videoPlayer.value = controller;
+        controller.play();
+      });
+      Future.delayed(const Duration(seconds: 3), () {
         if (loggedIn) {
           context.go('/home');
         } else {
@@ -20,14 +31,16 @@ class SplashScreen extends HookConsumerWidget {
         }
       });
       return null;
-    }, [loggedIn]);
+    }, []);
 
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text(
-          "Splash Screen",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+        child: videoPlayer.value != null && videoPlayer.value!.value.isInitialized
+            ? AspectRatio(
+          aspectRatio: videoPlayer.value!.value.aspectRatio,
+          child:  VideoPlayer(videoPlayer.value!),
+        )
+            : const CircularProgressIndicator(),
       ),
     );
   }
