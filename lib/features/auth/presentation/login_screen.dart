@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter/gestures.dart';
@@ -10,6 +11,22 @@ class LoginScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final showOtpFields = useState(false);
+
+    // Controllers & FocusNodes for OTP
+    final otpControllers = List.generate(4, (_) => useTextEditingController());
+    final otpFocusNodes = List.generate(4, (_) => useFocusNode());
+
+    void handleOtpInput(String value, int index) {
+      if (value.isNotEmpty && index < 3) {
+        // Move to next field
+        FocusScope.of(context).requestFocus(otpFocusNodes[index + 1]);
+      } else if (value.isEmpty && index > 0) {
+        // Move back if deleting
+        FocusScope.of(context).requestFocus(otpFocusNodes[index - 1]);
+      }
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -79,18 +96,90 @@ class LoginScreen extends HookConsumerWidget {
                     ),
                   ),
                   SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.large_button_horizontal_padding,
-                      ),
-                      backgroundColor: AppColors.button_color,
-                    ),
-                    child: Text(
-                      "Login",
-                      style: TextStyle(color: AppColors.button_text_color),
-                    ),
+
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!showOtpFields.value) ...[
+                        /// Normal Login Button
+                        ElevatedButton(
+                          onPressed: () {
+                            showOtpFields.value = true;
+                            FocusScope.of(context).requestFocus(
+                              otpFocusNodes[0],
+                            ); // auto-focus first field
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal:
+                                  AppSizes.large_button_horizontal_padding,
+                            ),
+                            backgroundColor: AppColors.button_color,
+                          ),
+                          child: Text(
+                            "Login",
+                            style: TextStyle(
+                              color: AppColors.button_text_color,
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        /// 4 OTP TextFields
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(
+                            4,
+                            (index) => SizedBox(
+                              width: 50,
+                              child: TextField(
+                                controller: otpControllers[index],
+                                focusNode: otpFocusNodes[index],
+                                textAlign: TextAlign.center,
+                                maxLength: 1,
+                                keyboardType: TextInputType.number,
+                                onChanged:
+                                    (value) => handleOtpInput(value, index),
+                                decoration: const InputDecoration(
+                                  counterText: "",
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(
+                                        AppSizes.textField_radius,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        /// Verify Button
+                        ElevatedButton(
+                          onPressed: () {
+                            final otp =
+                                otpControllers.map((c) => c.text).join();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Entered OTP: $otp")),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal:
+                                  AppSizes.large_button_horizontal_padding,
+                            ),
+                            backgroundColor: AppColors.button_color,
+                          ),
+                          child: Text(
+                            "Verify",
+                            style: TextStyle(
+                              color: AppColors.button_text_color,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
 
                   SizedBox(height: 20),
@@ -123,32 +212,27 @@ class LoginScreen extends HookConsumerWidget {
                   SizedBox(height: 20),
                   RichText(
                     text: TextSpan(
-                      style:  TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         color: AppColors.text_color, // default color
                       ),
                       children: [
-                         const TextSpan(text: "Signup from "),
+                        const TextSpan(text: "Not an user! signup from "),
                         TextSpan(
-                          text: "here",
-                          style:  TextStyle(
+                          text: "Here",
+                          style: TextStyle(
                             color: AppColors.app_blue_color, // highlighted blue
                             fontWeight: FontWeight.bold,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              context.push('/signup');
-                            },
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () {
+                                  context.push('/signup');
+                                },
                         ),
-
                       ],
                     ),
-                  )
-,
-                  // ElevatedButton(
-                  //   onPressed: () {},
-                  //   child: const Text("Register"),
-                  // ),
+                  ),
                 ],
               ),
             ),
