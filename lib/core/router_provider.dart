@@ -1,12 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:microsensors/features/auth/presentation/signup_screen.dart';
 
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/providers/auth_providers.dart';
-import '../features/home_screen/presentation/home_screen.dart';
-import '../features/splash_screen/presentation/splash_screen.dart';
+import '../features/home/presentation/home_screen.dart';
+import '../features/splash/presentation/splash_screen.dart';
 import 'go_router_refresh_stream.dart';
 
 

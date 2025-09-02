@@ -9,4 +9,9 @@ class AppColors {
   static final white_text_color = "#ffffff".toColor();
   static final sub_heading_text_color = "#808080".toColor();
   static final text_color = "#A8A8A8".toColor();
+  static final icon_color = "#575757".toColor();
+  static final card_color = "#ffffff".toColor();
+  static final bottom_nav_icon_color = "#ffffff".toColor();
+  static final fab_icon_color = "#1f2f48".toColor();
+  static final fab_foreground_icon_color = "#ffffff".toColor();
 }
