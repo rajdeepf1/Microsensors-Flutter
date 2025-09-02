@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/colors.dart';
-
 import '../../../utils/constants.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -28,7 +27,9 @@ class ProfileScreen extends StatelessWidget {
             ProfileMenu(
               text: "Notifications",
               icon: Icons.notifications_none_outlined,
-              press: () {},
+              press: () {
+                context.push("/notification");
+              },
             ),
             ProfileMenu(
               text: "Settings",

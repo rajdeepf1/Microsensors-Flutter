@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/sizes.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/constants.dart';
@@ -64,7 +65,18 @@ class MainLayout extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            const Icon(Icons.notifications_none_outlined, size: 30),
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_none_outlined,
+                size: 30,
+              ),
+              onPressed: () {
+                // Your action here
+                print("Notification icon clicked");
+                context.push("/notification");
+              },
+            ),
+
           ],
         ),
       )

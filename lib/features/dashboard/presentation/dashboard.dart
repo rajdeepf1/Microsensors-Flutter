@@ -27,7 +27,8 @@ class Dashboard extends StatelessWidget {
                 "Stats",
                 style: TextStyle(
                   color: AppColors.heading_text_color,
-                  fontSize: 22,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold
                 ),
               ),
 
@@ -77,7 +78,8 @@ class Dashboard extends StatelessWidget {
                 "Users",
                 style: TextStyle(
                   color: AppColors.heading_text_color,
-                  fontSize: 22,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold
                 ),
               ),
               UsersLottieCard(
@@ -96,7 +98,8 @@ class Dashboard extends StatelessWidget {
                 "Products",
                 style: TextStyle(
                   color: AppColors.heading_text_color,
-                  fontSize: 22,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold
                 ),
               ),
               ProductsLottieCard(

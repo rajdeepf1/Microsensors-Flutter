@@ -63,7 +63,7 @@ class UsersLottieCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(icon, size: 48, color: Colors.white),
+                      Icon(icon, size: 30, color: Colors.white),
                       const SizedBox(height: 8),
                       Text(
                         label,
@@ -80,7 +80,7 @@ class UsersLottieCard extends StatelessWidget {
                   const Icon(
                     Icons.arrow_forward_ios,
                     color: Colors.white,
-                    size: 24,
+                    size: 20,
                   ),
                 ],
               ),
