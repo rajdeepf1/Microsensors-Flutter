@@ -14,4 +14,8 @@ class AppColors {
   static final bottom_nav_icon_color = "#ffffff".toColor();
   static final fab_icon_color = "#1f2f48".toColor();
   static final fab_foreground_icon_color = "#ffffff".toColor();
+  static final tab_text_color = "#ffffff".toColor();
+  static final tab_indicator_color = "#1f2f48".toColor();
+
+
 }

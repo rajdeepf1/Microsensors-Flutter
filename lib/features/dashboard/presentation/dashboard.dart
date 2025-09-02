@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/utils/sizes.dart';
 import '../../../utils/colors.dart';
@@ -84,7 +85,8 @@ class Dashboard extends StatelessWidget {
                 icon: Icons.person_add_alt_1_outlined,
                 label: "Users",
                 onTap: () {
-                  print("Add User Clicked");
+                  print("Users Clicked");
+                  context.push("/users");
                 },
               ),
 
@@ -103,6 +105,7 @@ class Dashboard extends StatelessWidget {
                 label: "Products",
                 onTap: () {
                   print("Add Product Clicked");
+                  context.push("/products");
                 },
               ),
             ],
