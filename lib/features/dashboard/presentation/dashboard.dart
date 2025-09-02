@@ -115,7 +115,7 @@ class Dashboard extends StatelessWidget {
 
       floatingActionButton: SpeedDial(
         animatedIcon: AnimatedIcons.menu_close,
-        backgroundColor: AppColors.fab_icon_color,
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: AppColors.fab_foreground_icon_color,
         overlayOpacity: 0,
         spacing: 10,

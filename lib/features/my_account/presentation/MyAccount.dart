@@ -31,6 +31,7 @@ class MyAccount extends StatelessWidget {
                     text: "Name",
                     child: TextFormField(
                       initialValue: "Annette Black",
+                      style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.app_blue_color.withOpacity(0.05),
@@ -47,6 +48,7 @@ class MyAccount extends StatelessWidget {
                     text: "Email",
                     child: TextFormField(
                       initialValue: "annette@gmail.com",
+                      style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.app_blue_color.withOpacity(0.05),
@@ -63,6 +65,7 @@ class MyAccount extends StatelessWidget {
                     text: "Phone",
                     child: TextFormField(
                       initialValue: "(316) 555-0116",
+                      style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor:  AppColors.app_blue_color.withOpacity(0.05),
@@ -79,6 +82,7 @@ class MyAccount extends StatelessWidget {
                     text: "Address",
                     child: TextFormField(
                       initialValue: "New York, NVC",
+                      style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.app_blue_color.withOpacity(0.05),
@@ -96,6 +100,7 @@ class MyAccount extends StatelessWidget {
                     child: TextFormField(
                       obscureText: true,
                       initialValue: "demopass",
+                      style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         suffixIcon: const Icon(
                           Icons.visibility_off,
@@ -115,6 +120,7 @@ class MyAccount extends StatelessWidget {
                   UserInfoEditField(
                     text: "New Password",
                     child: TextFormField(
+                      style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         hintText: "New Password",
                         filled: true,
