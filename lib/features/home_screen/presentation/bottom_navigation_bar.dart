@@ -9,7 +9,6 @@ class AppBottomNavigationBar extends HookWidget {
 
     final pages = [
       Center(child: Text("🏠 Home", style: TextStyle(fontSize: 24))),
-      Center(child: Text("🔍 Search", style: TextStyle(fontSize: 24))),
       Center(child: Text("👤 Profile", style: TextStyle(fontSize: 24))),
     ];
 
@@ -22,7 +21,6 @@ class AppBottomNavigationBar extends HookWidget {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),

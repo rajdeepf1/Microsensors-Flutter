@@ -1,15 +1,15 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-/// A Listenable for GoRouter that listens to a Stream
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyOnChange(stream);
-  }
+import '../features/auth/providers/auth_providers.dart';
 
-  void notifyOnChange(Stream<dynamic> stream) {
-    stream.listen((_) {
-      notifyListeners(); // rebuild GoRouter when stream emits
+class GoRouterRefresh extends ChangeNotifier {
+  GoRouterRefresh(this.ref) {
+    // Listen to any change in authProvider
+    ref.listen<bool>(authProvider, (_, __) {
+      notifyListeners(); // Trigger router rebuild
     });
   }
+
+  final Ref ref;
 }
