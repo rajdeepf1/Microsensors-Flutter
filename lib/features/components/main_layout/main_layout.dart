@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:microsensors/utils/sizes.dart';
 import '../../../utils/colors.dart';
+import '../../../utils/constants.dart';
 
 class MainLayout extends StatelessWidget {
   final String title;
@@ -30,12 +31,17 @@ class MainLayout extends StatelessWidget {
               borderRadius: BorderRadius.circular(
                 AppSizes.userImage_radius,
               ),
-              child: Image.asset(
-                "assets/images/user.png",
-                height: 70,
-                width: 70,
-                fit: BoxFit.cover,
+              child:
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSizes.userImage_radius),
+                child: Image.network(
+                  Constants.user_default_image,
+                  height: 70,
+                  width: 70,
+                  fit: BoxFit.cover,
+                ),
               ),
+
             ),
             const SizedBox(width: 12),
             Column(

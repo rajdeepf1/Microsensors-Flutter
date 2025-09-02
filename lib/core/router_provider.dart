@@ -1,9 +1,8 @@
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:microsensors/features/auth/presentation/signup_screen.dart';
+import 'package:microsensors/features/my_account/presentation/MyAccount.dart';
 import 'package:microsensors/features/product_list/presentation/product_list.dart';
 import 'package:microsensors/features/user_list/presentation/users_list.dart';
-
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_screen.dart';
@@ -28,10 +27,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/signup',
-        builder: (context, state) => const SignUpScreen(),
-      ),
-      GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
         //redirect: (context, state) => !isLoggedIn ? '/login' : null,
@@ -43,6 +38,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/products',
         builder: (context, state) => const ProductList(),
+      ),
+      GoRoute(
+        path: '/my-account',
+        builder: (context, state) => const MyAccount(),
       ),
     ],
   );

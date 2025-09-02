@@ -183,57 +183,6 @@ class LoginScreen extends HookConsumerWidget {
                     ],
                   ),
 
-                  SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          thickness: 1,
-                          color: AppColors.app_blue_color,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          "OR",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.text_color,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          thickness: 1,
-                          color: AppColors.app_blue_color,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.text_color, // default color
-                      ),
-                      children: [
-                        const TextSpan(text: "Not an user! signup from "),
-                        TextSpan(
-                          text: "Here",
-                          style: TextStyle(
-                            color: AppColors.app_blue_color, // highlighted blue
-                            fontWeight: FontWeight.bold,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap = () {
-                                  context.push('/signup');
-                                },
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
