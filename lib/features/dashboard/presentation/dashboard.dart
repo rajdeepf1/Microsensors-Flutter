@@ -130,6 +130,7 @@ class Dashboard extends StatelessWidget {
             backgroundColor: Colors.blue,
             onTap: () {
               print("Add User Clicked");
+              context.push("/add-user");
             },
           ),
           SpeedDialChild(
@@ -139,6 +140,7 @@ class Dashboard extends StatelessWidget {
             backgroundColor: Colors.green,
             onTap: () {
               print("Add Product Clicked");
+              context.push("/add-product");
             },
           ),
         ],

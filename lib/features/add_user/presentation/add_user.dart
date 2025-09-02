@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 
-class MyAccount extends StatelessWidget {
-  const MyAccount({super.key});
+import '../../components/user/profile_pic.dart';
+import '../../components/user/user_info_edit_field.dart';
+
+class AddUser extends StatelessWidget {
+  const AddUser({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: false,
-        elevation: 0,
-        foregroundColor: Colors.white,
-        title: const Text("My Account"),
-      ),
-      body: SingleChildScrollView(
+
+    List<DropdownMenuItem<String>>? countries = [
+      "Admin",
+      "Sales",
+      'Production Manager',
+    ].map<DropdownMenuItem<String>>((String value) {
+      return DropdownMenuItem<String>(value: value, child: Text(value));
+    }).toList();
+
+    return
+     MainLayout(title: "Add User", child:
+      SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
@@ -64,7 +71,7 @@ class MyAccount extends StatelessWidget {
                   UserInfoEditField(
                     text: "Phone",
                     child: TextFormField(
-                      initialValue: "(316) 555-0116",
+                      initialValue: "(000) 000-0000",
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
@@ -79,50 +86,35 @@ class MyAccount extends StatelessWidget {
                     ),
                   ),
                   UserInfoEditField(
-                    text: "Address",
-                    child: TextFormField(
-                      initialValue: "New York, NVC",
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
-                      decoration: InputDecoration(
+                    text: "Role",
+                    child: DropdownButtonFormField(
+                      items: countries,
+                      icon: const Icon(Icons.expand_more),
+                      onSaved: (country) {
+                        // save it
+                      },
+                      onChanged: (value) {},
+                      style: TextStyle(color: AppColors.sub_heading_text_color,fontWeight: FontWeight.bold),
+                      decoration:  InputDecoration(
+                        hintText: 'Roles',
                         filled: true,
                         fillColor: AppColors.app_blue_color.withOpacity(0.05),
-                        contentPadding: const EdgeInsets.symmetric(
+                        contentPadding: EdgeInsets.symmetric(
                             horizontal: 16.0 * 1.5, vertical: 16.0),
-                        border: const OutlineInputBorder(
+                        border: OutlineInputBorder(
                           borderSide: BorderSide.none,
                           borderRadius: BorderRadius.all(Radius.circular(50)),
                         ),
                       ),
                     ),
                   ),
+
                   UserInfoEditField(
-                    text: "Old Password",
-                    child: TextFormField(
-                      obscureText: true,
-                      initialValue: "demopass",
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
-                      decoration: InputDecoration(
-                        suffixIcon: const Icon(
-                          Icons.visibility_off,
-                          size: 20,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16.0 * 1.5, vertical: 16.0),
-                        border: const OutlineInputBorder(
-                          borderSide: BorderSide.none,
-                          borderRadius: BorderRadius.all(Radius.circular(50)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  UserInfoEditField(
-                    text: "New Password",
+                    text: "Password",
                     child: TextFormField(
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
-                        hintText: "New Password",
+                        hintText: "Password",
                         filled: true,
                         fillColor: AppColors.app_blue_color.withOpacity(0.05),
                         contentPadding: const EdgeInsets.symmetric(
@@ -169,7 +161,7 @@ class MyAccount extends StatelessWidget {
                       shape: const StadiumBorder(),
                     ),
                     onPressed: () {},
-                    child: const Text("Save Update"),
+                    child: const Text("Add User"),
                   ),
                 ),
               ],
@@ -177,85 +169,9 @@ class MyAccount extends StatelessWidget {
           ],
         ),
       ),
-    );
+     );
   }
+
 }
 
-class ProfilePic extends StatelessWidget {
-  const ProfilePic({
-    super.key,
-    required this.image,
-    this.isShowPhotoUpload = false,
-    this.imageUploadBtnPress,
-  });
 
-  final String image;
-  final bool isShowPhotoUpload;
-  final VoidCallback? imageUploadBtnPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color:
-          Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.08),
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: NetworkImage(image),
-          ),
-          InkWell(
-            onTap: imageUploadBtnPress,
-            child: CircleAvatar(
-              radius: 13,
-              backgroundColor: Theme.of(context).primaryColor,
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class UserInfoEditField extends StatelessWidget {
-  const UserInfoEditField({
-    super.key,
-    required this.text,
-    required this.child,
-  });
-
-  final String text;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0 / 2),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(text),
-          ),
-          Expanded(
-            flex: 3,
-            child: child,
-          ),
-        ],
-      ),
-    );
-  }
-}

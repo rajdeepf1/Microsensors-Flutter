@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:microsensors/features/my_account/presentation/MyAccount.dart';
+import 'package:microsensors/features/add_product/presentation/add_product.dart';
+import 'package:microsensors/features/add_user/presentation/add_user.dart';
+import 'package:microsensors/features/my_account/presentation/my_account.dart';
 import 'package:microsensors/features/notification/presentation/notification.dart';
 import 'package:microsensors/features/product_list/presentation/product_list.dart';
 import 'package:microsensors/features/user_list/presentation/users_list.dart';
@@ -47,6 +49,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notification',
         builder: (context, state) => const Notification(),
+      ),
+      GoRoute(
+        path: '/add-user',
+        builder: (context, state) => const AddUser(),
+      ),
+      GoRoute(
+        path: '/add-product',
+        builder: (context, state) => const AddProduct(),
       ),
     ],
   );
