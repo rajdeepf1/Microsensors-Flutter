@@ -84,7 +84,7 @@ class Dashboard extends StatelessWidget {
               ),
               UsersLottieCard(
                 lottiePath: "assets/animations/adduser.json",
-                icon: Icons.person_add_alt_1_outlined,
+                icon: Icons.person_pin_outlined,
                 label: "Users",
                 onTap: () {
                   print("Users Clicked");
@@ -104,7 +104,7 @@ class Dashboard extends StatelessWidget {
               ),
               ProductsLottieCard(
                 lottiePath: "assets/animations/addproduct.json",
-                icon: Icons.add_box_outlined,
+                icon: Icons.file_copy_outlined,
                 label: "Products",
                 onTap: () {
                   print("Add Product Clicked");
