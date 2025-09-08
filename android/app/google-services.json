@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "559971445474",
+    "project_id": "microsensors-a8c89",
+    "storage_bucket": "microsensors-a8c89.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559971445474:android:a2dca4c88807d63c9b4cbb",
+        "android_client_info": {
+          "package_name": "com.example.microsensors"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACrUa70S1s-l84RD_1FUj8qofp1PFOOzs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

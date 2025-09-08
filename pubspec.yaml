@@ -56,7 +56,9 @@ dev_dependencies:
   flutter_speed_dial: ^7.0.0
   flutter_svg: ^2.2.0
   dotted_border: ^2.0.0
-
+  firebase_core: ^4.1.0
+  firebase_messaging: ^16.0.1
+  flutter_local_notifications: ^19.4.1
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
