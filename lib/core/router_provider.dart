@@ -2,11 +2,13 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:microsensors/features/add_product/presentation/add_product.dart';
 import 'package:microsensors/features/add_user/presentation/add_user.dart';
+import 'package:microsensors/features/auth/presentation/email_password_login_screen.dart';
 import 'package:microsensors/features/my_account/presentation/my_account.dart';
 import 'package:microsensors/features/notification/presentation/notification.dart';
 import 'package:microsensors/features/product_list/presentation/product_list.dart';
 import 'package:microsensors/features/user_list/presentation/users_list.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/signup_screen.dart';
 import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
@@ -26,6 +28,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/email-login',
+        builder: (context, state) => const EmailPasswordLoginScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const SignUpScreen(),
       ),
       GoRoute(
         path: '/home',

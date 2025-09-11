@@ -74,9 +74,6 @@ class AuthRepository {
     }
   }
 
-
-
-
   /// Sends OTP. Returns ApiData(true) on success; ApiError otherwise.
   Future<ApiState<bool>> sendOtp(UserDataModel user) async {
     try {
@@ -119,7 +116,6 @@ class AuthRepository {
       return ApiError('Unexpected error: $e', error: e, stackTrace: st);
     }
   }
-
 
   /// Verifies OTP (otp/verify endpoint). Returns ApiData<OtpResponse> on success.
   Future<ApiState<OtpResponse>> verifyOtp(UserDataModel user, String otp) async {
@@ -180,6 +176,48 @@ class AuthRepository {
           return ApiError('Verification failed: ${resp.statusCode}', error: e, stackTrace: st);
         }
       }
+      final msg = _extractErrorMessage(e);
+      return ApiError('Network error: $msg', error: e, stackTrace: st);
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
+    }
+  }
+
+  Future<ApiState<UserResponseModel>> loginWithEmailPassword(
+      String email, String password) async {
+    try {
+      final response = await _client.post(
+        'user/login', // replace with your actual endpoint
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        return ApiError('Unexpected response: ${response.statusCode}');
+      }
+
+      final raw = response.data;
+      if (raw == null || raw is! Map) {
+        return const ApiError('Unexpected response format');
+      }
+
+      final Map<String, dynamic> body = Map<String, dynamic>.from(raw);
+
+      late UserResponseModel userResp;
+      try {
+        userResp = UserResponseModel.fromJson(body);
+      } catch (e, st) {
+        return ApiError('Failed to parse response: $e', error: e, stackTrace: st);
+      }
+
+      if (!userResp.success || userResp.data == null) {
+        return ApiError(userResp.error?.toString() ?? 'Login failed');
+      }
+
+      return ApiData(userResp);
+    } on DioException catch (e, st) {
       final msg = _extractErrorMessage(e);
       return ApiError('Network error: $msg', error: e, stackTrace: st);
     } catch (e, st) {

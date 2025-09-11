@@ -1,6 +1,7 @@
 // lib/features/auth/ui/login_screen.dart
 import 'dart:convert';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
@@ -16,8 +17,6 @@ import '../data/auth_repository.dart';
 
 class LoginScreen extends HookWidget {
   const LoginScreen({super.key});
-
-  static const _prefsKey = 'logged_in_user';
 
   @override
   Widget build(BuildContext context) {
@@ -67,17 +66,25 @@ class LoginScreen extends HookWidget {
             FocusScope.of(context).requestFocus(otpFocusNodes[0]);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('OTP requested. Please check your email.')),
+              const SnackBar(
+                content: Text('OTP requested. Please check your email.'),
+              ),
             );
           } else {
             // server says success=false or data is null
-            final err = wrapper.error?.toString() ?? 'No user object returned by server';
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+            final err =
+                wrapper.error?.toString() ??
+                'No user object returned by server';
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(err)));
           }
         } else if (res is ApiError<UserResponseModel>) {
           // ApiError should expose message / error fields
           final msg = res.message ?? res.error?.toString() ?? 'Unknown error';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: $msg')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Login failed: $msg')));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Unexpected server response')),
@@ -88,15 +95,20 @@ class LoginScreen extends HookWidget {
       }
     }
 
-
     Future<void> verifyOtpAndSave() async {
       final otp = otpControllers.map((c) => c.text).join();
       if (otp.length < 4) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter 4-digit OTP')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Enter 4-digit OTP')));
         return;
       }
       if (foundUser.value == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No user to verify — request OTP first')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No user to verify — request OTP first'),
+          ),
+        );
         return;
       }
 
@@ -109,43 +121,54 @@ class LoginScreen extends HookWidget {
         // res is ApiState<OtpResponse>
         if (res is ApiData<OtpResponse>) {
           final otpResp = res.data;
-          if (otpResp.success && (otpResp.statusCode == 200 || otpResp.statusCode == 201)) {
+          if (otpResp.success &&
+              (otpResp.statusCode == 200 || otpResp.statusCode == 201)) {
             // Save the user (UserDataModel) to local storage
             try {
               await LocalStorageService().saveUser(userData);
             } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save user locally: $e')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to save user locally: $e')),
+              );
               // optional: return; // if saving is critical
             }
 
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Welcome ${userData.username}')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Welcome ${userData.username}')),
+              );
               context.go('/home');
             }
           } else {
-            final msg = otpResp.error ?? otpResp.data ?? 'OTP verification failed';
+            final msg =
+                otpResp.error ?? otpResp.data ?? 'OTP verification failed';
             await LocalStorageService().removeUser();
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(msg)));
           }
         } else if (res is ApiError<OtpResponse>) {
           final msg = res.message ?? res.error?.toString() ?? 'Verify failed';
           await LocalStorageService().removeUser();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
         } else {
           await LocalStorageService().removeUser();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unexpected verify response')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unexpected verify response')),
+          );
         }
       } finally {
         loading.value = false;
       }
     }
 
-
     Future<void> resendOtp() async {
       if (foundUser.value == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No user to resend OTP.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No user to resend OTP.')));
         return;
       }
       loading.value = true;
@@ -154,9 +177,9 @@ class LoginScreen extends HookWidget {
         if (res is ApiData<bool> && res.data == true) {
           for (final c in otpControllers) c.clear();
           FocusScope.of(context).requestFocus(otpFocusNodes[0]);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP resent')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('OTP resent')));
         } else if (res is ApiError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Resend failed: ${res ?? 'Unknown'}')),
@@ -213,6 +236,7 @@ class LoginScreen extends HookWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    SizedBox(height: 100,),
                     Text(
                       "Welcome",
                       style: TextStyle(
@@ -223,7 +247,10 @@ class LoginScreen extends HookWidget {
                     ),
                     Text(
                       "Login to continue",
-                      style: TextStyle(fontSize: 16, color: AppColors.text_color),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.text_color,
+                      ),
                     ),
                     const SizedBox(height: 40),
                     TextField(
@@ -254,7 +281,8 @@ class LoginScreen extends HookWidget {
                               onPressed: startLogin,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.large_button_horizontal_padding,
+                                  horizontal:
+                                      AppSizes.large_button_horizontal_padding,
                                 ),
                                 backgroundColor: AppColors.button_color,
                               ),
@@ -270,7 +298,7 @@ class LoginScreen extends HookWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: List.generate(
                                 4,
-                                    (index) => SizedBox(
+                                (index) => SizedBox(
                                   width: 50,
                                   child: TextField(
                                     controller: otpControllers[index],
@@ -278,12 +306,15 @@ class LoginScreen extends HookWidget {
                                     textAlign: TextAlign.center,
                                     maxLength: 1,
                                     keyboardType: TextInputType.number,
-                                    onChanged: (value) => handleOtpInput(value, index),
+                                    onChanged:
+                                        (value) => handleOtpInput(value, index),
                                     decoration: const InputDecoration(
                                       counterText: "",
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.all(
-                                          Radius.circular(AppSizes.textField_radius),
+                                          Radius.circular(
+                                            AppSizes.textField_radius,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -298,7 +329,8 @@ class LoginScreen extends HookWidget {
                               onPressed: verifyOtpAndSave,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.large_button_horizontal_padding,
+                                  horizontal:
+                                      AppSizes.large_button_horizontal_padding,
                                 ),
                                 backgroundColor: AppColors.button_color,
                               ),
@@ -311,10 +343,93 @@ class LoginScreen extends HookWidget {
                             ),
 
                             const SizedBox(height: 8),
-                            TextButton(onPressed: resendOtp, child: const Text('Resend OTP')),
+                            TextButton(
+                              onPressed: resendOtp,
+                              child: const Text('Resend OTP'),
+                            ),
                           ],
                         ],
                       ),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            thickness: 1,
+                            color: AppColors.app_blue_color,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            "OR",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.text_color,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            thickness: 1,
+                            color: AppColors.app_blue_color,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // SizedBox(height: 20),
+                    // RichText(
+                    //   text: TextSpan(
+                    //     style: TextStyle(
+                    //       fontSize: 16,
+                    //       color: AppColors.text_color, // default color
+                    //     ),
+                    //     children: [
+                    //       const TextSpan(text: "Not an user! signup from "),
+                    //       TextSpan(
+                    //         text: "Here",
+                    //         style: TextStyle(
+                    //           color: AppColors.app_blue_color,
+                    //           // highlighted blue
+                    //           fontWeight: FontWeight.bold,
+                    //         ),
+                    //         recognizer:
+                    //             TapGestureRecognizer()
+                    //               ..onTap = () {
+                    //                 context.push('/signup');
+                    //               },
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
+
+                    SizedBox(height: 20),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.text_color, // default color
+                        ),
+                        children: [
+                          const TextSpan(text: "Login using email-id & password"),
+                          TextSpan(
+                            text: " CLick Here",
+                            style: TextStyle(
+                              color: AppColors.app_blue_color,
+                              // highlighted blue
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () {
+                                context.push('/email-login');
+                              },
+                          ),
+                        ],
+                      ),
+                    ),
+
                   ],
                 ),
               ),
