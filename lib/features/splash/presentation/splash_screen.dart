@@ -31,7 +31,7 @@ class SplashScreen extends HookConsumerWidget {
         controller.play();
       });
       Future.delayed(const Duration(seconds: 3), () async {
-        final UserModel? user = await storage.getUser();
+        final UserDataModel? user = await storage.getUser();
         if (user != null) {
           // navigate to home
           context.go('/home');

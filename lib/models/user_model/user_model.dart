@@ -1,26 +1,26 @@
 import 'dart:convert';
 
-class ApiResponse {
+class UserResponseModel {
   final bool success;
   final int statusCode;
-  final UserModel? data;
+  final UserDataModel? data;
   final dynamic error;
 
-  ApiResponse({
+  UserResponseModel({
     required this.success,
     required this.statusCode,
     this.data,
     this.error,
   });
 
-  factory ApiResponse.fromJson(Map<String, dynamic> json) {
-    return ApiResponse(
+  factory UserResponseModel.fromJson(Map<String, dynamic> json) {
+    return UserResponseModel(
       success: json['success'] as bool? ?? false,
       statusCode: json['statusCode'] is int
           ? json['statusCode'] as int
           : int.tryParse('${json['statusCode']}') ?? 0,
       data: json['data'] != null
-          ? UserModel.fromJson(Map<String, dynamic>.from(json['data']))
+          ? UserDataModel.fromJson(Map<String, dynamic>.from(json['data']))
           : null,
       error: json['error'],
     );
@@ -38,11 +38,11 @@ class ApiResponse {
   /// Encode/decode helpers if you ever want to persist ApiResponse itself
   String toRawJson() => json.encode(toJson());
 
-  static ApiResponse fromRawJson(String str) =>
-      ApiResponse.fromJson(json.decode(str) as Map<String, dynamic>);
+  static UserResponseModel fromRawJson(String str) =>
+      UserResponseModel.fromJson(json.decode(str) as Map<String, dynamic>);
 }
 
-class UserModel {
+class UserDataModel {
   final int userId;
   final String username;
   final String mobileNumber;
@@ -51,7 +51,7 @@ class UserModel {
   final String roleName;
   final String fcmToken;
 
-  UserModel({
+  UserDataModel({
     required this.userId,
     required this.username,
     required this.mobileNumber,
@@ -61,8 +61,8 @@ class UserModel {
     required this.fcmToken,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+  factory UserDataModel.fromJson(Map<String, dynamic> json) {
+    return UserDataModel(
       userId: json['userId'] is int
           ? json['userId'] as int
           : int.tryParse('${json['userId']}') ?? 0,
@@ -91,16 +91,16 @@ class UserModel {
   String toRawJson() => json.encode(toJson());
 
   /// For SharedPreferences: parse back from raw JSON string
-  static UserModel? fromRawJson(String? raw) {
+  static UserDataModel? fromRawJson(String? raw) {
     if (raw == null || raw.isEmpty) return null;
     try {
-      return UserModel.fromJson(json.decode(raw) as Map<String, dynamic>);
+      return UserDataModel.fromJson(json.decode(raw) as Map<String, dynamic>);
     } catch (_) {
       return null;
     }
   }
 
-  UserModel copyWith({
+  UserDataModel copyWith({
     int? userId,
     String? username,
     String? mobileNumber,
@@ -109,7 +109,7 @@ class UserModel {
     String? roleName,
     String? fcmToken,
   }) {
-    return UserModel(
+    return UserDataModel(
       userId: userId ?? this.userId,
       username: username ?? this.username,
       mobileNumber: mobileNumber ?? this.mobileNumber,

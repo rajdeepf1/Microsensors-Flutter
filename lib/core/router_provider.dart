@@ -14,7 +14,7 @@ import '../features/splash/presentation/splash_screen.dart';
 
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final isLoggedIn = ref.watch(authProvider);
+  //final isLoggedIn = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/splash',
