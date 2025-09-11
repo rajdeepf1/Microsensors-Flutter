@@ -3,14 +3,21 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:video_player/video_player.dart';
+import '../../../core/local_storage_service.dart';
+import '../../../models/user_model/user_model.dart';
 import '../../auth/providers/auth_providers.dart';
 
 class SplashScreen extends HookConsumerWidget {
+
+
   const SplashScreen({super.key});
+
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loggedIn = ref.watch(authProvider);
+
+    final storage = LocalStorageService();
 
     final controller = useMemoized(
           () => VideoPlayerController.asset("assets/videos/splash.mp4"),
@@ -23,10 +30,13 @@ class SplashScreen extends HookConsumerWidget {
         videoPlayer.value = controller;
         controller.play();
       });
-      Future.delayed(const Duration(seconds: 3), () {
-        if (loggedIn) {
+      Future.delayed(const Duration(seconds: 3), () async {
+        final UserModel? user = await storage.getUser();
+        if (user != null) {
+          // navigate to home
           context.go('/home');
         } else {
+          // navigate to login
           context.go('/login');
         }
       });

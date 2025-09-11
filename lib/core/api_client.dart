@@ -4,19 +4,24 @@ import 'package:dio/dio.dart';
 class ApiClient {
   final Dio _dio;
 
-  ApiClient()
+  ApiClient({String baseUrl = "http://10.0.2.2:8080/api/"})
       : _dio = Dio(
     BaseOptions(
-      baseUrl: "https://jsonplaceholder.typicode.com",
+      baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
     ),
   );
 
-  Future<Response> get(String path) async => await _dio.get(path);
-  Future<Response> post(String path, {dynamic data}) async =>
-      await _dio.post(path, data: data);
-  Future<Response> put(String path, {dynamic data}) async =>
-      await _dio.put(path, data: data);
-  Future<Response> delete(String path) async => await _dio.delete(path);
+  Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options}) async =>
+      await _dio.get(path, queryParameters: queryParameters, options: options);
+
+  Future<Response> post(String path, {dynamic data, Options? options}) async =>
+      await _dio.post(path, data: data, options: options);
+
+  Future<Response> put(String path, {dynamic data, Options? options}) async =>
+      await _dio.put(path, data: data, options: options);
+
+  Future<Response> delete(String path, {Options? options}) async =>
+      await _dio.delete(path, options: options);
 }

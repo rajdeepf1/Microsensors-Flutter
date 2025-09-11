@@ -112,7 +112,7 @@ class LoginScreen extends HookConsumerWidget {
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal:
-                                  AppSizes.large_button_horizontal_padding,
+                              AppSizes.large_button_horizontal_padding,
                             ),
                             backgroundColor: AppColors.button_color,
                           ),
@@ -129,7 +129,7 @@ class LoginScreen extends HookConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: List.generate(
                             4,
-                            (index) => SizedBox(
+                                (index) => SizedBox(
                               width: 50,
                               child: TextField(
                                 controller: otpControllers[index],
@@ -159,7 +159,7 @@ class LoginScreen extends HookConsumerWidget {
                         ElevatedButton(
                           onPressed: () {
                             final otp =
-                                otpControllers.map((c) => c.text).join();
+                            otpControllers.map((c) => c.text).join();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text("Entered OTP: $otp")),
                             );
@@ -168,7 +168,7 @@ class LoginScreen extends HookConsumerWidget {
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal:
-                                  AppSizes.large_button_horizontal_padding,
+                              AppSizes.large_button_horizontal_padding,
                             ),
                             backgroundColor: AppColors.button_color,
                           ),

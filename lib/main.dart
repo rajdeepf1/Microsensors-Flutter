@@ -59,21 +59,21 @@ class MyApp extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     /**********************web sockets****************************************/
-    // connect and auto-subscribe to /topic/user_{userId}
-    SimpleSocketService.instance.connect(
-      userId: 1,
-      urlOverride: 'ws://10.0.2.2:8080/ws', // use wss in prod
-      reconnectMs: 3000,
-    );
-
-// listen to incoming messages
-    SimpleSocketService.instance.messages.listen((payload) {
-      print('Realtime payload: $payload');
-      // update providers/state or show in-app banner
-    });
-
-    SimpleSocketService.instance.subscribe(destination: '/topic/orders_101', id: 'sub-order-101');
-    SimpleSocketService.instance.sendJson('/app/orders/command', {'cmd':'ack','orderId':101});
+//     // connect and auto-subscribe to /topic/user_{userId}
+//     SimpleSocketService.instance.connect(
+//       userId: 1,
+//       urlOverride: 'ws://10.0.2.2:8080/ws', // use wss in prod
+//       reconnectMs: 3000,
+//     );
+//
+// // listen to incoming messages
+//     SimpleSocketService.instance.messages.listen((payload) {
+//       print('Realtime payload: $payload');
+//       // update providers/state or show in-app banner
+//     });
+//
+//     SimpleSocketService.instance.subscribe(destination: '/topic/orders_101', id: 'sub-order-101');
+//     SimpleSocketService.instance.sendJson('/app/orders/command', {'cmd':'ack','orderId':101});
 
 
     //SimpleSocketService.instance.disconnect();
