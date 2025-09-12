@@ -1,18 +1,14 @@
-// lib/features/auth/ui/login_screen.dart
-import 'dart:convert';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/models/otp/OTPResponse.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/sizes.dart';
 import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/core/api_state.dart';
-
+import '../../components/edit_text_field/EditTextField.dart';
 import '../data/auth_repository.dart';
 
 class LoginScreen extends HookWidget {
@@ -236,7 +232,7 @@ class LoginScreen extends HookWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: 100,),
+                    SizedBox(height: 100),
                     Text(
                       "Welcome",
                       style: TextStyle(
@@ -253,21 +249,31 @@ class LoginScreen extends HookWidget {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    TextField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(color: AppColors.text_color),
-                      decoration: InputDecoration(
-                        labelText: "Enter Number",
-                        labelStyle: TextStyle(color: AppColors.text_color),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.textField_radius,
+
+                    EditTextField(
+                      child: TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          color: AppColors.sub_heading_text_color,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          hint: Text("Enter Number"),
+                          prefixIcon: const Icon(Icons.phone_android_outlined),
+                          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0 * 1.5,
+                            vertical: 16.0,
+                          ),
+                          border: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.all(Radius.circular(50)),
                           ),
                         ),
-                        prefixIcon: const Icon(Icons.phone_android_outlined),
                       ),
                     ),
+
                     const SizedBox(height: 20),
 
                     if (loading.value)
@@ -300,20 +306,36 @@ class LoginScreen extends HookWidget {
                                 4,
                                 (index) => SizedBox(
                                   width: 50,
-                                  child: TextField(
-                                    controller: otpControllers[index],
-                                    focusNode: otpFocusNodes[index],
-                                    textAlign: TextAlign.center,
-                                    maxLength: 1,
-                                    keyboardType: TextInputType.number,
-                                    onChanged:
-                                        (value) => handleOtpInput(value, index),
-                                    decoration: const InputDecoration(
-                                      counterText: "",
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(
-                                            AppSizes.textField_radius,
+                                  child: EditTextField(
+                                    child: TextFormField(
+                                      controller: otpControllers[index],
+                                      focusNode: otpFocusNodes[index],
+                                      textAlign: TextAlign.center,
+                                      maxLength: 1,
+                                      keyboardType: TextInputType.number,
+                                      onChanged:
+                                          (value) =>
+                                              handleOtpInput(value, index),
+                                      style: TextStyle(
+                                        color: AppColors.sub_heading_text_color,
+                                        fontSize: 20,
+                                        // bigger font for OTP digits (optional)
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      decoration: InputDecoration(
+                                        filled: true,
+                                        counterText: "",
+                                        fillColor: AppColors.app_blue_color
+                                            .withOpacity(0.05),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14.0,
+                                              vertical: 14.0,
+                                            ),
+                                        border: const OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(15),
                                           ),
                                         ),
                                       ),
@@ -403,7 +425,6 @@ class LoginScreen extends HookWidget {
                     //     ],
                     //   ),
                     // ),
-
                     SizedBox(height: 20),
                     RichText(
                       text: TextSpan(
@@ -412,7 +433,9 @@ class LoginScreen extends HookWidget {
                           color: AppColors.text_color, // default color
                         ),
                         children: [
-                          const TextSpan(text: "Login using email-id & password"),
+                          const TextSpan(
+                            text: "Login using email-id & password",
+                          ),
                           TextSpan(
                             text: " CLick Here",
                             style: TextStyle(
@@ -421,15 +444,14 @@ class LoginScreen extends HookWidget {
                               fontWeight: FontWeight.bold,
                             ),
                             recognizer:
-                            TapGestureRecognizer()
-                              ..onTap = () {
-                                context.push('/email-login');
-                              },
+                                TapGestureRecognizer()
+                                  ..onTap = () {
+                                    context.push('/email-login');
+                                  },
                           ),
                         ],
                       ),
                     ),
-
                   ],
                 ),
               ),

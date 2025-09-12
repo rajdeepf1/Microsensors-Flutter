@@ -13,6 +13,8 @@ import '../../../utils/sizes.dart';
 import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/core/api_state.dart';
 
+import '../../add_product/presentation/add_product.dart';
+import '../../components/edit_text_field/EditTextField.dart';
 import '../data/auth_repository.dart';
 
 class EmailPasswordLoginScreen extends HookWidget {
@@ -139,39 +141,46 @@ class EmailPasswordLoginScreen extends HookWidget {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(color: AppColors.text_color),
-                      decoration: InputDecoration(
-                        labelText: "Enter an email",
-                        labelStyle: TextStyle(color: AppColors.text_color),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.textField_radius,
+                    EditTextField(
+                      child: TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(color: AppColors.sub_heading_text_color),
+                        decoration: InputDecoration(
+                          filled: true,
+                          hint: Text("Enter an email"),
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0 * 1.5, vertical: 16.0),
+                          border: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.all(Radius.circular(50)),
                           ),
                         ),
-                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    TextField(
-                      controller: passwordController,
-                      keyboardType: TextInputType.visiblePassword,
-                      style: TextStyle(color: AppColors.text_color),
-                      decoration: InputDecoration(
-                        labelText: "Enter password",
-                        labelStyle: TextStyle(color: AppColors.text_color),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.textField_radius,
+                    EditTextField(
+                      child: TextFormField(
+                        controller: passwordController,
+                        keyboardType: TextInputType.visiblePassword,
+                        style: TextStyle(color: AppColors.sub_heading_text_color),
+                        decoration: InputDecoration(
+                          filled: true,
+                          hint: Text("Enter password"),
+                          prefixIcon: const Icon(Icons.password),
+                          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0 * 1.5, vertical: 16.0),
+                          border: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.all(Radius.circular(50)),
                           ),
                         ),
-                        prefixIcon: const Icon(Icons.phone_android_outlined),
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     if (loading.value)
                       const CircularProgressIndicator()
                     else
