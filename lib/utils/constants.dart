@@ -1,5 +1,6 @@
 class Constants{
 
+  static const String apiBaseUrl = "http://10.0.2.2:8080/api/";
   static final String user_default_image = "https://i.postimg.cc/0jqKB6mS/Profile-Image.png";
 
   static final cameraIcon =

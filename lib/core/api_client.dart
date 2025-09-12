@@ -1,10 +1,12 @@
 // core/api_client.dart
 import 'package:dio/dio.dart';
 
+import '../utils/constants.dart';
+
 class ApiClient {
   final Dio _dio;
 
-  ApiClient({String baseUrl = "http://10.0.2.2:8080/api/"})
+  ApiClient({String baseUrl = Constants.apiBaseUrl})
       : _dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,

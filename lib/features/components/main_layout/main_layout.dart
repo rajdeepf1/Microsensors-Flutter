@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/sizes.dart';
+import '../../../core/app_state.dart';
+import '../../../core/local_storage_service.dart';
+import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/constants.dart';
+import '../smart_image/smart_image.dart';
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends HookWidget {
   final String title;
   final Widget child;
   final bool isHome;
@@ -20,6 +25,14 @@ class MainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+// currentUser is a UserDataModel? (comes from AppState's ValueNotifier)
+    final UserDataModel? currentUser = useValueListenable(AppState.instance.currentUser);
+
+    final username = currentUser?.username ?? 'User';
+    final role = currentUser?.roleName ?? 'Guest';
+    final userImage = currentUser?.userImage; // may be null or relative path
+
     return Scaffold(
       appBar: isHome
           ? AppBar(
@@ -33,15 +46,16 @@ class MainLayout extends StatelessWidget {
                 AppSizes.userImage_radius,
               ),
               child:
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppSizes.userImage_radius),
-                child: Image.network(
-                  Constants.user_default_image,
-                  height: 70,
-                  width: 70,
-                  fit: BoxFit.cover,
-                ),
+
+              SmartImage(
+                imageUrl: userImage,
+                baseUrl: Constants.apiBaseUrl,
+                width: 70,
+                height: 70,
+                shape: ImageShape.circle,
+                username: username,
               ),
+
 
             ),
             const SizedBox(width: 12),
@@ -49,16 +63,16 @@ class MainLayout extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Hello User!",
+                  "Hello, ${username}!",
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 18,
                     color: AppColors.white_text_color,
                   ),
                 ),
                 Text(
-                  "Admin",
+                  "${role}",
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: AppColors.white_text_color,
                   ),
                 ),

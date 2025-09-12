@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/constants.dart';
+import '../smart_image/smart_image.dart';
+
 class ProfilePic extends StatelessWidget {
   const ProfilePic({
     super.key,
     required this.image,
+    required this.userName,
     this.isShowPhotoUpload = false,
     this.imageUploadBtnPress,
   });
 
   final String image;
+  final String userName;
   final bool isShowPhotoUpload;
   final VoidCallback? imageUploadBtnPress;
 
@@ -27,9 +32,13 @@ class ProfilePic extends StatelessWidget {
       child: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: NetworkImage(image),
+          SmartImage(
+            imageUrl: image,
+            baseUrl: Constants.apiBaseUrl,
+            width: 120,
+            height: 120,
+            shape: ImageShape.circle,
+            username: userName,
           ),
           InkWell(
             onTap: imageUploadBtnPress,

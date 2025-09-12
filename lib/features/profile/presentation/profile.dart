@@ -1,8 +1,19 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/colors.dart';
+import '../../../core/api_state.dart';
+import '../../../core/app_state.dart';
+import '../../../core/local_storage_service.dart';
+import '../../../models/user_model/user_model.dart';
 import '../../../utils/constants.dart';
+import '../../components/smart_image/smart_image.dart';
+import '../repository/user_repository.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -53,13 +64,65 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class ProfilePic extends StatelessWidget {
+class ProfilePic extends HookWidget {
   const ProfilePic({
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+
+    final currentUser = useValueListenable(AppState.instance.currentUser);
+
+    final repo = useMemoized(() => UserRepository());
+    final picked = useState<File?>(null);
+    final loading = useState(false);
+    final message = useState<String?>(null);
+
+    final user = currentUser;
+    final username = user?.username ?? "User";
+    final imageUrl = user?.userImage;
+
+    Future<void> pickAndUpload() async {
+      try {
+        final res = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
+        if (res == null || res.files.isEmpty) return;
+        final path = res.files.first.path;
+        if (path == null) return;
+
+        final file = File(path);
+        picked.value = file;
+
+        loading.value = true;
+        final apiRes = await repo.uploadProfileImage(user!.userId, file);
+
+        if (apiRes is ApiData<UserResponseModel>) {
+          message.value = 'Uploaded';
+          // Save updated user to SharedPreferences
+          final updatedUser = apiRes.data.data; // UserDataModel inside UserResponseModel
+          if (updatedUser != null) {
+            await LocalStorageService().saveUser(updatedUser);
+            // Broadcast to app listeners
+            AppState.instance.updateUser(updatedUser);
+          }
+        } else if (apiRes is ApiError<UserResponseModel>) {
+          message.value = apiRes.message ?? apiRes.error?.toString() ?? 'Upload failed';
+        } else {
+          message.value = 'Unexpected response';
+        }
+      } on PlatformException catch (e) {
+        message.value = 'Platform error: ${e.message}';
+      } on MissingPluginException {
+        message.value = 'Plugin not available (restart app)';
+      } finally {
+        loading.value = false;
+      }
+    }
+
+
+
+
+
     return SizedBox(
       height: 115,
       width: 115,
@@ -67,10 +130,19 @@ class ProfilePic extends StatelessWidget {
         fit: StackFit.expand,
         clipBehavior: Clip.none,
         children: [
-           CircleAvatar(
-            backgroundImage:
-            NetworkImage(Constants.user_default_image),
-          ),
+          if (loading.value)
+            const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            SmartImage(
+              imageUrl: imageUrl,
+              baseUrl: Constants.apiBaseUrl,
+              width: 115,
+              height: 115,
+              shape: ImageShape.circle,
+              username: username,
+            ),
           Positioned(
             right: -16,
             bottom: 0,
@@ -86,7 +158,7 @@ class ProfilePic extends StatelessWidget {
                   ),
                   backgroundColor: const Color(0xFFF5F6F9),
                 ),
-                onPressed: () {},
+                onPressed: pickAndUpload,
                 child: SvgPicture.string(Constants.cameraIcon),
               ),
             ),
@@ -111,6 +183,7 @@ class ProfileMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextButton(

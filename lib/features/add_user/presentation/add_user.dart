@@ -28,6 +28,7 @@ class AddUser extends StatelessWidget {
           children: [
             ProfilePic(
               image: Constants.user_default_image,
+              userName: "",
               imageUploadBtnPress: () {},
             ),
             const Divider(),
