@@ -55,7 +55,11 @@ class ProfileScreen extends StatelessWidget {
             ProfileMenu(
               text: "Log Out",
               icon: Icons.logout_outlined,
-              press: () {},
+              press: () async {
+                print("hiiiiii");
+                await LocalStorageService().removeUser();
+                context.go("/login");
+              },
             ),
           ],
         ),
