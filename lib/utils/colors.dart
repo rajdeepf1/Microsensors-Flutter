@@ -17,5 +17,4 @@ class AppColors {
   static final tab_text_color = "#ffffff".toColor();
   static final tab_indicator_color = "#1f2f48".toColor();
 
-
 }
