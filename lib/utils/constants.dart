@@ -1,7 +1,19 @@
 class Constants{
 
-  static const String apiBaseUrl = "http://10.0.2.2:8080/api/";
-  static final String user_default_image = "https://i.postimg.cc/0jqKB6mS/Profile-Image.png";
+  // Private URLs (not exposed outside this class)
+  static const String _apiBaseUrlLocal = "http://10.0.2.2:8080/api/";
+  static const String _apiBaseUrlProduction = "http://195.35.6.190:8080/api/";
+
+  // Toggle flag (set to true for production build)
+  static const bool _isProduction = true;
+
+  // Publicly exposed base URL
+  static  String get apiBaseUrl =>
+      _isProduction ? _apiBaseUrlProduction : _apiBaseUrlLocal;
+
+  // Other public constants
+  static const String userDefaultImage =
+      "https://i.postimg.cc/0jqKB6mS/Profile-Image.png";
 
   static final cameraIcon =
   '''<svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
