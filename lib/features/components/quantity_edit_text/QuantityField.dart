@@ -34,7 +34,7 @@ class QuantityField extends HookWidget {
         controller: controller,
         readOnly: true, // user can only change via buttons
         textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.sub_heading_text_color),
+        style: TextStyle(color: AppColors.heading_text_color),
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.app_blue_color.withOpacity(0.05),
