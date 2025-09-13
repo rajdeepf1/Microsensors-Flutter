@@ -10,12 +10,14 @@ class ProfilePic extends StatelessWidget {
     required this.userName,
     this.isShowPhotoUpload = false,
     this.imageUploadBtnPress,
+    this.placeHolder
   });
 
   final String image;
   final String userName;
   final bool isShowPhotoUpload;
   final VoidCallback? imageUploadBtnPress;
+  final Widget? placeHolder;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class ProfilePic extends StatelessWidget {
             height: 120,
             shape: ImageShape.circle,
             username: userName,
+            placeholder: placeHolder,
           ),
           InkWell(
             onTap: imageUploadBtnPress,

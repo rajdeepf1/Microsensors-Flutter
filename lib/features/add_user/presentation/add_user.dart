@@ -1,24 +1,121 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/utils/colors.dart';
-import 'package:microsensors/utils/constants.dart';
-
+import '../../../core/api_state.dart';
+import '../../../models/user_model/user_model.dart';
 import '../../components/user/profile_pic.dart';
 import '../../components/user/user_info_edit_field.dart';
+import '../repository/add_user_repository.dart';
 
-class AddUser extends StatelessWidget {
+class AddUser extends HookWidget {
   const AddUser({super.key});
 
   @override
   Widget build(BuildContext context) {
 
-    List<DropdownMenuItem<String>>? countries = [
-      "Admin",
-      "Sales",
-      'Production Manager',
-    ].map<DropdownMenuItem<String>>((String value) {
-      return DropdownMenuItem<String>(value: value, child: Text(value));
-    }).toList();
+    final nameCtrl = useTextEditingController();
+    final emailCtrl = useTextEditingController();
+    final phoneCtrl = useTextEditingController();
+    final passCtrl = useTextEditingController();
+    final roleCtrl = useState<String?>(null);
+
+    final pickedImage = useState<File?>(null);
+    final loading = useState(false);
+    final roleId = useState<int?>(null);
+
+
+    final repo = useMemoized(() => AddUserRepository());
+
+    // Step 1: Pick image
+    Future<void> pickImage() async {
+      final res =
+      await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
+      if (res == null || res.files.isEmpty) return;
+      final path = res.files.first.path;
+      if (path == null) return;
+      pickedImage.value = File(path);
+    }
+
+    // Step 2: Add user and then upload image
+    Future<void> addUser() async {
+      final name = nameCtrl.text.trim();
+      final email = emailCtrl.text.trim();
+      final phone = phoneCtrl.text.trim();
+      final pass = passCtrl.text.trim();
+      final id = roleId.value;
+
+      if (name.isEmpty || email.isEmpty || phone.isEmpty || pass.isEmpty) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("All fields are required")));
+        return;
+      }
+
+      if (id == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Please select a role")));
+        return;
+      }
+
+      loading.value = true;
+      try {
+        final createRes = await repo.createUser(
+          username: name,
+          email: email,
+          mobileNumber: phone,
+          password: pass,
+          roleId: id,
+        );
+
+        if (createRes is ApiData<UserResponseModel>) {
+          final createdUser = createRes.data.data;
+          if (createdUser != null) {
+            // upload image if selected
+            if (pickedImage.value != null) {
+              final uploadRes = await repo.uploadProfileImage(createdUser.userId, pickedImage.value!);
+              if (uploadRes is ApiData<UserResponseModel>) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("User created with avatar")),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("User created, but image upload failed")),
+                );
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("User created successfully")),
+              );
+            }
+            context.pop();
+          }
+        } else if (createRes is ApiError<UserResponseModel>) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(createRes.message ?? "Failed to create user")),
+          );
+        }
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    final Map<String, int> roleMap = {
+      "Admin": 1,
+      "Sales": 2,
+      "Production Manager": 3,
+    };
+
+    List<DropdownMenuItem<int>> roles = roleMap.entries
+        .map((entry) => DropdownMenuItem<int>(
+      value: entry.value,
+      child: Text(entry.key),
+    ))
+        .toList();
+
 
     return
      MainLayout(title: "Add User", child:
@@ -27,9 +124,11 @@ class AddUser extends StatelessWidget {
         child: Column(
           children: [
             ProfilePic(
-              image: Constants.user_default_image,
-              userName: "",
-              imageUploadBtnPress: () {},
+              image: pickedImage.value?.path ?? '',
+              userName: "User",
+              imageUploadBtnPress: pickImage,
+              isShowPhotoUpload: true,
+              placeHolder: Image.asset("assets/images/user.png"),
             ),
             const Divider(),
             Form(
@@ -38,7 +137,7 @@ class AddUser extends StatelessWidget {
                   UserInfoEditField(
                     text: "Name",
                     child: TextFormField(
-                      initialValue: "Annette Black",
+                      controller: nameCtrl,
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
@@ -55,7 +154,7 @@ class AddUser extends StatelessWidget {
                   UserInfoEditField(
                     text: "Email",
                     child: TextFormField(
-                      initialValue: "annette@gmail.com",
+                      controller: emailCtrl,
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
@@ -72,7 +171,7 @@ class AddUser extends StatelessWidget {
                   UserInfoEditField(
                     text: "Phone",
                     child: TextFormField(
-                      initialValue: "(000) 000-0000",
+                      controller: phoneCtrl,
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
@@ -89,12 +188,10 @@ class AddUser extends StatelessWidget {
                   UserInfoEditField(
                     text: "Role",
                     child: DropdownButtonFormField(
-                      items: countries,
+                      value: roleId.value,
+                      items: roles,
                       icon: const Icon(Icons.expand_more),
-                      onSaved: (country) {
-                        // save it
-                      },
-                      onChanged: (value) {},
+                      onChanged: (value) => roleId.value = value,
                       style: TextStyle(color: AppColors.sub_heading_text_color,fontWeight: FontWeight.bold),
                       decoration:  InputDecoration(
                         hintText: 'Roles',
@@ -113,6 +210,7 @@ class AddUser extends StatelessWidget {
                   UserInfoEditField(
                     text: "Password",
                     child: TextFormField(
+                      controller: passCtrl,
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         hintText: "Password",
@@ -137,7 +235,9 @@ class AddUser extends StatelessWidget {
                 SizedBox(
                   width: 120,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.pop();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context)
                           .textTheme
@@ -161,8 +261,9 @@ class AddUser extends StatelessWidget {
                       minimumSize: const Size(double.infinity, 48),
                       shape: const StadiumBorder(),
                     ),
-                    onPressed: () {},
-                    child: const Text("Add User"),
+                    onPressed: loading.value ? null : addUser,
+                    child:loading.value ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("Add User"),
                   ),
                 ),
               ],
