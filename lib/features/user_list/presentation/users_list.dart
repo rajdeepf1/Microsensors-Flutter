@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:microsensors/features/components/main_layout/main_layout.dart';
+import 'package:microsensors/features/user_list/presentation/production_manager_user_list.dart';
+import 'package:microsensors/features/user_list/presentation/sales_user_list.dart';
 
 import '../../../utils/colors.dart';
 
@@ -22,10 +24,10 @@ class UsersList extends StatelessWidget {
           unselectedLabelColor: AppColors.tab_text_color,
           indicatorColor: AppColors.tab_indicator_color,
         ),
-        child: const TabBarView(
+        child: TabBarView(
           children: [
-            Center(child: Text("Sales Persons List")),
-            Center(child: Text("Production Managers List")),
+            Center(child: SalesUserListScreen()),
+            Center(child: ProductionManagerUserList()),
           ],
         ),
       ),
