@@ -12,8 +12,11 @@ import '../../../core/app_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/constants.dart';
+import '../../components/app_version/app_version.dart';
 import '../../components/smart_image/smart_image.dart';
 import '../repository/user_repository.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -42,11 +45,11 @@ class ProfileScreen extends StatelessWidget {
                 context.push("/notification");
               },
             ),
-            ProfileMenu(
-              text: "Settings",
-              icon: Icons.settings_applications_outlined,
-              press: () {},
-            ),
+            // ProfileMenu(
+            //   text: "Settings",
+            //   icon: Icons.settings_applications_outlined,
+            //   press: () {},
+            // ),
             ProfileMenu(
               text: "Help Center",
               icon: Icons.help_center_outlined,
@@ -56,11 +59,12 @@ class ProfileScreen extends StatelessWidget {
               text: "Log Out",
               icon: Icons.logout_outlined,
               press: () async {
-                print("hiiiiii");
                 await LocalStorageService().removeUser();
                 context.go("/login");
               },
             ),
+            const SizedBox(height: 12),
+            Center(child: const AppVersionWidget()),
           ],
         ),
       ),
@@ -68,14 +72,12 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
+
 class ProfilePic extends HookWidget {
-  const ProfilePic({
-    Key? key,
-  }) : super(key: key);
+  const ProfilePic({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-
     final currentUser = useValueListenable(AppState.instance.currentUser);
 
     final repo = useMemoized(() => UserRepository());
@@ -89,7 +91,10 @@ class ProfilePic extends HookWidget {
 
     Future<void> pickAndUpload() async {
       try {
-        final res = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
+        final res = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          allowMultiple: false,
+        );
         if (res == null || res.files.isEmpty) return;
         final path = res.files.first.path;
         if (path == null) return;
@@ -102,11 +107,9 @@ class ProfilePic extends HookWidget {
 
         if (apiRes is ApiData<UserResponseModel>) {
           message.value = 'Uploaded';
-          // Save updated user to SharedPreferences
-          final updatedUser = apiRes.data.data; // UserDataModel inside UserResponseModel
+          final updatedUser = apiRes.data.data;
           if (updatedUser != null) {
             await LocalStorageService().saveUser(updatedUser);
-            // Broadcast to app listeners
             AppState.instance.updateUser(updatedUser);
           }
         } else if (apiRes is ApiError<UserResponseModel>) {
@@ -123,55 +126,62 @@ class ProfilePic extends HookWidget {
       }
     }
 
-
-
-
-
-    return SizedBox(
-      height: 115,
-      width: 115,
-      child: Stack(
-        fit: StackFit.expand,
-        clipBehavior: Clip.none,
-        children: [
-          if (loading.value)
-            const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          else
-            SmartImage(
-              imageUrl: imageUrl,
-              baseUrl: Constants.apiBaseUrl,
-              width: 115,
-              height: 115,
-              shape: ImageShape.circle,
-              username: username,
-            ),
-          Positioned(
-            right: -16,
-            bottom: 0,
-            child: SizedBox(
-              height: 46,
-              width: 46,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                    side: const BorderSide(color: Colors.white),
-                  ),
-                  backgroundColor: const Color(0xFFF5F6F9),
-                ),
-                onPressed: pickAndUpload,
-                child: SvgPicture.string(Constants.cameraIcon),
+    return Container(
+      padding: const EdgeInsets.all(6), // spacing for the border
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.08),
+          width: 2,
+        ),
+      ),
+      child: SizedBox(
+        height: 115,
+        width: 115,
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.none,
+          children: [
+            if (loading.value)
+              const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              SmartImage(
+                imageUrl: imageUrl,
+                baseUrl: Constants.apiBaseUrl,
+                width: 115,
+                height: 115,
+                shape: ImageShape.circle,
+                username: username,
               ),
-            ),
-          )
-        ],
+            Positioned(
+              right: -10,
+              bottom: -2,
+              child: SizedBox(
+                height: 46,
+                width: 46,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    shape: const CircleBorder(
+                      side: BorderSide(color: Colors.white),
+                    ),
+                    backgroundColor: const Color(0xFFF5F6F9),
+                  ),
+                  onPressed: pickAndUpload,
+                  child: SvgPicture.string(Constants.cameraIcon),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 }
+
+
 
 class ProfileMenu extends StatelessWidget {
   const ProfileMenu({

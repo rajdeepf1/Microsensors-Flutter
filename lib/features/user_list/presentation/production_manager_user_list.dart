@@ -7,6 +7,7 @@ import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 
 import '../../../core/api_state.dart';
+import '../../components/status_pill/status_pill.dart';
 
 class ProductionManagerUserList extends HookWidget {
   const ProductionManagerUserList({super.key});
@@ -58,6 +59,7 @@ class ProductionManagerUserList extends HookWidget {
               mobileNumber: user.mobileNumber,
               roleName: user.roleName,
               avatarUrl: avatarUrl,
+              isActive: user.isActive,
             );
           },
         );
@@ -108,6 +110,7 @@ class UserCardListWidget extends StatelessWidget {
   final String mobileNumber;
   final String roleName;
   final String avatarUrl;
+  final bool isActive;
 
   const UserCardListWidget({
     super.key,
@@ -116,101 +119,109 @@ class UserCardListWidget extends StatelessWidget {
     required this.mobileNumber,
     required this.roleName,
     required this.avatarUrl,
+    this.isActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      child: Card(
-        elevation: 4,
-        color: AppColors.card_color,
-        margin: const EdgeInsets.all(0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SmartImage(
-                imageUrl: avatarUrl,
-                baseUrl: Constants.apiBaseUrl,
-                shape: ImageShape.circle,
-                width: 70,
-              ),
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Username
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF111827),
+    return Card(
+      elevation: 4,
+      color: AppColors.card_color,
+      margin: const EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SmartImage(
+              imageUrl: avatarUrl,
+              baseUrl: Constants.apiBaseUrl,
+              shape: ImageShape.circle,
+              width: 70,
+            ),
+            const SizedBox(width: 16),
+            // main info column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // name + status pill on one row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
+                      const SizedBox(width: 8),
+                      StatusPill(active: isActive, height: 24),
+                    ],
+                  ),
 
-                    // Email
-                    Row(
-                      children: [
-                        const Icon(Icons.email_outlined,
-                            size: 16, color: Color(0xFF6B7280)),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            email,
-                            style: const TextStyle(
-                                fontSize: 13, color: Color(0xFF6B7280)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
-                    // Mobile
-                    Row(
-                      children: [
-                        const Icon(Icons.phone_android,
-                            size: 16, color: Color(0xFF6B7280)),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            mobileNumber,
-                            style: const TextStyle(
-                                fontSize: 13, color: Color(0xFF6B7280)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Role
-                    Row(
-                      children: [
-                        const Icon(Icons.card_membership_outlined,
-                            size: 16, color: Color(0xFF6B7280)),
-                        const SizedBox(width: 8),
-                        Text(
-                          roleName,
+                  // Email
+                  Row(
+                    children: [
+                      const Icon(Icons.email_outlined,
+                          size: 16, color: Color(0xFF6B7280)),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          email,
                           style: const TextStyle(
                               fontSize: 13, color: Color(0xFF6B7280)),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Mobile
+                  Row(
+                    children: [
+                      const Icon(Icons.phone_android,
+                          size: 16, color: Color(0xFF6B7280)),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          mobileNumber,
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFF6B7280)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Role
+                  Row(
+                    children: [
+                      const Icon(Icons.card_membership_outlined,
+                          size: 16, color: Color(0xFF6B7280)),
+                      const SizedBox(width: 8),
+                      Text(
+                        roleName,
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -38,14 +38,6 @@ class Dashboard extends StatelessWidget {
                 child: Row(
                   children: [
                     StatsCard(
-                      title: "Users",
-                      value: "120",
-                      icon: Icons.person,
-                      color: Colors.blue,
-                      onTap: () {},
-                    ),
-                    const SizedBox(width: 12),
-                    StatsCard(
                       title: "Orders",
                       value: "45",
                       icon: Icons.shopping_cart,
@@ -53,14 +45,24 @@ class Dashboard extends StatelessWidget {
                       onTap: () {},
                     ),
                     const SizedBox(width: 12),
+
                     StatsCard(
-                      title: "Revenue",
-                      value: "\$12k",
-                      icon: Icons.attach_money,
-                      color: Colors.orange,
+                      title: "Users",
+                      value: "120",
+                      icon: Icons.person,
+                      color: Colors.blue,
                       onTap: () {},
                     ),
+
                     const SizedBox(width: 12),
+                    // StatsCard(
+                    //   title: "Revenue",
+                    //   value: "\$12k",
+                    //   icon: Icons.attach_money,
+                    //   color: Colors.orange,
+                    //   onTap: () {},
+                    // ),
+                    //const SizedBox(width: 12),
                     StatsCard(
                       title: "Products",
                       value: "230",

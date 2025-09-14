@@ -21,10 +21,7 @@ import '../../profile/repository/user_repository.dart';
 class MyAccount extends HookWidget {
   const MyAccount({super.key});
 
-  bool _isValidEmail(String s) {
-    final re = RegExp(r"^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$");
-    return re.hasMatch(s);
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +104,7 @@ class MyAccount extends HookWidget {
       final oldPass = oldPassCtrl.text;
       final newPass = newPassCtrl.text;
 
-      if (email.isNotEmpty && !_isValidEmail(email)) {
+      if (email.isNotEmpty && !Constants.isValidEmail(email)) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid email')));
         return;
       }
@@ -311,44 +308,19 @@ class MyAccount extends HookWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              SizedBox(
-                width: 120,
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context)
-                        .textTheme
-                        .bodyLarge!
-                        .color!
-                        .withOpacity(0.08),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text("Cancel"),
-                ),
+          const SizedBox(height: 70.0),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+                shape: const StadiumBorder(),
               ),
-              const SizedBox(width: 16.0),
-              SizedBox(
-                width: 160,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: const StadiumBorder(),
-                  ),
-                  onPressed: submitUpdate,
-                  child: const Text("Save Update"),
-                ),
-              ),
-            ],
+              onPressed: submitUpdate,
+              child: const Text("Save Update"),
+            ),
           ),
         ],
       ),

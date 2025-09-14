@@ -16,6 +16,7 @@ class AddUserRepository {
     required String mobileNumber,
     required String password,
     required int roleId,
+    required bool is_active,
   }) async {
     try {
       final response = await _client.post(
@@ -26,6 +27,7 @@ class AddUserRepository {
           "mobileNumber": mobileNumber,
           "password": password,
           "roleId": roleId,
+          "isActive": is_active,
         },
         options: Options(headers: {'Content-Type': 'application/json'}),
       );

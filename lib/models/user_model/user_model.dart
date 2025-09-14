@@ -50,6 +50,7 @@ class UserDataModel {
   final String userImage;
   final String roleName;
   final String fcmToken;
+  final bool isActive;
 
   UserDataModel({
     required this.userId,
@@ -59,6 +60,7 @@ class UserDataModel {
     required this.userImage,
     required this.roleName,
     required this.fcmToken,
+    required this.isActive,
   });
 
   factory UserDataModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,7 @@ class UserDataModel {
       userImage: json['userImage'] as String? ?? '',
       roleName: json['roleName'] as String? ?? '',
       fcmToken: json['fcmToken'] as String? ?? '',
+      isActive: json['isActive'] as bool? ?? false,
     );
   }
 
@@ -84,6 +87,7 @@ class UserDataModel {
       'userImage': userImage,
       'roleName': roleName,
       'fcmToken': fcmToken,
+      'isActive': isActive
     };
   }
 
@@ -108,6 +112,7 @@ class UserDataModel {
     String? userImage,
     String? roleName,
     String? fcmToken,
+    bool? isActive
   }) {
     return UserDataModel(
       userId: userId ?? this.userId,
@@ -117,6 +122,7 @@ class UserDataModel {
       userImage: userImage ?? this.userImage,
       roleName: roleName ?? this.roleName,
       fcmToken: fcmToken ?? this.fcmToken,
+      isActive: isActive ?? this.isActive,
     );
   }
 }
