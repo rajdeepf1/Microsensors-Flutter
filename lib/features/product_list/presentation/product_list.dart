@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
+import 'package:microsensors/features/components/status_pill/status_pill.dart';
 import 'package:microsensors/features/product_list/repository/product_repository.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
@@ -100,7 +101,6 @@ class _RetryView extends StatelessWidget {
 }
 
 
-
 class ProductCardWidget extends StatelessWidget {
   final String name;
   final String description;
@@ -127,112 +127,124 @@ class ProductCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stockText =
-    stockQuantity > 0 ? 'In stock: $stockQuantity' : 'Out of stock';
+    // Colors & sizing tuned to resemble your screenshot
+    final cardBg = AppColors.card_color; // light purple-ish
+    //final cardBg = Colors.white; // light purple-ish
+    final accent = const Color(0xFF7B8CFF); // deeper accent for image bg
+    final titleColor = const Color(0xFF1B1140);
+    final subtitleColor = Colors.black54;
 
     return Card(
-      elevation: 4,
-      color: AppColors.card_color,
+      elevation: 2,
+      color: cardBg,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Full width image with overlay name
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 180, // fixed height (adjust as needed)
-                  child: SmartImage(
-                    imageUrl: avatarUrl,
-                    baseUrl: Constants.apiBaseUrl,
-                    shape: ImageShape.rectangle,
-                    fit: BoxFit.cover, // image covers full width
-                    // placeholder: Image.asset("assets/images/auth_image.png",
-                    //     fit: BoxFit.cover),
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  color: Colors.black54,
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-                  child: Text(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            // Left column: texts + small button
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title (large)
+                  Text(
                     name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
 
-          // Product details
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                  const SizedBox(height: 6),
 
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(6), // space around text
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50, // background color
-                    borderRadius: BorderRadius.circular(6), // rounded corners
-                  ),
-                  child: Text(
+                  // Subtitle (smaller, e.g. course)
+                  Text(
                     description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87, // text color
-                      fontSize: 14,
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontSize: 12,
                     ),
                   ),
-                ),
 
+                  const SizedBox(height: 10),
 
+                SizedBox(width: 100,child: StatusPill(status: status),),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
+                  Text(
+                    sku,
+                    style: TextStyle(fontSize: 12, color: subtitleColor),
+                  ),
 
+                  const SizedBox(height: 10),
 
-                Row(
-                  children: [
-                    Expanded(child: Text('Price: ₹${price.toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.w600)),),
-                    Expanded(child: Text(stockText,
+                  // Date and extra line (createdAt / createdBy)
+                  Text(
+                    createdAt,
+                    style: TextStyle(fontSize: 12, color: subtitleColor),
+                  ),
+                  
+                  const SizedBox(height: 20),
+
+                  // Small rounded white pill button (Sign up)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // click
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 2,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        'Details',
                         style: TextStyle(
-                            color:
-                            stockQuantity > 0 ? Colors.green : Colors.red)),),
-                    Expanded(child:                status=='active'? Text('Status: $status',style: TextStyle(color: Colors.green),) :Text('Status: $status',style: TextStyle(color: Colors.red)),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 8),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
 
-                Text('SKU: $sku', style: const TextStyle(color: Colors.grey,fontWeight: FontWeight.w900)),
-                const SizedBox(height: 6),
-                Text('Created by: $createdBy',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                Text('Created at: ${createdAt}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(width: 12),
+
+            // Right side: rounded image box
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 120,
+                height: 120,
+                color: accent.withOpacity(0.12),
+                child: SmartImage(
+                  imageUrl: avatarUrl,
+                  baseUrl: Constants.apiBaseUrl,
+                  width: 120,
+                  height: 120,
+                  shape: ImageShape.rectangle,
+                  fit: BoxFit.cover,
+                  username: name,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

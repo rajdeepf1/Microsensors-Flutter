@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+import '../../../utils/colors.dart';
+
 enum ImageShape { circle, rounded, rectangle }
 
 class SmartImage extends StatelessWidget {
@@ -69,7 +71,7 @@ class SmartImage extends StatelessWidget {
 
   Widget _initialsAvatar(String? name, {double? h, double? w}) {
     final n = (name ?? '').trim();
-    String initials = 'U';
+    String initials = n;
     if (n.isNotEmpty) {
       final parts = n.split(RegExp(r'\s+'));
       initials = parts.length == 1
@@ -82,7 +84,7 @@ class SmartImage extends StatelessWidget {
       height: size,
       width: size,
       decoration: BoxDecoration(
-        color: Colors.white24,
+        color: AppColors.app_blue_color,
         borderRadius: BorderRadius.circular(shape == ImageShape.circle ? size / 2 : borderRadius),
       ),
       child: Center(

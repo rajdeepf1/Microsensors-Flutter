@@ -141,6 +141,7 @@ class UserCardListWidget extends StatelessWidget {
               baseUrl: Constants.apiBaseUrl,
               shape: ImageShape.circle,
               width: 70,
+              username: name,
             ),
             const SizedBox(width: 16),
             // main info column
@@ -163,7 +164,7 @@ class UserCardListWidget extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      StatusPill(active: isActive, height: 24),
+                      StatusPill(status: isActive?'Active':'InActive'),
                     ],
                   ),
 

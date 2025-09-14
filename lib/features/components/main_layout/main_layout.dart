@@ -86,7 +86,7 @@ class MainLayout extends HookWidget {
               ),
               onPressed: () {
                 // Your action here
-                print("Notification icon clicked");
+                print("Notification icons clicked");
                 context.push("/notification");
               },
             ),

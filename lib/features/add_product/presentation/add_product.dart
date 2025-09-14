@@ -26,6 +26,8 @@ class AddProduct extends HookWidget {
     final descCtrl = useTextEditingController();
     final priceCtrl = useTextEditingController();
     final skuCtrl = useTextEditingController();
+    final skuTimestamp = useState<String?>(null);
+
     final qty = useState<int>(0);
     final status = useState<bool>(true); // true -> ACTIVE
     final pickedImage = useState<File?>(null);
@@ -147,6 +149,57 @@ class AddProduct extends HookWidget {
       }
     }
 
+    String _sanitizeNameForSku(String name) {
+      final sanitized = name
+          .trim()
+          .toUpperCase()
+          .replaceAll(RegExp(r'[^A-Z0-9 ]'), '') // remove special chars
+          .replaceAll(RegExp(r'\s+'), '-')       // spaces -> dashes
+          .replaceAll(RegExp(r'-+'), '-');       // collapse repeated dashes
+      // optionally truncate if too long
+      return sanitized.length > 40 ? sanitized.substring(0, 40) : sanitized;
+    }
+
+// helper to create timestamp suffix (human readable)
+    String _createTimestampSuffix() {
+      final now = DateTime.now();
+      final ts = '${now.year.toString().padLeft(4, '0')}' // YYYY
+          '${now.month.toString().padLeft(2, '0')}'        // MM
+          '${now.day.toString().padLeft(2, '0')}'         // DD
+          '-${now.hour.toString().padLeft(2, '0')}'       // HH
+          '${now.minute.toString().padLeft(2, '0')}'      // mm
+          '${now.second.toString().padLeft(2, '0')}';     // ss
+      return ts;
+    }
+
+    // listen to name changes and update SKU accordingly
+    useEffect(() {
+      void listener() {
+        final name = nameCtrl.text;
+        if (name.trim().isEmpty) {
+          // clear both sku and timestamp when name cleared
+          skuTimestamp.value = null;
+          skuCtrl.text = '';
+          return;
+        }
+
+        // generate timestamp suffix ONCE when the user *starts* typing
+        skuTimestamp.value ??= _createTimestampSuffix();
+
+        // build sku as SANITIZED_NAME - TIMESTAMP
+        final sanitized = _sanitizeNameForSku(name);
+        skuCtrl.text = sanitized.isEmpty
+            ? skuTimestamp.value!
+            : '${sanitized}-${skuTimestamp.value}';
+      }
+
+      nameCtrl.addListener(listener);
+      // initialize in case name already has value
+      listener();
+
+      return () => nameCtrl.removeListener(listener);
+    }, [nameCtrl, skuCtrl, skuTimestamp]);
+
     return MainLayout(
       title: "Add Product",
       child: SingleChildScrollView(
@@ -219,56 +272,57 @@ class AddProduct extends HookWidget {
                     ),
                   ),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ProductEditField(
-                          text: "Product Price",
-                          child: TextFormField(
-                            controller: priceCtrl,
-                            keyboardType: TextInputType.number,
-                            style: TextStyle(
-                              color: AppColors.sub_heading_text_color,
-                            ),
-                            decoration: InputDecoration(
-                              prefixText: "₹ ",
-                              prefixStyle: TextStyle(color: AppColors.sub_heading_text_color),
-                              filled: true,
-                              fillColor: AppColors.app_blue_color.withOpacity(
-                                0.05,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0 * 1.5,
-                                vertical: 16.0,
-                              ),
-                              border: const OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(50),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16), // spacing between fields
-                      Expanded(
-                        child: QuantityField(
-                          label: "Stock Qty",
-                          initialValue: 0,
-                          onChanged: (val) {
-                            print("Quantity updated: $val");
-                            qty.value = val;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: ProductEditField(
+                  //         text: "Product Price",
+                  //         child: TextFormField(
+                  //           controller: priceCtrl,
+                  //           keyboardType: TextInputType.number,
+                  //           style: TextStyle(
+                  //             color: AppColors.sub_heading_text_color,
+                  //           ),
+                  //           decoration: InputDecoration(
+                  //             prefixText: "₹ ",
+                  //             prefixStyle: TextStyle(color: AppColors.sub_heading_text_color),
+                  //             filled: true,
+                  //             fillColor: AppColors.app_blue_color.withOpacity(
+                  //               0.05,
+                  //             ),
+                  //             contentPadding: const EdgeInsets.symmetric(
+                  //               horizontal: 16.0 * 1.5,
+                  //               vertical: 16.0,
+                  //             ),
+                  //             border: const OutlineInputBorder(
+                  //               borderSide: BorderSide.none,
+                  //               borderRadius: BorderRadius.all(
+                  //                 Radius.circular(50),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 16), // spacing between fields
+                  //     Expanded(
+                  //       child: QuantityField(
+                  //         label: "Stock Qty",
+                  //         initialValue: 0,
+                  //         onChanged: (val) {
+                  //           print("Quantity updated: $val");
+                  //           qty.value = val;
+                  //         },
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
 
                   ProductEditField(
                     text: "SKU",
                     child: TextFormField(
                       controller: skuCtrl,
+                      enabled: false,
                       style: TextStyle(color: AppColors.sub_heading_text_color),
                       decoration: InputDecoration(
                         filled: true,
@@ -293,7 +347,7 @@ class AddProduct extends HookWidget {
                     child: Row(
                       spacing: 16,
                       children: [
-                        Text(isSwitched.value ? "Active" : "InActive"),
+                        Text("Active Status"),
 
                         Switch(
                           value: isSwitched.value,
@@ -317,44 +371,21 @@ class AddProduct extends HookWidget {
               ),
             ),
             const SizedBox(height: 16.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  width: 120,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge!.color!.withOpacity(0.08),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text("Cancel"),
-                  ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: const StadiumBorder(),
                 ),
-                const SizedBox(width: 16.0),
-                SizedBox(
-                  width: 160,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: const StadiumBorder(),
-                    ),
-                    onPressed: loading.value ? null : onAddProduct,
-                    child:
-                        loading.value
-                            ? const CircularProgressIndicator()
-                            : const Text("Add Product"),
-                  ),
-                ),
-              ],
+                onPressed: loading.value ? null : onAddProduct,
+                child:
+                loading.value
+                    ? const CircularProgressIndicator()
+                    : const Text("Add Product"),
+              ),
             ),
             SizedBox(height: 80),
           ],
