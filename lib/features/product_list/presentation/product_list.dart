@@ -20,7 +20,6 @@ class ProductList extends HookWidget {
     );
     final repo = useMemoized(() => ProductRepository());
 
-
     Future<void> loadProducts() async {
       apiState.value = const ApiLoading();
       final result = await repo.fetchProducts();
@@ -62,6 +61,7 @@ class ProductList extends HookWidget {
               createdBy: p.createdByUsername,
               createdAt: p.formattedCreatedAt,
               avatarUrl: avatarUrl!,
+              onRefresh: loadProducts,
             );
           },
         );
@@ -104,7 +104,6 @@ class _RetryView extends StatelessWidget {
   }
 }
 
-
 class ProductCardWidget extends StatelessWidget {
   final int productId;
   final String name;
@@ -116,6 +115,7 @@ class ProductCardWidget extends StatelessWidget {
   final String createdBy;
   final String createdAt;
   final String avatarUrl;
+  final Future<void> Function()? onRefresh;
 
   const ProductCardWidget({
     super.key,
@@ -129,14 +129,14 @@ class ProductCardWidget extends StatelessWidget {
     required this.createdBy,
     required this.createdAt,
     required this.avatarUrl,
+    this.onRefresh,
   });
 
-  void _openDetailsSheet(BuildContext context) {
-
+  void _openDetailsSheet(BuildContext context) async {
     final FocusNode productNameFocusNode = FocusNode();
     final enableSaveNotifier = ValueNotifier<bool>(false);
 
-    showModalBottomSheet(
+    final bool? result = await showModalBottomSheet(
       context: context,
       isScrollControlled: true, // allows full-screen height
       backgroundColor: Colors.transparent, // to apply rounded corners easily
@@ -180,7 +180,6 @@ class ProductCardWidget extends StatelessWidget {
                         ),
                       ),
                     ],
-
                   ),
                   body: EditProduct(
                     productId: productId,
@@ -202,6 +201,9 @@ class ProductCardWidget extends StatelessWidget {
       },
     );
 
+    if (result == true) {
+      await onRefresh?.call();
+    }
   }
 
   @override
@@ -254,15 +256,11 @@ class ProductCardWidget extends StatelessWidget {
                       children: [
                         const TextSpan(
                           text: 'SKU: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         TextSpan(
                           text: sku,
-                          style: TextStyle(
-                            color: subtitleColor,
-                          ),
+                          style: TextStyle(color: subtitleColor),
                         ),
                       ],
                     ),
@@ -270,7 +268,6 @@ class ProductCardWidget extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
-
 
                   Text(
                     createdAt,

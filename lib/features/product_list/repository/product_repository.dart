@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
+import '../../../models/product/ProductDeleteResponse.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/product/product_request.dart';
 import '../../../models/product/product_response.dart';
@@ -118,6 +119,56 @@ class ProductRepository {
     }
   }
 
+  Future<ApiState<ProductDeleteResponse>> deleteProduct(int productId) async {
+    try {
+      final response = await _client.delete(
+        'products/$productId',
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        final raw = response.data;
+
+        if (raw is Map<String, dynamic>) {
+          final resp = ProductDeleteResponse.fromJson(raw);
+          if (resp.success) {
+            return ApiData(resp);
+          } else {
+            return ApiError(resp.error ?? 'Delete failed', error: resp);
+          }
+        }
+
+        // Fallback: if API just sends plain string "Product Deleted"
+        if (raw is String) {
+          return ApiData(ProductDeleteResponse(
+            success: true,
+            statusCode: response.statusCode ?? 200,
+            data: raw,
+            error: null,
+          ));
+        }
+
+        // No body case (204 No Content)
+        return ApiData(ProductDeleteResponse(
+          success: true,
+          statusCode: response.statusCode ?? 200,
+          data: 'Product Deleted',
+          error: null,
+        ));
+      }
+
+      return ApiError('Unexpected status: ${response.statusCode}');
+    } on DioException catch (e, st) {
+      final body = e.response?.data;
+      String msg = (body is Map && body['error'] != null)
+          ? body['error'].toString()
+          : e.message ?? 'Network error';
+
+      return ApiError(msg, error: e, stackTrace: st);
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
+    }
+  }
 
 
 }

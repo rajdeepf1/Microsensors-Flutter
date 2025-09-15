@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:microsensors/models/product/ProductDeleteResponse.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:dotted_border/dotted_border.dart';
 import '../../../core/api_state.dart';
@@ -153,7 +154,72 @@ class EditProduct extends HookWidget {
       }
     }
 
-    Future<void> onDelete() async {}
+    Future<void> onDelete() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete product'),
+          content: const Text(
+            'Are you sure you want to delete this product? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return; // user cancelled
+
+      deleteLoading.value = true;
+      try {
+        final res = await repo.deleteProduct(productId);
+
+        if (res is ApiData<ProductDeleteResponse>) {
+          final deleteResp = res.data;
+          if (deleteResp.success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(deleteResp.data?.toString() ?? 'Product deleted successfully'),
+              ),
+            );
+
+            // Close the bottom sheet and notify parent (ProductList) to refresh
+            Navigator.of(context).pop(true);
+            return;
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(deleteResp.error ?? 'Failed to delete product')),
+            );
+          }
+        } else if (res is ApiError<ProductDeleteResponse>) {
+          final msg = res.message ?? 'Failed to delete product';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unexpected error while deleting')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      } finally {
+        // only reset loading if the sheet is still open
+        if (Navigator.of(context).mounted) {
+          deleteLoading.value = false;
+        }
+      }
+    }
+
 
     String _sanitizeNameForSku(String name) {
       final sanitized = name
