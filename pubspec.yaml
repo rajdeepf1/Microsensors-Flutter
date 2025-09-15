@@ -74,6 +74,9 @@ dependencies:
   # For App Version
   package_info_plus: ^9.0.0
 
+  # BottomSheet
+  modal_bottom_sheet: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

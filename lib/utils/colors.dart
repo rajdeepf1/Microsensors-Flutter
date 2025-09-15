@@ -4,6 +4,7 @@ import 'dart:ui';
 class AppColors {
   static const Color app_blue_color = Color(0xFF3C8DEA);
   static const Color button_color = Color(0xFF3C8DEA);
+  static const Color delete_button_color = Color(0xFFEC0606);
   static const Color button_text_color = Color(0xFFFFFFFF);
   static const Color heading_text_color = Color(0xFF575757);
   static const Color white_text_color = Color(0xFFFFFFFF);
@@ -22,5 +23,6 @@ class AppColors {
   static const Color pill_in_active_text_color = Color(0xFFB91C1C);
   static const Color pill_discontinued_bg_color = Color(0xFFA8A8A8);
   static const Color pill_discontinued_text_color = Color(0xFF1F2F48);
+
 
 }

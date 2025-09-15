@@ -2,7 +2,8 @@ class Constants{
 
   // Private URLs (not exposed outside this class)
   //static const String _apiBaseUrlLocal = "http://10.0.2.2:8080/api/"; //android
-  static const String _apiBaseUrlLocal = "http://localhost:8080/api/"; //ios
+  //static const String _apiBaseUrlLocal = "http://localhost:8080/api/"; //ios
+  static const String _apiBaseUrlLocal = "http://192.168.0.137:8080/api/"; //wireless network
   static const String _apiBaseUrlProduction = "http://195.35.6.190:8080/api/";
 
   // Toggle flag (set to true for production build)

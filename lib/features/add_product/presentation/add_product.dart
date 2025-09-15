@@ -55,25 +55,6 @@ class AddProduct extends HookWidget {
         return;
       }
 
-      double? price;
-      if (priceCtrl.text.trim().isNotEmpty) {
-        price = double.tryParse(priceCtrl.text.trim());
-        if (price == null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Invalid price')));
-          return;
-        }
-      }
-
-      final qytData = qty.value;
-      if (qytData == 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product quantity could not be zero')),
-        );
-        return;
-      }
-
       final sku = skuCtrl.text.trim();
       if (sku.isEmpty) {
         ScaffoldMessenger.of(
@@ -88,8 +69,8 @@ class AddProduct extends HookWidget {
           productName: name,
           description:
               descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-          price: price,
-          stockQuantity: qytData,
+          price: null,
+          stockQuantity: 0,
           sku: sku,
           status: status.value ? 'ACTIVE' : 'INACTIVE',
           createdByUserId: /* supply current user id if required */ 1,

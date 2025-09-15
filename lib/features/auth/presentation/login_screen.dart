@@ -437,7 +437,7 @@ class LoginScreen extends HookWidget {
                             text: "Login using email-id & password",
                           ),
                           TextSpan(
-                            text: " CLick Here",
+                            text: " Click Here",
                             style: TextStyle(
                               color: AppColors.app_blue_color,
                               // highlighted blue
