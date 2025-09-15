@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../utils/constants.dart';
@@ -10,17 +11,51 @@ class ProfilePic extends StatelessWidget {
     required this.userName,
     this.isShowPhotoUpload = false,
     this.imageUploadBtnPress,
-    this.placeHolder
+    this.placeHolder,
+    this.isFile = false, // 👈 NEW flag
   });
 
-  final String image;
+  final String image; // either URL or File.path
   final String userName;
   final bool isShowPhotoUpload;
   final VoidCallback? imageUploadBtnPress;
   final Widget? placeHolder;
+  final bool isFile;
 
   @override
   Widget build(BuildContext context) {
+    Widget imageWidget;
+
+    if (isFile) {
+      // ✅ Local file preview
+      imageWidget = ClipOval(
+        child: Image.file(
+          File(image),
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => CircleAvatar(
+            radius: 60,
+            child: Text(
+              userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+              style: const TextStyle(fontSize: 32),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // ✅ Fallback to SmartImage (server URL)
+      imageWidget = SmartImage(
+        imageUrl: image,
+        baseUrl: Constants.apiBaseUrl,
+        width: 120,
+        height: 120,
+        shape: ImageShape.circle,
+        username: userName,
+        placeholder: placeHolder,
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       margin: const EdgeInsets.symmetric(vertical: 16.0),
@@ -34,27 +69,20 @@ class ProfilePic extends StatelessWidget {
       child: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          SmartImage(
-            imageUrl: image,
-            baseUrl: Constants.apiBaseUrl,
-            width: 120,
-            height: 120,
-            shape: ImageShape.circle,
-            username: userName,
-            placeholder: placeHolder,
-          ),
-          InkWell(
-            onTap: imageUploadBtnPress,
-            child: CircleAvatar(
-              radius: 13,
-              backgroundColor: Theme.of(context).primaryColor,
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 20,
+          imageWidget,
+          if (isShowPhotoUpload) // show add button only when flag is true
+            InkWell(
+              onTap: imageUploadBtnPress,
+              child: CircleAvatar(
+                radius: 13,
+                backgroundColor: Theme.of(context).primaryColor,
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
-          )
         ],
       ),
     );
