@@ -32,6 +32,7 @@ class EmailPasswordLoginScreen extends HookWidget {
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
     final loading = useState<bool>(false);
+    final showPassword = useState(false);
 
     Future<void> doLogin() async {
       final email = emailController.text.trim();
@@ -164,6 +165,7 @@ class EmailPasswordLoginScreen extends HookWidget {
                     EditTextField(
                       child: TextFormField(
                         controller: passwordController,
+                        obscureText: !showPassword.value,
                         keyboardType: TextInputType.visiblePassword,
                         style: TextStyle(color: AppColors.sub_heading_text_color),
                         decoration: InputDecoration(
@@ -171,6 +173,15 @@ class EmailPasswordLoginScreen extends HookWidget {
                           hint: Text("Enter password"),
                           prefixIcon: const Icon(Icons.password),
                           fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              showPassword.value ? Icons.visibility : Icons.visibility_off,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              showPassword.value = !showPassword.value;
+                            },
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16.0 * 1.5, vertical: 16.0),
                           border: const OutlineInputBorder(
