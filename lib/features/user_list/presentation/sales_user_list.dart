@@ -233,6 +233,7 @@ class UserCardListWidget extends StatelessWidget {
                 baseUrl: Constants.apiBaseUrl,
                 shape: ImageShape.circle,
                 width: 70,
+                height: 70,
                 username: name,
               ),
               const SizedBox(width: 16),
@@ -241,6 +242,7 @@ class UserCardListWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     // name + status pill on one row
                     Row(
                       children: [

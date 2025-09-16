@@ -172,7 +172,7 @@ class MyAccount extends HookWidget {
           ProfilePic(
             image: imageUrl!,
             userName: username,
-            imageUploadBtnPress: pickAndUpload,
+            imageUploadBtnPress: pickAndUpload,isShowPhotoUpload: true,
           ),
           const Divider(),
           Form(

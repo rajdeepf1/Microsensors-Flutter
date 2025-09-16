@@ -44,14 +44,15 @@ class EditUser extends HookWidget {
   Widget build(BuildContext context) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
-
     final repo = useMemoized(() => SalesManagersUserRepository());
     final loading = useState(false);
     final deleteLoading = useState(false);
     final isSwitched = useState(isActive);
     final roleId = useState<int?>(null);
-    final pickedImage = useState<File?>(null); // single state for selected image
-    final isSaveButtonDisable = useState(true);
+    final pickedImage = useState<File?>(null); // selected image preview
+
+    // This flag determines whether fields are editable.
+    final isEditing = useState<bool>(false);
 
     // controllers pre-filled with current user
     final nameCtrl = useTextEditingController(text: name);
@@ -72,34 +73,40 @@ class EditUser extends HookWidget {
       return null;
     }, []);
 
+    // Listen to parent notifier (the external Edit button). When parent sets it true,
+    // we enable editing. When parent sets it false, we disable editing and reset UI if needed.
     useEffect(() {
       if (enableSaveNotifier != null) {
         void listener() {
-          isSaveButtonDisable.value = !enableSaveNotifier!.value;
+          final val = enableSaveNotifier!.value;
+          isEditing.value = val;
+          // if parent enabled and passed focus request via nameFocusNode, parent already requests focus
+          // nothing more is needed here
         }
 
         enableSaveNotifier!.addListener(listener);
+        // initialize local isEditing from current notifier value
+        isEditing.value = enableSaveNotifier!.value;
         return () => enableSaveNotifier!.removeListener(listener);
       }
       return null;
     }, [enableSaveNotifier]);
 
-    useEffect(() {
-      if (pickedImage.value != null && enableSaveNotifier != null) {
-        enableSaveNotifier!.value = true;  // enable save if an image is picked
-      }
-      return null;
-    }, [pickedImage.value]);
-
-    // Step 1: Pick image
+    // Step 1: Pick image - allow only when editing (parent toggles editing)
     Future<void> pickImage() async {
+      if (!isEditing.value) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tap Edit to enable image upload')),
+        );
+        return;
+      }
+
       try {
         final res = await FilePicker.platform.pickFiles(type: FileType.image);
         if (res != null && res.files.isNotEmpty && res.files.first.path != null) {
           pickedImage.value = File(res.files.first.path!);
-          if (enableSaveNotifier != null) {
-            enableSaveNotifier!.value = true;
-          }
+          // ensure parent Save state is enabled (if parent has provided notifier)
+          if (enableSaveNotifier != null) enableSaveNotifier!.value = true;
         }
       } on PlatformException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +124,7 @@ class EditUser extends HookWidget {
       final email = emailCtrl.text.trim();
       final phone = phoneCtrl.text.trim();
       final id = roleId.value;
-      final isActive = isSwitched.value;
+      final isActiveLocal = isSwitched.value;
 
       if (name.isEmpty || email.isEmpty || phone.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -148,7 +155,7 @@ class EditUser extends HookWidget {
           email: email,
           phoneNumber: phone,
           roleId: id,
-          isActive: isActive,
+          isActive: isActiveLocal,
         );
 
         final updateRes = await repo.updateUser(req);
@@ -180,8 +187,10 @@ class EditUser extends HookWidget {
               );
             }
 
-            //  close screen and tell caller to refresh
-            Navigator.of(context).pop(true);
+            // reset editing state and notify parent to disable Save
+            isEditing.value = false;
+            if (enableSaveNotifier != null) enableSaveNotifier!.value = false;
+            Navigator.of(context).pop(true); // tell parent to refresh
           }
         } else if (updateRes is ApiError<UserResponseModel>) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -197,9 +206,7 @@ class EditUser extends HookWidget {
 
     Future<void> onDeleteUser() async {
       final adminUser = await LocalStorageService().getUser();
-
       final deletedBy = adminUser?.userId;
-
 
       final confirmed = await showDialog<bool>(
         context: context,
@@ -253,18 +260,23 @@ class EditUser extends HookWidget {
     )
         .toList();
 
+    // true if we can save: either editing was toggled on OR user picked an image
+    final canSave = isEditing.value || pickedImage.value != null;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         children: [
-          // <-- Here we pass either the picked file path (preview) or the avatarUrl.
+          // No Edit/Cancel button here — your AppBar edit icon controls editing via enableSaveNotifier.
+
+          // Profile pic preview (uses picked file path if present)
           ProfilePic(
             image: pickedImage.value != null ? pickedImage.value!.path : avatarUrl,
             userName: name,
             imageUploadBtnPress: pickImage,
             isShowPhotoUpload: true,
-            isFile: pickedImage.value != null, // 👈 tells ProfilePic to use File
           ),
+
           const Divider(),
           Form(
             key: formKey,
@@ -275,6 +287,7 @@ class EditUser extends HookWidget {
                   child: TextFormField(
                     controller: nameCtrl,
                     focusNode: nameFocusNode,
+                    enabled: isEditing.value,
                     style: TextStyle(color: AppColors.sub_heading_text_color),
                     decoration: InputDecoration(
                       filled: true,
@@ -294,6 +307,7 @@ class EditUser extends HookWidget {
                   text: "Email",
                   child: TextFormField(
                     controller: emailCtrl,
+                    enabled: isEditing.value,
                     style: TextStyle(color: AppColors.sub_heading_text_color),
                     decoration: InputDecoration(
                       filled: true,
@@ -313,6 +327,7 @@ class EditUser extends HookWidget {
                   text: "Phone",
                   child: TextFormField(
                     controller: phoneCtrl,
+                    enabled: isEditing.value,
                     style: TextStyle(color: AppColors.sub_heading_text_color),
                     decoration: InputDecoration(
                       filled: true,
@@ -330,26 +345,31 @@ class EditUser extends HookWidget {
                 ),
                 UserInfoEditField(
                   text: "Role",
-                  child: DropdownButtonFormField(
-                    value: roleId.value,
-                    items: roles,
-                    icon: const Icon(Icons.expand_more),
-                    onChanged: (value) => roleId.value = value,
-                    style: TextStyle(
-                      color: AppColors.sub_heading_text_color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Roles',
-                      filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.0 * 1.5,
-                        vertical: 16.0,
+                  child: AbsorbPointer(
+                    absorbing: !isEditing.value,
+                    child: DropdownButtonFormField<int>(
+                      value: roleId.value,
+                      items: roles,
+                      icon: const Icon(Icons.expand_more),
+                      onChanged: (value) {
+                        if (isEditing.value) roleId.value = value;
+                      },
+                      style: TextStyle(
+                        color: AppColors.sub_heading_text_color,
+                        fontWeight: FontWeight.bold,
                       ),
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                        borderRadius: BorderRadius.all(Radius.circular(50)),
+                      decoration: InputDecoration(
+                        hintText: 'Roles',
+                        filled: true,
+                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.0 * 1.5,
+                          vertical: 16.0,
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius: BorderRadius.all(Radius.circular(50)),
+                        ),
                       ),
                     ),
                   ),
@@ -358,7 +378,7 @@ class EditUser extends HookWidget {
                   text: "Active Status",
                   child: Switch(
                     value: isSwitched.value,
-                    onChanged: (val) => isSwitched.value = val,
+                    onChanged: isEditing.value ? (val) => isSwitched.value = val : null,
                     activeThumbColor: Colors.green,
                     activeTrackColor: Colors.greenAccent,
                     inactiveThumbColor: AppColors.app_blue_color,
@@ -381,10 +401,8 @@ class EditUser extends HookWidget {
                 minimumSize: const Size(double.infinity, 48),
                 shape: const StadiumBorder(),
               ),
-              onPressed: (loading.value || isSaveButtonDisable.value)
-                  ? null
-                  : submitUpdate,
-              child: const Text("Save Update"),
+              onPressed: (loading.value || !canSave) ? null : submitUpdate,
+              child: loading.value ? const CircularProgressIndicator() : const Text("Save Update"),
             ),
           ),
 
@@ -426,14 +444,10 @@ class EditUser extends HookWidget {
                 shape: const StadiumBorder(),
               ),
               onPressed: deleteLoading.value ? null : onDeleteUser,
-              child:
-              deleteLoading.value
-                  ? const CircularProgressIndicator()
-                  : const Text("Delete"),
+              child: deleteLoading.value ? const CircularProgressIndicator() : const Text("Delete"),
             ),
           ),
-          SizedBox(height: 80),
-
+          const SizedBox(height: 80),
         ],
       ),
     );

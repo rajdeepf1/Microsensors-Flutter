@@ -8,6 +8,7 @@ import 'package:microsensors/utils/constants.dart';
 
 import '../../../core/api_state.dart';
 import '../../components/status_pill/status_pill.dart';
+import 'edit_user.dart';
 
 class ProductionManagerUserList extends HookWidget {
   const ProductionManagerUserList({super.key});
@@ -54,12 +55,14 @@ class ProductionManagerUserList extends HookWidget {
             final user = data[index];
             final avatarUrl = user.userImage;
             return UserCardListWidget(
+              userId: user.userId,
               name: user.username,
               email: user.email,
               mobileNumber: user.mobileNumber,
               roleName: user.roleName,
               avatarUrl: avatarUrl,
               isActive: user.isActive,
+              onRefresh: loadUsers,
             );
           },
         );
@@ -105,124 +108,212 @@ class _RetryView extends StatelessWidget {
 }
 
 class UserCardListWidget extends StatelessWidget {
+  final int userId;
   final String name;
   final String email;
   final String mobileNumber;
   final String roleName;
   final String avatarUrl;
   final bool isActive;
+  final Future<void> Function()? onRefresh;
 
   const UserCardListWidget({
     super.key,
+    required this.userId,
     required this.name,
     required this.email,
     required this.mobileNumber,
     required this.roleName,
     required this.avatarUrl,
     this.isActive = false,
+    this.onRefresh,
   });
+
+
+  void _openDetailsSheet(BuildContext context) async {
+    final FocusNode nameFocusNode = FocusNode();
+    final enableSaveNotifier = ValueNotifier<bool>(false);
+
+    final bool? result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // allows full-screen height
+      backgroundColor: Colors.transparent, // to apply rounded corners easily
+      builder: (BuildContext ctx) {
+        // Use FractionallySizedBox to control sheet height (0.95 -> ~full-screen)
+        return FractionallySizedBox(
+          heightFactor: 0.95,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Material(
+              // Material so AppBar / buttons use Material styles
+              color: Colors.white,
+              child: SafeArea(
+                top: false,
+                // keep top as part of the sheet (AppBar handles status)
+                child: Scaffold(
+                  appBar: AppBar(
+                    elevation: 0,
+                    backgroundColor: Colors.white,
+                    iconTheme: const IconThemeData(color: Colors.black),
+                    title: Text(
+                      name,
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    leading: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.black),
+                          tooltip: "Edit",
+                          onPressed: () {
+                            // TODO: handle edit action here
+                            debugPrint("Edit button clicked for $name");
+                            nameFocusNode.requestFocus();
+                            enableSaveNotifier.value = true;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  body: EditUser(
+                    userId: userId,
+                    name: name,
+                    email: email,
+                    mobileNumber: mobileNumber,
+                    avatarUrl: avatarUrl,
+                    roleName: roleName,
+                    isActive: isActive,
+                    nameFocusNode: nameFocusNode,
+                    enableSaveNotifier: enableSaveNotifier,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (result == true) {
+      await onRefresh?.call();
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      color: AppColors.card_color,
-      margin: const EdgeInsets.all(0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SmartImage(
-              imageUrl: avatarUrl,
-              baseUrl: Constants.apiBaseUrl,
-              shape: ImageShape.circle,
-              width: 70,
-              username: name,
-            ),
-            const SizedBox(width: 16),
-            // main info column
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // name + status pill on one row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      StatusPill(status: isActive?'Active':'InActive'),
-                    ],
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Email
-                  Row(
-                    children: [
-                      const Icon(Icons.email_outlined,
-                          size: 16, color: Color(0xFF6B7280)),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          email,
-                          style: const TextStyle(
-                              fontSize: 13, color: Color(0xFF6B7280)),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Mobile
-                  Row(
-                    children: [
-                      const Icon(Icons.phone_android,
-                          size: 16, color: Color(0xFF6B7280)),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          mobileNumber,
-                          style: const TextStyle(
-                              fontSize: 13, color: Color(0xFF6B7280)),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Role
-                  Row(
-                    children: [
-                      const Icon(Icons.card_membership_outlined,
-                          size: 16, color: Color(0xFF6B7280)),
-                      const SizedBox(width: 8),
-                      Text(
-                        roleName,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF6B7280)),
-                      ),
-                    ],
-                  ),
-                ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(16), // for ripple clipping
+      onTap: () {
+        //  your navigation or action
+        debugPrint("Card tapped: $name");
+        // Example: Navigator.push(...);
+        _openDetailsSheet(context);
+      },
+      child: Card(
+        elevation: 4,
+        color: AppColors.card_color,
+        margin: const EdgeInsets.all(0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SmartImage(
+                imageUrl: avatarUrl,
+                baseUrl: Constants.apiBaseUrl,
+                shape: ImageShape.circle,
+                width: 70,
+                username: name,
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+              // main info column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // name + status pill on one row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF111827),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        StatusPill(status: isActive ? 'Active' : 'InActive'),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Email
+                    Row(
+                      children: [
+                        const Icon(Icons.email_outlined,
+                            size: 16, color: Color(0xFF6B7280)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            email,
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFF6B7280)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Mobile
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_android,
+                            size: 16, color: Color(0xFF6B7280)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            mobileNumber,
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFF6B7280)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Role
+                    Row(
+                      children: [
+                        const Icon(Icons.card_membership_outlined,
+                            size: 16, color: Color(0xFF6B7280)),
+                        const SizedBox(width: 8),
+                        Text(
+                          roleName,
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFF6B7280)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
