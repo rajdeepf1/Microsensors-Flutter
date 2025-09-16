@@ -1,18 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/utils/sizes.dart';
+import '../../../models/product/product_list_response.dart';
+import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
+import '../repository/dashboard_repository.dart';
 import 'products_lottie_card.dart';
 import 'users_lottie_card.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends HookWidget {
   const Dashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    final repo = useMemoized(() => DashboardRepository());
+
+    final usersState = useState<ApiState<List<UserDataModel>>>(const ApiInitial());
+    final productsState = useState<ApiState<List<ProductDataModel>>>(const ApiInitial());
+
+
+// load both counts
+    Future<void> loadAll() async {
+      usersState.value = const ApiLoading();
+      productsState.value = const ApiLoading();
+
+      usersState.value = await repo.fetchUsers();
+      productsState.value = await repo.fetchProducts();
+    }
+
+    useEffect(() {
+      loadAll();
+      return null;
+    }, []);
+
+
     return Scaffold(
 
       body: Scrollbar(
@@ -39,7 +66,7 @@ class Dashboard extends StatelessWidget {
                   children: [
                     StatsCard(
                       title: "Orders",
-                      value: "45",
+                      value: "--",
                       icon: Icons.shopping_cart,
                       color: Colors.green,
                       onTap: () {},
@@ -48,7 +75,7 @@ class Dashboard extends StatelessWidget {
 
                     StatsCard(
                       title: "Users",
-                      value: "120",
+                      value: _stateToString(usersState.value),
                       icon: Icons.person,
                       color: Colors.blue,
                       onTap: () {},
@@ -65,7 +92,7 @@ class Dashboard extends StatelessWidget {
                     //const SizedBox(width: 12),
                     StatsCard(
                       title: "Products",
-                      value: "230",
+                      value: _stateToString(productsState.value),
                       icon: Icons.inventory,
                       color: Colors.purple,
                       onTap: () {},
@@ -150,4 +177,13 @@ class Dashboard extends StatelessWidget {
 
     );
   }
+
+  String _stateToString(ApiState<List<dynamic>> state) {
+    if (state is ApiInitial) return "-";
+    if (state is ApiLoading) return "...";
+    if (state is ApiError) return "!";
+    if (state is ApiData<List<dynamic>>) return state.data.length.toString();
+    return "-";
+  }
+
 }
