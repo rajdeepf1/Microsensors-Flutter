@@ -1,165 +1,72 @@
-// lib/services/fcm_service.dart
-import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:http/http.dart' as http;
+// lib/services/fcm_service.dart  (or wherever you keep it)
+import 'package:dio/dio.dart';
+import 'package:microsensors/core/api_client.dart';
+import 'package:microsensors/core/api_state.dart';
+import 'package:microsensors/models/user_model/user_model.dart';
+import 'package:microsensors/utils/constants.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-/// FcmService
-/// - init() sets up local notifications & foreground message handling
-/// - registerTokenForUser(userId) POSTs the device token to your backend
-/// - messages is a broadcast stream of incoming payloads (Map<String,dynamic>)
 class FcmService {
-  FcmService._private();
-  static final FcmService instance = FcmService._private();
+  final ApiClient apiClient;
 
-  final FlutterLocalNotificationsPlugin _localNotifications =
-  FlutterLocalNotificationsPlugin();
+  FcmService({ApiClient? apiClient})
+      : apiClient = apiClient ?? ApiClient(baseUrl: Constants.apiBaseUrl);
 
-  // broadcast stream for app to listen to incoming payloads
-  final StreamController<Map<String, dynamic>> _messagesController =
-  StreamController<Map<String, dynamic>>.broadcast();
-
-  Stream<Map<String, dynamic>> get messages => _messagesController.stream;
-
-  // Android notification channel
-  static const AndroidNotificationChannel _androidChannel =
-  AndroidNotificationChannel(
-    'high_importance_channel',
-    'High Importance Notifications',
-    description: 'This channel is used for important notifications.',
-    importance: Importance.max,
-  );
-
-  String backendBaseUrl = ''; // set via init or leave and pass in registerTokenForUser
-
-  /// Initialize FCM handling and local notifications.
-  /// Call this once early (e.g., in main before runApp).
-  Future<void> init({String? backendBase}) async {
-    if (backendBase != null) backendBaseUrl = backendBase;
-
-    // initialize local notifications
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    final iosInit = DarwinInitializationSettings();
-    final settings = InitializationSettings(android: androidInit, iOS: iosInit);
-    await _localNotifications.initialize(settings,
-        onDidReceiveNotificationResponse: (response) {
-          debugPrint('Local notification tapped (payload): ${response.payload}');
-          // UI should react to payload (listen to messages stream or handle navigation separately)
-        });
-
-    // create Android channel
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_androidChannel);
-
-    // request permissions (iOS / Android 13+)
-    await FirebaseMessaging.instance.requestPermission();
-
-    // foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage msg) {
-      debugPrint('FCM onMessage: ${msg.messageId}');
-      _handleRemoteMessage(msg);
-    });
-
-    // token refresh - you may want to register the refreshed token again after login
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      debugPrint('FCM token refreshed: $newToken');
-      // Optionally: if you store current logged-in userId globally, re-register here
-    });
-
-    // Note: background handler must be top-level and registered in main.dart:
-    // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  }
-
-  /// Register current device token for a given user on your backend.
-  /// Call this after successful login (pass the numeric userId).
-  Future<bool> registerTokenForUser(int userId, {String? backendBase}) async {
-    if (backendBase != null) backendBaseUrl = backendBase;
-    if (backendBaseUrl.isEmpty) {
-      debugPrint('FcmService: backendBaseUrl not set; cannot register token.');
-      return false;
-    }
+  /// Registers a token for a user.
+  /// Returns ApiData(UserDataModel) on success or ApiError(...) on failure.
+  Future<ApiState<UserDataModel>> registerToken({
+    required int userId,
+    required String token,
+  }) async {
+    final encodedToken = Uri.encodeComponent(token);
+    // match your Spring controller path (adjust if your baseUrl already contains /api)
+    final path = 'user/token?userId=$userId&token=$encodedToken';
 
     try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token == null) {
-        debugPrint('FcmService: token is null');
-        return false;
-      }
+      final resp = await apiClient.post(path);
+      final status = resp.statusCode ?? 0;
 
-      final uri = Uri.parse(
-          '$backendBaseUrl/api/device/token?userId=$userId&token=${Uri.encodeComponent(token)}');
+      if (status >= 200 && status < 300) {
+        final body = resp.data;
+        if (body is Map<String, dynamic>) {
+          final success = body['success'] == true;
+          final data = body['data'];
 
-      final resp = await http.post(uri);
-      if (resp.statusCode >= 200 && resp.statusCode < 300) {
-        debugPrint('FcmService: token registered for user $userId');
-        return true;
+          if (success && data != null && data is Map<String, dynamic>) {
+            try {
+              final user = UserDataModel.fromJson(Map<String, dynamic>.from(data));
+              return ApiData<UserDataModel>(user);
+            } catch (e) {
+              return ApiError<UserDataModel>('Failed to parse user data: $e');
+            }
+          } else {
+            final errMsg = body['error']?.toString() ?? 'Server returned success=false or no data';
+            return ApiError<UserDataModel>(errMsg);
+          }
+        } else {
+          return ApiError<UserDataModel>('Unexpected response format from server');
+        }
       } else {
-        debugPrint(
-            'FcmService: failed to register token: ${resp.statusCode} ${resp.body}');
-        return false;
+        // non-2xx
+        if (status >= 400 && status < 500) {
+          return ApiError<UserDataModel>('Client error: ${resp.statusCode}');
+        } else {
+          return ApiError<UserDataModel>('Server error: ${resp.statusCode}');
+        }
       }
+    } on DioException catch (e) {
+      // Dio 5 uses DioException
+      final respStatus = e.response?.statusCode;
+      final respData = e.response?.data;
+      if (respStatus != null && respStatus >= 400 && respStatus < 500) {
+        final message = (respData is Map && respData['error'] != null)
+            ? respData['error'].toString()
+            : 'Client error: $respStatus';
+        return ApiError<UserDataModel>(message);
+      }
+      return ApiError<UserDataModel>('Network error: ${e.message}');
     } catch (e) {
-      debugPrint('FcmService: register token error: $e');
-      return false;
+      return ApiError<UserDataModel>('Unexpected error: $e');
     }
-  }
-
-  /// Return current device FCM token (useful for debugging)
-  Future<String?> getDeviceToken() async {
-    return FirebaseMessaging.instance.getToken();
-  }
-
-  void _handleRemoteMessage(RemoteMessage msg) {
-    // prefer data payload
-    Map<String, dynamic> payload = <String, dynamic>{};
-    if (msg.data.isNotEmpty) {
-      payload = Map<String, dynamic>.from(msg.data);
-    } else if (msg.notification != null) {
-      payload = {
-        'type': 'NOTIFICATION',
-        'title': msg.notification!.title ?? '',
-        'body': msg.notification!.body ?? '',
-      };
-    }
-
-    // send to app-level stream
-    _messagesController.add(payload);
-
-    // show a local notification (so foreground behaves like background)
-    _showLocalNotification(payload);
-  }
-
-  Future<void> _showLocalNotification(Map<String, dynamic> payload) async {
-    final title = payload['title']?.toString() ?? payload['type']?.toString() ?? 'Notification';
-    final body = payload['body']?.toString() ?? '';
-
-    final details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _androidChannel.id,
-        _androidChannel.name,
-        channelDescription: _androidChannel.description,
-        importance: Importance.max,
-        priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
-
-    await _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch.remainder(100000),
-      title,
-      body,
-      details,
-      payload: jsonEncode(payload),
-    );
-  }
-
-  /// Clean up
-  Future<void> dispose() async {
-    await _messagesController.close();
   }
 }
