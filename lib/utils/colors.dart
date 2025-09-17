@@ -15,7 +15,7 @@ class AppColors {
   static const Color fab_icon_color = Color(0xFF1F2F48);
   static const Color fab_foreground_icon_color = Color(0xFFFFFFFF);
   static const Color tab_text_color = Color(0xFFFFFFFF);
-  static const Color tab_indicator_color = Color(0xFF1F2F48);
+  static const Color tab_indicator_color = Color(0xFFFFFFFF);
   static const Color card_color = Color(0xFFEEF2FF);
   static const Color pill_active_bg_color = Color(0xFFE6F7EC);
   static const Color pill_active_text_color = Color(0xFF0F9D58);
