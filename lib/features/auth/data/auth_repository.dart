@@ -27,7 +27,7 @@ class AuthRepository {
         return const ApiError('Unexpected response format');
       }
 
-      final Map<String, dynamic> body = Map<String, dynamic>.from(raw as Map);
+      final Map<String, dynamic> body = Map<String, dynamic>.from(raw);
 
       // Parse wrapper
       late UserResponseModel userResp;
@@ -62,7 +62,7 @@ class AuthRepository {
         // RETURN the wrapper to the UI (success)
         return ApiData(userResp);
       } else if (otpResult is ApiError<bool>) {
-        return ApiError('Failed to send OTP: ${otpResult.message ?? otpResult.error}');
+        return ApiError('Failed to send OTP: ${otpResult.message}');
       } else {
         return const ApiError('Failed to send OTP (unknown)');
       }
@@ -94,7 +94,7 @@ class AuthRepository {
 
       final raw = response.data;
       if (raw is Map) {
-        final Map<String, dynamic> body = Map<String, dynamic>.from(raw as Map);
+        final Map<String, dynamic> body = Map<String, dynamic>.from(raw);
         if (body['success'] == true || body['statusCode'] == 201 || body['statusCode'] == 200) {
           return const ApiData(true);
         } else {

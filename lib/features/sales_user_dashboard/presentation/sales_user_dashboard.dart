@@ -1,39 +1,37 @@
-// lib/features/dashboard/presentation/dashboard.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:go_router/go_router.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
-import '../repository/dashboard_repository.dart';
-import 'products_lottie_card.dart';
-import 'users_lottie_card.dart';
+import '../repository/sales_dashboard_repository.dart';
+
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:microsensors/core/local_storage_service.dart';
 
-class Dashboard extends HookWidget {
-  const Dashboard({super.key});
+class SalesUserDashboard extends HookWidget {
+  const SalesUserDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final repo = useMemoized(() => DashboardRepository());
+    final repo = useMemoized(() => SalesDashboardRepository());
     final fcmService = useMemoized(() => FcmService());
 
-    final usersState = useState<ApiState<List<UserDataModel>>>(const ApiInitial());
-    final productsState = useState<ApiState<List<ProductDataModel>>>(const ApiInitial());
+    //final usersState = useState<ApiState<List<UserDataModel>>>(const ApiInitial());
+    final productsState = useState<ApiState<List<ProductDataModel>>>(
+      const ApiInitial(),
+    );
 
     // load both counts
     Future<void> loadAll() async {
-      usersState.value = const ApiLoading();
       productsState.value = const ApiLoading();
 
-      usersState.value = await repo.fetchUsers();
       productsState.value = await repo.fetchProducts();
     }
 
@@ -43,14 +41,16 @@ class Dashboard extends HookWidget {
       StreamSubscription<String>? tokenRefreshSub;
       StreamSubscription<RemoteMessage>? openedAppSub;
 
-      final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+      final FlutterLocalNotificationsPlugin localNotifications =
+          FlutterLocalNotificationsPlugin();
       // we will reuse the channel created in main.dart ("high_importance_channel")
-      const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
-        'high_importance_channel',
-        'High Importance Notifications',
-        description: 'This channel is used for important notifications.',
-        importance: Importance.max,
-      );
+      const AndroidNotificationChannel androidChannel =
+          AndroidNotificationChannel(
+            'high_importance_channel',
+            'High Importance Notifications',
+            description: 'This channel is used for important notifications.',
+            importance: Importance.max,
+          );
 
       // function to show local notification using local plugin instance
       Future<void> showLocalNotification(RemoteMessage message) async {
@@ -84,16 +84,23 @@ class Dashboard extends HookWidget {
           final storedUser = await LocalStorageService().getUser();
 
           // 2) initialize the local plugin (safe to call even if main already created channel)
-          const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+          const androidInit = AndroidInitializationSettings(
+            '@mipmap/ic_launcher',
+          );
           final initSettings = InitializationSettings(android: androidInit);
           await localNotifications.initialize(initSettings);
 
           // 3) Request permission for notifications (iOS/Android 13+)
           final messaging = FirebaseMessaging.instance;
           final settings = await messaging.requestPermission(
-            alert: true, badge: true, sound: true, provisional: false,
+            alert: true,
+            badge: true,
+            sound: true,
+            provisional: false,
           );
-          debugPrint('Dashboard FCM permission: ${settings.authorizationStatus}');
+          debugPrint(
+            'Dashboard FCM permission: ${settings.authorizationStatus}',
+          );
 
           // 4) Get the token (first time)
           final token = await messaging.getToken();
@@ -101,25 +108,33 @@ class Dashboard extends HookWidget {
 
           // --- SAFELY CALL registerToken and handle ApiState result ---
           if (storedUser == null) {
-            debugPrint('No stored user found - skipping token registration for now.');
+            debugPrint(
+              'No stored user found - skipping token registration for now.',
+            );
           } else if (token == null) {
             debugPrint('Device token is null - cannot register token.');
           } else {
             // call your registerToken which returns ApiState<UserDataModel>
-            final ApiState<UserDataModel> res =
-                await fcmService.registerToken(userId: storedUser.userId, token: token);
+            final ApiState<UserDataModel> res = await fcmService.registerToken(
+              userId: storedUser.userId,
+              token: token,
+            );
 
             if (res is ApiData<UserDataModel>) {
               // success - backend returned canonical user object in data
               final UserDataModel savedUser = res.data;
               await LocalStorageService().saveUser(savedUser);
-              debugPrint("FCM token saved successfully and stored user updated (id=${savedUser.userId})");
+              debugPrint(
+                "FCM token saved successfully and stored user updated (id=${savedUser.userId})",
+              );
             } else if (res is ApiError<UserDataModel>) {
               // server returned an error state
               debugPrint("FCM token registration failed: ${res.message}");
             } else {
               // defensive: unexpected state
-              debugPrint("FCM token registration returned unexpected state: $res");
+              debugPrint(
+                "FCM token registration returned unexpected state: $res",
+              );
             }
           }
 
@@ -130,24 +145,32 @@ class Dashboard extends HookWidget {
           });
 
           // 6) Token refresh: re-register token for stored user
-          tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+          tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
+            newToken,
+          ) async {
             debugPrint('Dashboard - token refreshed: $newToken');
 
             // handle nulls defensively
             final currentStored = await LocalStorageService().getUser();
             if (currentStored == null) {
-              debugPrint('No stored user when token refreshed - skipping registration.');
+              debugPrint(
+                'No stored user when token refreshed - skipping registration.',
+              );
               return;
             }
 
-            final ApiState<UserDataModel> refreshRes =
-            await fcmService.registerToken(userId: currentStored.userId, token: newToken);
+            final ApiState<UserDataModel> refreshRes = await fcmService
+                .registerToken(userId: currentStored.userId, token: newToken);
 
             if (refreshRes is ApiData<UserDataModel>) {
               await LocalStorageService().saveUser(refreshRes.data);
-              debugPrint('FCM Token Refreshed and saved successfully (id=${refreshRes.data.userId})');
+              debugPrint(
+                'FCM Token Refreshed and saved successfully (id=${refreshRes.data.userId})',
+              );
             } else if (refreshRes is ApiError<UserDataModel>) {
-              debugPrint('FCM refresh registration failed: ${refreshRes.message}');
+              debugPrint(
+                'FCM refresh registration failed: ${refreshRes.message}',
+              );
             } else {
               debugPrint('FCM refresh returned unexpected state: $refreshRes');
             }
@@ -161,13 +184,14 @@ class Dashboard extends HookWidget {
           // 8) If app was launched from terminated state by a notification
           final initialMessage = await messaging.getInitialMessage();
           if (initialMessage != null) {
-            debugPrint('Dashboard - initialMessage: ${initialMessage.messageId}');
+            debugPrint(
+              'Dashboard - initialMessage: ${initialMessage.messageId}',
+            );
           }
         } catch (e) {
           debugPrint('Dashboard FCM init error: $e');
         }
       }();
-
 
       // cleanup
       return () {
@@ -195,9 +219,10 @@ class Dashboard extends HookWidget {
               Text(
                 "Stats",
                 style: TextStyle(
-                    color: AppColors.headingTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
+                  color: AppColors.headingTextColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
 
               // Horizontal scroll stats cards
@@ -206,26 +231,29 @@ class Dashboard extends HookWidget {
                 child: Row(
                   children: [
                     StatsCard(
-                      title: "Orders",
+                      title: "Active Orders",
                       value: "--",
-                      icon: Icons.shopping_cart,
+                      icon: Icons.play_for_work,
                       color: Colors.green,
+                      width: 180,
                       onTap: () {},
                     ),
                     const SizedBox(width: 12),
                     StatsCard(
-                      title: "Users",
-                      value: _stateToString(usersState.value),
-                      icon: Icons.person,
+                      title: "In Production",
+                      value: "--",
+                      icon: Icons.factory,
                       color: Colors.blue,
+                      width: 180,
                       onTap: () {},
                     ),
                     const SizedBox(width: 12),
                     StatsCard(
-                      title: "Products",
-                      value: _stateToString(productsState.value),
-                      icon: Icons.inventory,
+                      title: "Dispatched",
+                      value: "--",
+                      icon: Icons.double_arrow,
                       color: Colors.purple,
+                      width: 180,
                       onTap: () {},
                     ),
                   ],
@@ -235,37 +263,43 @@ class Dashboard extends HookWidget {
               const SizedBox(height: 40),
 
               Text(
-                "Users",
+                "Recent Orders: ",
                 style: TextStyle(
-                    color: AppColors.headingTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
-              ),
-              UsersLottieCard(
-                lottiePath: "assets/animations/adduser.json",
-                icon: Icons.person_pin_outlined,
-                label: "Users",
-                onTap: () {
-                  context.push("/users");
-                },
+                  color: AppColors.headingTextColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: 150),
 
-              Text(
-                "Products",
-                style: TextStyle(
-                    color: AppColors.headingTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
-              ),
-              ProductsLottieCard(
-                lottiePath: "assets/animations/addproduct.json",
-                icon: Icons.file_copy_outlined,
-                label: "Products",
-                onTap: () {
-                  context.push("/products");
-                },
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Material(
+                      // provides ink surface for ripple
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(40),
+                        // optional ripple shape
+                        onTap: () => context.push("/add-orders"),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Icon(
+                            Icons.add,
+                            size: 48, // make it larger if you want
+                            color: Colors.blue, // optional color
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    "Please Add Orders",
+                    style: TextStyle(color: Colors.blue, fontSize: 20),
+                  ),
+                ],
               ),
             ],
           ),
@@ -278,24 +312,28 @@ class Dashboard extends HookWidget {
         overlayOpacity: 0,
         spacing: 10,
         children: [
+          // SpeedDialChild(
+          //   child: Icon(Icons.person_add,
+          //       size: 28, color: AppColors.fab_foreground_icon_color),
+          //   label: "Add User",
+          //   labelStyle: TextStyle(color: AppColors.heading_text_color),
+          //   backgroundColor: Colors.blue,
+          //   onTap: () {
+          //     print("Add User Clicked");
+          //     context.push("/add-user");
+          //   },
+          // ),
           SpeedDialChild(
-            child: Icon(Icons.person_add,
-                size: 28, color: AppColors.fabForegroundIconColor),
-            label: "Add User",
-            labelStyle: TextStyle(color: AppColors.headingTextColor),
-            backgroundColor: Colors.blue,
-            onTap: () {
-              context.push("/add-user");
-            },
-          ),
-          SpeedDialChild(
-            child: Icon(Icons.add_box,
-                size: 28, color: AppColors.fabForegroundIconColor),
-            label: "Add Product",
+            child: Icon(
+              Icons.add_box,
+              size: 28,
+              color: AppColors.fabForegroundIconColor,
+            ),
+            label: "Create Order",
             labelStyle: TextStyle(color: AppColors.headingTextColor),
             backgroundColor: Colors.green,
             onTap: () {
-              context.push("/add-product");
+              context.push("/add-orders");
             },
           ),
         ],
@@ -303,11 +341,11 @@ class Dashboard extends HookWidget {
     );
   }
 
-  String _stateToString(ApiState<List<dynamic>> state) {
-    if (state is ApiInitial) return "-";
-    if (state is ApiLoading) return "...";
-    if (state is ApiError) return "!";
-    if (state is ApiData<List<dynamic>>) return state.data.length.toString();
-    return "-";
-  }
+  // String _stateToString(ApiState<List<dynamic>> state) {
+  //   if (state is ApiInitial) return "-";
+  //   if (state is ApiLoading) return "...";
+  //   if (state is ApiError) return "!";
+  //   if (state is ApiData<List<dynamic>>) return state.data.length.toString();
+  //   return "-";
+  // }
 }

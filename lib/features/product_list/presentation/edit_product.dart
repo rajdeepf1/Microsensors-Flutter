@@ -91,6 +91,7 @@ class EditProduct extends HookWidget {
         isSaveButtonDisable.value = true;
         isEditing.value = false;
       }
+      return null;
     }, [enableSaveNotifier]);
 
     Future<void> onAddProduct() async {
@@ -142,7 +143,7 @@ class EditProduct extends HookWidget {
                 );
               } else if (upload is ApiError<ProductResponse>) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(upload.message ?? 'Image upload failed')),
+                  SnackBar(content: Text(upload.message)),
                 );
               }
             } else {
@@ -153,7 +154,7 @@ class EditProduct extends HookWidget {
           }
           Navigator.of(context).pop(true);
         } else if (createRes is ApiError<ProductResponse>) {
-          final msg = createRes.message ?? createRes.error?.toString() ?? 'Failed to update product';
+          final msg = createRes.message;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         }
       } finally {
@@ -204,7 +205,7 @@ class EditProduct extends HookWidget {
             );
           }
         } else if (res is ApiError<ProductDeleteResponse>) {
-          final msg = res.message ?? 'Failed to delete product';
+          final msg = res.message;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -218,7 +219,7 @@ class EditProduct extends HookWidget {
       }
     }
 
-    String _sanitizeNameForSku(String name) {
+    String sanitizeNameForSku(String name) {
       final sanitized = name
           .trim()
           .toUpperCase()
@@ -228,7 +229,7 @@ class EditProduct extends HookWidget {
       return sanitized.length > 40 ? sanitized.substring(0, 40) : sanitized;
     }
 
-    String _createTimestampSuffix() {
+    String createTimestampSuffix() {
       final now = DateTime.now();
       final ts =
           '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
@@ -244,9 +245,9 @@ class EditProduct extends HookWidget {
           skuCtrl.text = '';
           return;
         }
-        skuTimestamp.value ??= _createTimestampSuffix();
-        final sanitized = _sanitizeNameForSku(name);
-        skuCtrl.text = sanitized.isEmpty ? skuTimestamp.value! : '${sanitized}-${skuTimestamp.value}';
+        skuTimestamp.value ??= createTimestampSuffix();
+        final sanitized = sanitizeNameForSku(name);
+        skuCtrl.text = sanitized.isEmpty ? skuTimestamp.value! : '$sanitized-${skuTimestamp.value}';
       }
 
       nameCtrl.addListener(listener);
@@ -290,10 +291,10 @@ class EditProduct extends HookWidget {
                     controller: nameCtrl,
                     focusNode: productNameFocusNode,
                     enabled: isEditing.value, // editable only when editing
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
                         borderSide: BorderSide.none,
@@ -307,13 +308,13 @@ class EditProduct extends HookWidget {
                   child: TextFormField(
                     controller: descCtrl,
                     enabled: isEditing.value,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     keyboardType: TextInputType.multiline,
                     maxLines: 5,
                     minLines: 3,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       alignLabelWithHint: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                       border: const OutlineInputBorder(
@@ -328,10 +329,10 @@ class EditProduct extends HookWidget {
                   child: TextFormField(
                     controller: skuCtrl,
                     enabled: false, // SKU remains read-only
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
                         borderSide: BorderSide.none,
@@ -343,15 +344,15 @@ class EditProduct extends HookWidget {
                 ProductEditField(
                   text: "Status",
                   child: DropdownButtonFormField<String>(
-                    value: status.value,
+                    initialValue: status.value,
                     items: dropDownStatus,
                     icon: const Icon(Icons.expand_more),
                     onChanged: isEditing.value ? (value) => status.value = value! : null,
-                    style: TextStyle(color: AppColors.sub_heading_text_color, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.subHeadingTextColor, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       hintText: 'Status',
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
                         borderSide: BorderSide.none,
@@ -393,7 +394,7 @@ class EditProduct extends HookWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.delete_button_color,
+                backgroundColor: AppColors.deleteButtonColor,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 48),
                 shape: const StadiumBorder(),

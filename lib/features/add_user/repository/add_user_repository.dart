@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
 import '../../../models/user_model/user_model.dart';
-import '../../../models/user_model/user_request_model.dart';
 
 class AddUserRepository {
   final ApiClient _client;
@@ -16,7 +15,7 @@ class AddUserRepository {
     required String mobileNumber,
     required String password,
     required int roleId,
-    required bool is_active,
+    required bool isActive,
   }) async {
     try {
       final response = await _client.post(
@@ -27,7 +26,7 @@ class AddUserRepository {
           "mobileNumber": mobileNumber,
           "password": password,
           "roleId": roleId,
-          "isActive": is_active,
+          "isActive": isActive,
         },
         options: Options(headers: {'Content-Type': 'application/json'}),
       );

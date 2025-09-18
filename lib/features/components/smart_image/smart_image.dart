@@ -77,7 +77,7 @@ class SmartImage extends StatelessWidget {
       height: size,
       width: size,
       decoration: BoxDecoration(
-        color: AppColors.app_blue_color,
+        color: AppColors.appBlueColor,
         borderRadius: BorderRadius.circular(
           shape == ImageShape.circle ? size / 2 : borderRadius,
         ),

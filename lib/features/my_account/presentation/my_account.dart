@@ -4,7 +4,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 
@@ -76,7 +75,7 @@ class MyAccount extends HookWidget {
             AppState.instance.updateUser(updatedUser);
           }
         } else if (apiRes is ApiError<UserResponseModel>) {
-          message.value = apiRes.message ?? apiRes.error?.toString() ?? 'Upload failed';
+          message.value = apiRes.message;
         } else {
           message.value = 'Unexpected response';
         }
@@ -154,7 +153,7 @@ class MyAccount extends HookWidget {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Updated successfully (no user returned)')));
           }
         } else if (res is ApiError<UserResponseModel>) {
-          final msg = res.message ?? res.error?.toString() ?? 'Update failed';
+          final msg = res.message;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unexpected server response')));
@@ -183,10 +182,10 @@ class MyAccount extends HookWidget {
                   text: "Name",
                   child: TextFormField(
                     controller: nameCtrl,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
@@ -200,10 +199,10 @@ class MyAccount extends HookWidget {
                   text: "Email",
                   child: TextFormField(
                     controller: emailCtrl,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
@@ -217,10 +216,10 @@ class MyAccount extends HookWidget {
                   text: "Phone",
                   child: TextFormField(
                     controller: phoneCtrl,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor:  AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor:  AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
@@ -235,10 +234,10 @@ class MyAccount extends HookWidget {
                   child: TextFormField(
                     initialValue: userrole,
                     enabled: false,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5, vertical: 16.0),
                       border: const OutlineInputBorder(
@@ -253,7 +252,7 @@ class MyAccount extends HookWidget {
                   child: TextFormField(
                     controller: oldPassCtrl,
                     obscureText: !showOldPassword.value, // toggle visibility
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -265,7 +264,7 @@ class MyAccount extends HookWidget {
                         },
                       ),
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0 * 1.5, vertical: 16.0,
                       ),
@@ -281,7 +280,7 @@ class MyAccount extends HookWidget {
                   child: TextFormField(
                     controller: newPassCtrl,
                     obscureText: !showNewPassword.value,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       hintText: "New Password",
                       suffixIcon: IconButton(
@@ -294,7 +293,7 @@ class MyAccount extends HookWidget {
                         },
                       ),
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0 * 1.5, vertical: 16.0,
                       ),

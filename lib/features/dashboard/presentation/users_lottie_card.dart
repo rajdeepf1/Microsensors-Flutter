@@ -23,7 +23,7 @@ class UsersLottieCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Card(
-        color: AppColors.card_color,
+        color: AppColors.cardColor,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -46,7 +46,7 @@ class UsersLottieCard extends StatelessWidget {
             Container(
               height: 150,
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.4),
+                color: Colors.blueAccent.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),

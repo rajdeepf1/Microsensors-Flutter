@@ -1,18 +1,35 @@
 // lib/main.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:microsensors/services/socket_service.dart';
-import 'services/fcm_service.dart'; // optional, still available
+// optional, still available
 import 'package:microsensors/utils/colors.dart';
 import 'core/router_provider.dart';
-
+//import 'package:microsensors/services/socket_service.dart';
 //
 // ---------------------- TOP-LEVEL BACKGROUND HANDLERS (must be top-level) ----------------------
 //
+
+// For web
+const firebaseWebOptions = FirebaseOptions(
+
+    apiKey: "AIzaSyCqDvbxxD1TkrVheYmZUERRzi_wX7B4atA",
+
+    authDomain: "microsensors-a8c89.firebaseapp.com",
+
+    projectId: "microsensors-a8c89",
+
+    storageBucket: "microsensors-a8c89.firebasestorage.app",
+
+    messagingSenderId: "559971445474",
+
+    appId: "1:559971445474:web:d90e9b5b7e8206299b4cbb",
+
+    measurementId: "G-76V23TRR12"
+
+);
 
 // Called when a Firebase message is received in background/terminated state.
 // Must be a top-level or static function and is an entrypoint for the background isolate.
@@ -20,6 +37,7 @@ import 'core/router_provider.dart';
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  //await Firebase.initializeApp(options: firebaseWebOptions);
   debugPrint('FCM BG message received: ${message.messageId}');
   // TODO: lightweight processing (store payload, analytics, etc.)
 }
@@ -99,13 +117,15 @@ Future<void> showLocalNotificationFromMessage(RemoteMessage message) async {
 // ---------------------- MAIN (keep initialization + background handlers) ----------------------
 //
 
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
   await Firebase.initializeApp(
     // If you used FlutterFire CLI, pass options here:
-    // options: DefaultFirebaseOptions.currentPlatform,
+     //options: firebaseWebOptions,
   );
 
   // Initialize local notifications (channels, handlers)
@@ -158,7 +178,7 @@ class MyApp extends HookConsumerWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.app_blue_color,
+          backgroundColor: AppColors.appBlueColor,
           foregroundColor: Colors.white,
           elevation: 4,
         ),

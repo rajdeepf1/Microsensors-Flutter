@@ -4,7 +4,6 @@ import 'package:microsensors/core/api_client.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/utils/constants.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class FcmService {
   final ApiClient apiClient;

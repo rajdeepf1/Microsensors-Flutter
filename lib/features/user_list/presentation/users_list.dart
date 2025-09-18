@@ -19,10 +19,10 @@ class UsersList extends StatelessWidget {
             Tab(text: "Sales Persons",),
             Tab(text: "Production Managers"),
           ],
-          labelColor: AppColors.tab_text_color,
+          labelColor: AppColors.tabTextColor,
           automaticIndicatorColorAdjustment: true,
-          unselectedLabelColor: AppColors.tab_text_color,
-          indicatorColor: AppColors.tab_indicator_color,
+          unselectedLabelColor: AppColors.tabTextColor,
+          indicatorColor: AppColors.tabIndicatorColor,
         ),
         child: TabBarView(
           children: [

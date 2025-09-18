@@ -5,7 +5,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/user_model/user_model.dart';
-import '../../auth/providers/auth_providers.dart';
 
 class SplashScreen extends HookConsumerWidget {
 

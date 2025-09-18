@@ -28,10 +28,10 @@ class ProductRepository {
       } else {
         return ApiError('Server error: ${response.statusCode}');
       }
-    } on DioError catch (dioErr, st) {
+    } on DioException catch (dioErr, st) {
       // (same error handling pattern as your other repos)
-      if (dioErr.type == DioErrorType.connectionTimeout ||
-          dioErr.type == DioErrorType.receiveTimeout) {
+      if (dioErr.type == DioExceptionType.connectionTimeout ||
+          dioErr.type == DioExceptionType.receiveTimeout) {
         return ApiError('Connection timed out', error: dioErr, stackTrace: st);
       } else if (dioErr.response != null) {
         final body = dioErr.response?.data;
@@ -87,7 +87,7 @@ class ProductRepository {
   Future<ApiState<ProductResponse>> updateProduct(ProductRequest req, int productId) async {
     try {
       final response = await _client.put(
-        'products/${productId}',
+        'products/$productId',
         data: req.toJson(),
         options: Options(headers: {'Content-Type': 'application/json'}),
       );

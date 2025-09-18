@@ -22,7 +22,7 @@ class ProductListResponse {
     );
   }
 
-  /// Helper to convert data into List<ProductDataModel>
+  /// Helper to convert data into List <ProductDataModel>
   List<ProductDataModel> toProductList() {
     final list = data ?? <dynamic>[];
     return list

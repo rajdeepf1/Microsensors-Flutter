@@ -23,23 +23,23 @@ class StatusPill extends StatelessWidget {
     switch (normalized) {
       case 'active':
         label = 'Active';
-        bg = AppColors.pill_active_bg_color;
-        textColor = AppColors.pill_active_text_color;
+        bg = AppColors.pillActiveBgColor;
+        textColor = AppColors.pillActiveTextColor;
         borderColor = const Color(0xFFB7E5C9);
         break;
 
       case 'discontinued':
         label = 'Discontinued';
-        bg = AppColors.pill_discontinued_bg_color;
-        textColor = AppColors.pill_discontinued_text_color;
+        bg = AppColors.pillDiscontinuedBgColor;
+        textColor = AppColors.pillDiscontinuedTextColor;
         borderColor = Colors.black54;
         break;
 
       case 'inactive':
       default:
         label = 'Inactive';
-        bg = AppColors.pill_in_active_bg_color;
-        textColor = AppColors.pill_in_active_text_color;
+        bg = AppColors.pillInActiveBgColor;
+        textColor = AppColors.pillInActiveTextColor;
         borderColor = const Color(0xFFF5C6C6);
         break;
     }

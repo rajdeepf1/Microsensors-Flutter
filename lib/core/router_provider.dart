@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:microsensors/features/add_orders/presentation/add_orders.dart';
 import 'package:microsensors/features/add_product/presentation/add_product.dart';
 import 'package:microsensors/features/add_user/presentation/add_user.dart';
 import 'package:microsensors/features/auth/presentation/email_password_login_screen.dart';
@@ -9,7 +10,6 @@ import 'package:microsensors/features/product_list/presentation/product_list.dar
 import 'package:microsensors/features/user_list/presentation/users_list.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
-import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 
@@ -65,6 +65,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/add-product',
         builder: (context, state) => const AddProduct(),
+      ),
+      GoRoute(
+        path: '/add-orders',
+        builder: (context, state) => const AddOrders(),
       ),
     ],
   );

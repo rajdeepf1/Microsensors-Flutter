@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:microsensors/utils/colors.dart';
 
 class ProductsLottieCard extends StatelessWidget {
   final String lottiePath; // asset path of Lottie animation
@@ -45,7 +44,7 @@ class ProductsLottieCard extends StatelessWidget {
             Container(
               height: 150,
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.4),
+                color: Colors.blueAccent.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),

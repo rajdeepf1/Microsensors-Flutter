@@ -195,7 +195,7 @@ class EditUser extends HookWidget {
         } else if (updateRes is ApiError<UserResponseModel>) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(updateRes.message ?? "Failed to update user"),
+              content: Text(updateRes.message),
             ),
           );
         }
@@ -233,7 +233,7 @@ class EditUser extends HookWidget {
 
       deleteLoading.value = true;
 
-      debugPrint("Checking----${userId}----deletedBy->${deletedBy}");
+      debugPrint("Checking----$userId----deletedBy->$deletedBy");
 
       final res = await repo.deleteUser(userId, deletedBy!);
 
@@ -244,7 +244,7 @@ class EditUser extends HookWidget {
         Navigator.of(context).pop(true); // ✅ refresh user list
       } else if (res is ApiError<String>) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'Failed to delete user')),
+          SnackBar(content: Text(res.message)),
         );
       }
       deleteLoading.value = false;
@@ -288,10 +288,10 @@ class EditUser extends HookWidget {
                     controller: nameCtrl,
                     focusNode: nameFocusNode,
                     enabled: isEditing.value,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0 * 1.5,
                         vertical: 16.0,
@@ -308,10 +308,10 @@ class EditUser extends HookWidget {
                   child: TextFormField(
                     controller: emailCtrl,
                     enabled: isEditing.value,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0 * 1.5,
                         vertical: 16.0,
@@ -328,10 +328,10 @@ class EditUser extends HookWidget {
                   child: TextFormField(
                     controller: phoneCtrl,
                     enabled: isEditing.value,
-                    style: TextStyle(color: AppColors.sub_heading_text_color),
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0 * 1.5,
                         vertical: 16.0,
@@ -348,20 +348,20 @@ class EditUser extends HookWidget {
                   child: AbsorbPointer(
                     absorbing: !isEditing.value,
                     child: DropdownButtonFormField<int>(
-                      value: roleId.value,
+                      initialValue: roleId.value,
                       items: roles,
                       icon: const Icon(Icons.expand_more),
                       onChanged: (value) {
                         if (isEditing.value) roleId.value = value;
                       },
                       style: TextStyle(
-                        color: AppColors.sub_heading_text_color,
+                        color: AppColors.subHeadingTextColor,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Roles',
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -381,10 +381,10 @@ class EditUser extends HookWidget {
                     onChanged: isEditing.value ? (val) => isSwitched.value = val : null,
                     activeThumbColor: Colors.green,
                     activeTrackColor: Colors.greenAccent,
-                    inactiveThumbColor: AppColors.app_blue_color,
-                    inactiveTrackColor: AppColors.app_blue_color.withOpacity(0.05),
-                    trackOutlineColor: MaterialStateProperty.all(
-                      AppColors.app_blue_color.withOpacity(0.05),
+                    inactiveThumbColor: AppColors.appBlueColor,
+                    inactiveTrackColor: AppColors.appBlueColor.withValues(alpha: 0.05),
+                    trackOutlineColor: WidgetStateProperty.all(
+                      AppColors.appBlueColor.withValues(alpha: 0.05),
                     ),
                   ),
                 ),
@@ -421,7 +421,7 @@ class EditUser extends HookWidget {
                   "OR",
                   style: TextStyle(
                     fontSize: 16,
-                    color: AppColors.text_color,
+                    color: AppColors.textColor,
                   ),
                 ),
               ),
@@ -438,7 +438,7 @@ class EditUser extends HookWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.delete_button_color,
+                backgroundColor: AppColors.deleteButtonColor,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 48),
                 shape: const StadiumBorder(),

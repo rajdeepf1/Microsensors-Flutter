@@ -50,7 +50,7 @@ class ProductionManagerUserList extends HookWidget {
         body = ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: data.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final user = data[index];
             final avatarUrl = user.userImage;
@@ -216,7 +216,7 @@ class UserCardListWidget extends StatelessWidget {
       },
       child: Card(
         elevation: 4,
-        color: AppColors.card_color,
+        color: AppColors.cardColor,
         margin: const EdgeInsets.all(0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

@@ -15,7 +15,6 @@ import '../../../utils/constants.dart';
 import '../../components/app_version/app_version.dart';
 import '../../components/smart_image/smart_image.dart';
 import '../repository/user_repository.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 
 class ProfileScreen extends StatelessWidget {
@@ -74,7 +73,7 @@ class ProfileScreen extends StatelessWidget {
 
 
 class ProfilePic extends HookWidget {
-  const ProfilePic({Key? key}) : super(key: key);
+  const ProfilePic({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +112,7 @@ class ProfilePic extends HookWidget {
             AppState.instance.updateUser(updatedUser);
           }
         } else if (apiRes is ApiError<UserResponseModel>) {
-          message.value = apiRes.message ?? apiRes.error?.toString() ?? 'Upload failed';
+          message.value = apiRes.message;
         } else {
           message.value = 'Unexpected response';
         }
@@ -131,7 +130,7 @@ class ProfilePic extends HookWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.08),
+          color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.08),
           width: 2,
         ),
       ),
@@ -185,11 +184,11 @@ class ProfilePic extends HookWidget {
 
 class ProfileMenu extends StatelessWidget {
   const ProfileMenu({
-    Key? key,
+    super.key,
     required this.text,
     required this.icon,
     this.press,
-  }) : super(key: key);
+  });
 
   final String text;
   final IconData icon;
@@ -202,7 +201,7 @@ class ProfileMenu extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextButton(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.app_blue_color,
+          foregroundColor: AppColors.appBlueColor,
           padding: const EdgeInsets.all(20),
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),

@@ -3,7 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/sizes.dart';
 import '../../../core/app_state.dart';
-import '../../../core/local_storage_service.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/constants.dart';
@@ -43,7 +42,7 @@ class MainLayout extends HookWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(
-                AppSizes.userImage_radius,
+                AppSizes.userImageRadius,
               ),
               child:
 
@@ -63,17 +62,17 @@ class MainLayout extends HookWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Hello, ${username}!",
+                  "Hello, $username!",
                   style: TextStyle(
                     fontSize: 18,
-                    color: AppColors.white_text_color,
+                    color: AppColors.whiteTextColor,
                   ),
                 ),
                 Text(
-                  "${role}",
+                  role,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.white_text_color,
+                    color: AppColors.whiteTextColor,
                   ),
                 ),
               ],
@@ -86,7 +85,6 @@ class MainLayout extends HookWidget {
               ),
               onPressed: () {
                 // Your action here
-                print("Notification icons clicked");
                 context.push("/notification");
               },
             ),
@@ -97,7 +95,7 @@ class MainLayout extends HookWidget {
           : AppBar(
         title: Text(
           title,
-          style: TextStyle(color: AppColors.white_text_color),
+          style: TextStyle(color: AppColors.whiteTextColor),
         ),
         elevation: 5,
         bottom: tabBar,

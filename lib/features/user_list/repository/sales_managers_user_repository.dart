@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
 import '../../../models/user_model/user_model.dart';
-import '../../../models/user_model/user_request_model.dart';
 import '../../../models/user_model/user_update_request.dart';
 
 
@@ -36,10 +35,10 @@ class SalesManagersUserRepository {
       } else {
         return ApiError('Server error: ${response.statusCode}');
       }
-    } on DioError catch (dioErr, st) {
+    } on DioException catch (dioErr, st) {
       // Detailed Dio error handling for better messages
-      if (dioErr.type == DioErrorType.connectionTimeout ||
-          dioErr.type == DioErrorType.receiveTimeout) {
+      if (dioErr.type == DioExceptionType.connectionTimeout ||
+          dioErr.type == DioExceptionType.receiveTimeout) {
         return ApiError('Connection timed out', error: dioErr, stackTrace: st);
       } else if (dioErr.response != null) {
         final status = dioErr.response?.statusCode;

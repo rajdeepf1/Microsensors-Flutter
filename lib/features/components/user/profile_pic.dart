@@ -34,7 +34,7 @@ class ProfilePic extends StatelessWidget {
           width: 120,
           height: 120,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => CircleAvatar(
+          errorBuilder: (context, error, stackTrace) => CircleAvatar(
             radius: 60,
             child: Text(
               userName.isNotEmpty ? userName[0].toUpperCase() : '?',
@@ -63,7 +63,7 @@ class ProfilePic extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(
           color:
-          Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.08),
+          Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.08),
         ),
       ),
       child: Stack(

@@ -46,7 +46,7 @@ class ProductList extends HookWidget {
         body = ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: products.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final p = products[index];
             final avatarUrl = p.productImage;
@@ -80,7 +80,7 @@ class _RetryView extends StatelessWidget {
   final String message;
   final Future<void> Function() onRetry;
 
-  const _RetryView({required this.message, required this.onRetry, super.key});
+  const _RetryView({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +208,7 @@ class ProductCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = AppColors.card_color;
+    final cardBg = AppColors.cardColor;
     final accent = const Color(0xFF7B8CFF);
     final titleColor = const Color(0xFF1B1140);
     final subtitleColor = Colors.black54;
@@ -313,7 +313,7 @@ class ProductCardWidget extends StatelessWidget {
               child: Container(
                 width: 120,
                 height: 120,
-                color: accent.withOpacity(0.12),
+                color: accent.withValues(alpha: 0.12),
                 child: SmartImage(
                   imageUrl: avatarUrl,
                   baseUrl: Constants.apiBaseUrl,

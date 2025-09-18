@@ -50,7 +50,7 @@ class SalesUserListScreen extends HookWidget {
         body = ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: data.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final user = data[index];
             final avatarUrl = user.userImage;
@@ -133,7 +133,7 @@ class UserCardListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    void _openDetailsSheet(BuildContext context) async {
+    void openDetailsSheet(BuildContext context) async {
       final FocusNode nameFocusNode = FocusNode();
       final enableSaveNotifier = ValueNotifier<bool>(false);
 
@@ -214,11 +214,11 @@ class UserCardListWidget extends StatelessWidget {
         //  your navigation or action
         debugPrint("Card tapped: $name");
         // Example: Navigator.push(...);
-        _openDetailsSheet(context);
+        openDetailsSheet(context);
       },
       child: Card(
         elevation: 4,
-        color: AppColors.card_color,
+        color: AppColors.cardColor,
         margin: const EdgeInsets.all(0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

@@ -6,14 +6,11 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/utils/colors.dart';
-import 'package:microsensors/utils/constants.dart';
-import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 
 import '../../../core/api_state.dart';
 import '../../../models/product/product_request.dart';
 import '../../../models/product/product_response.dart';
-import '../../components/quantity_edit_text/QuantityField.dart';
 import '../repository/product_repository.dart';
 
 class AddProduct extends HookWidget {
@@ -24,27 +21,27 @@ class AddProduct extends HookWidget {
     // controllers
     final nameCtrl = useTextEditingController();
     final descCtrl = useTextEditingController();
-    final priceCtrl = useTextEditingController();
+    //final priceCtrl = useTextEditingController();
     final skuCtrl = useTextEditingController();
     final skuTimestamp = useState<String?>(null);
 
-    final qty = useState<int>(0);
+    //final qty = useState<int>(0);
     final status = useState<bool>(true); // true -> ACTIVE
     final pickedImage = useState<File?>(null);
     final loading = useState<bool>(false);
     final repo = useMemoized(() => ProductRepository());
     final isSwitched = useState(true);
 
-    Future<void> browseImage() async {
-      final res = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-      if (res == null || res.files.isEmpty) return;
-      final path = res.files.first.path;
-      if (path == null) return;
-      pickedImage.value = File(path);
-    }
+    // Future<void> browseImage() async {
+    //   final res = await FilePicker.platform.pickFiles(
+    //     type: FileType.image,
+    //     allowMultiple: false,
+    //   );
+    //   if (res == null || res.files.isEmpty) return;
+    //   final path = res.files.first.path;
+    //   if (path == null) return;
+    //   pickedImage.value = File(path);
+    // }
 
     Future<void> onAddProduct() async {
       final name = nameCtrl.text.trim();
@@ -104,7 +101,7 @@ class AddProduct extends HookWidget {
                 // show server-provided message
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(upload.message ?? 'Image upload failed'),
+                    content: Text(upload.message),
                   ),
                 );
               }
@@ -118,9 +115,7 @@ class AddProduct extends HookWidget {
         } else if (createRes is ApiError<ProductResponse>) {
           // backend error message (e.g. SKU exists)
           final msg =
-              createRes.message ??
-              createRes.error?.toString() ??
-              'Failed to create product';
+              createRes.message;
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(msg)));
@@ -130,7 +125,7 @@ class AddProduct extends HookWidget {
       }
     }
 
-    String _sanitizeNameForSku(String name) {
+    String sanitizeNameForSku(String name) {
       final sanitized = name
           .trim()
           .toUpperCase()
@@ -142,7 +137,7 @@ class AddProduct extends HookWidget {
     }
 
 // helper to create timestamp suffix (human readable)
-    String _createTimestampSuffix() {
+    String createTimestampSuffix() {
       final now = DateTime.now();
       final ts = '${now.year.toString().padLeft(4, '0')}' // YYYY
           '${now.month.toString().padLeft(2, '0')}'        // MM
@@ -165,13 +160,13 @@ class AddProduct extends HookWidget {
         }
 
         // generate timestamp suffix ONCE when the user *starts* typing
-        skuTimestamp.value ??= _createTimestampSuffix();
+        skuTimestamp.value ??= createTimestampSuffix();
 
         // build sku as SANITIZED_NAME - TIMESTAMP
-        final sanitized = _sanitizeNameForSku(name);
+        final sanitized = sanitizeNameForSku(name);
         skuCtrl.text = sanitized.isEmpty
             ? skuTimestamp.value!
-            : '${sanitized}-${skuTimestamp.value}';
+            : '$sanitized-${skuTimestamp.value}';
       }
 
       nameCtrl.addListener(listener);
@@ -206,10 +201,10 @@ class AddProduct extends HookWidget {
                     text: "Product Name",
                     child: TextFormField(
                       controller: nameCtrl,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -225,7 +220,7 @@ class AddProduct extends HookWidget {
                     text: "Product Description",
                     child: TextFormField(
                       controller: descCtrl,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       keyboardType: TextInputType.multiline,
                       // tells keyboard it's multiline
                       maxLines: 5,
@@ -234,7 +229,7 @@ class AddProduct extends HookWidget {
                       // ensures box has some height
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         alignLabelWithHint: true,
                         // better alignment for multiline
                         contentPadding: const EdgeInsets.symmetric(
@@ -304,10 +299,10 @@ class AddProduct extends HookWidget {
                     child: TextFormField(
                       controller: skuCtrl,
                       enabled: false,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -336,13 +331,13 @@ class AddProduct extends HookWidget {
                           activeThumbColor: Colors.green,
                           activeTrackColor: Colors.greenAccent,
                           // track color when ON
-                          inactiveThumbColor: AppColors.app_blue_color,
+                          inactiveThumbColor: AppColors.appBlueColor,
                           // thumb color when OFF
-                          inactiveTrackColor: AppColors.app_blue_color
-                              .withOpacity(0.05),
+                          inactiveTrackColor: AppColors.appBlueColor
+                              .withValues(alpha: 0.05),
                           // track color when OFF
-                          trackOutlineColor: MaterialStateProperty.all(
-                            AppColors.app_blue_color.withOpacity(0.05),
+                          trackOutlineColor: WidgetStateProperty.all(
+                            AppColors.appBlueColor.withValues(alpha: 0.05),
                           ),
                         ),
                       ],

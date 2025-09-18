@@ -58,12 +58,12 @@ class SignUpScreen extends HookConsumerWidget {
                     const SizedBox(height: 200),
                     TextField(
                       keyboardType: TextInputType.name,
-                      style: TextStyle(color: AppColors.text_color),
+                      style: TextStyle(color: AppColors.textColor),
                       decoration: InputDecoration(
                         labelText: "Enter Full Name",
-                        labelStyle: TextStyle(color: AppColors.text_color),
+                        labelStyle: TextStyle(color: AppColors.textColor),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.textField_radius),
+                          borderRadius: BorderRadius.circular(AppSizes.textFieldRadius),
                         ),
                         prefixIcon: const Icon(Icons.person_2_outlined),
                       ),
@@ -71,12 +71,12 @@ class SignUpScreen extends HookConsumerWidget {
                     const SizedBox(height: 20),
                     TextField(
                       keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(color: AppColors.text_color),
+                      style: TextStyle(color: AppColors.textColor),
                       decoration: InputDecoration(
                         labelText: "Enter Email",
-                        labelStyle: TextStyle(color: AppColors.text_color),
+                        labelStyle: TextStyle(color: AppColors.textColor),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.textField_radius),
+                          borderRadius: BorderRadius.circular(AppSizes.textFieldRadius),
                         ),
                         prefixIcon: const Icon(Icons.email_outlined),
                       ),
@@ -84,12 +84,12 @@ class SignUpScreen extends HookConsumerWidget {
                     const SizedBox(height: 20),
                     TextField(
                       keyboardType: TextInputType.visiblePassword,
-                      style: TextStyle(color: AppColors.text_color),
+                      style: TextStyle(color: AppColors.textColor),
                       decoration: InputDecoration(
                         labelText: "Enter Password",
-                        labelStyle: TextStyle(color: AppColors.text_color),
+                        labelStyle: TextStyle(color: AppColors.textColor),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.textField_radius),
+                          borderRadius: BorderRadius.circular(AppSizes.textFieldRadius),
                         ),
                         prefixIcon: const Icon(Icons.password_outlined),
                       ),
@@ -97,12 +97,12 @@ class SignUpScreen extends HookConsumerWidget {
                     const SizedBox(height: 20),
                     TextField(
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: AppColors.text_color),
+                      style: TextStyle(color: AppColors.textColor),
                       decoration: InputDecoration(
                         labelText: "Enter Number",
-                        labelStyle: TextStyle(color: AppColors.text_color),
+                        labelStyle: TextStyle(color: AppColors.textColor),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.textField_radius),
+                          borderRadius: BorderRadius.circular(AppSizes.textFieldRadius),
                         ),
                         prefixIcon: const Icon(Icons.phone_android_outlined),
                       ),
@@ -112,13 +112,13 @@ class SignUpScreen extends HookConsumerWidget {
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.large_button_horizontal_padding,
+                          horizontal: AppSizes.largeButtonHorizontalPadding,
                         ),
-                        backgroundColor: AppColors.button_color,
+                        backgroundColor: AppColors.buttonColor,
                       ),
                       child: Text(
                         "Signup",
-                        style: TextStyle(color: AppColors.button_text_color),
+                        style: TextStyle(color: AppColors.buttonTextColor),
                       ),
                     ),
                   ],

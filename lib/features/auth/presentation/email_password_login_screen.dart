@@ -1,19 +1,15 @@
 // lib/features/auth/ui/login_screen.dart
-import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:microsensors/models/otp/OTPResponse.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/sizes.dart';
 import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/core/api_state.dart';
 
-import '../../add_product/presentation/add_product.dart';
 import '../../components/edit_text_field/EditTextField.dart';
 import '../data/auth_repository.dart';
 
@@ -73,7 +69,7 @@ class EmailPasswordLoginScreen extends HookWidget {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
           }
         } else if (res is ApiError<UserResponseModel>) {
-          final msg = res.message ?? res.error?.toString() ?? 'Login failed';
+          final msg = res.message;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         }
       } finally {
@@ -131,14 +127,14 @@ class EmailPasswordLoginScreen extends HookWidget {
                       style: TextStyle(
                         fontSize: 38,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.heading_text_color,
+                        color: AppColors.headingTextColor,
                       ),
                     ),
                     Text(
                       "Login to continue",
                       style: TextStyle(
                         fontSize: 16,
-                        color: AppColors.text_color,
+                        color: AppColors.textColor,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -146,12 +142,12 @@ class EmailPasswordLoginScreen extends HookWidget {
                       child: TextFormField(
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(color: AppColors.sub_heading_text_color),
+                        style: TextStyle(color: AppColors.subHeadingTextColor),
                         decoration: InputDecoration(
                           filled: true,
                           hint: Text("Enter an email"),
                           prefixIcon: const Icon(Icons.email_outlined),
-                          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16.0 * 1.5, vertical: 16.0),
                           border: const OutlineInputBorder(
@@ -167,12 +163,12 @@ class EmailPasswordLoginScreen extends HookWidget {
                         controller: passwordController,
                         obscureText: !showPassword.value,
                         keyboardType: TextInputType.visiblePassword,
-                        style: TextStyle(color: AppColors.sub_heading_text_color),
+                        style: TextStyle(color: AppColors.subHeadingTextColor),
                         decoration: InputDecoration(
                           filled: true,
                           hint: Text("Enter password"),
                           prefixIcon: const Icon(Icons.password),
-                          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                           suffixIcon: IconButton(
                             icon: Icon(
                               showPassword.value ? Icons.visibility : Icons.visibility_off,
@@ -203,14 +199,14 @@ class EmailPasswordLoginScreen extends HookWidget {
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal:
-                                      AppSizes.large_button_horizontal_padding,
+                                      AppSizes.largeButtonHorizontalPadding,
                                 ),
-                                backgroundColor: AppColors.button_color,
+                                backgroundColor: AppColors.buttonColor,
                               ),
                               child: Text(
                                 "Login",
                                 style: TextStyle(
-                                  color: AppColors.button_text_color,
+                                  color: AppColors.buttonTextColor,
                                 ),
                               ),
                             ),
@@ -222,7 +218,7 @@ class EmailPasswordLoginScreen extends HookWidget {
                         Expanded(
                           child: Divider(
                             thickness: 1,
-                            color: AppColors.app_blue_color,
+                            color: AppColors.appBlueColor,
                           ),
                         ),
                         Padding(
@@ -231,14 +227,14 @@ class EmailPasswordLoginScreen extends HookWidget {
                             "OR",
                             style: TextStyle(
                               fontSize: 16,
-                              color: AppColors.text_color,
+                              color: AppColors.textColor,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Divider(
                             thickness: 1,
-                            color: AppColors.app_blue_color,
+                            color: AppColors.appBlueColor,
                           ),
                         ),
                       ],
@@ -275,14 +271,14 @@ class EmailPasswordLoginScreen extends HookWidget {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 16,
-                          color: AppColors.text_color, // default color
+                          color: AppColors.textColor, // default color
                         ),
                         children: [
                           const TextSpan(text: "Login using OTP"),
                           TextSpan(
                             text: " Click Here",
                             style: TextStyle(
-                              color: AppColors.app_blue_color,
+                              color: AppColors.appBlueColor,
                               // highlighted blue
                               fontWeight: FontWeight.bold,
                             ),

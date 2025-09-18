@@ -5,11 +5,10 @@ import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../models/product/product_list_response.dart';
-// if needed
 
-class DashboardRepository {
+class SalesDashboardRepository {
   final ApiClient _client;
-  DashboardRepository([ApiClient? client]) : _client = client ?? ApiClient();
+  SalesDashboardRepository([ApiClient? client]) : _client = client ?? ApiClient();
 
   Future<ApiState<List<UserDataModel>>> fetchUsers() async {
     try {

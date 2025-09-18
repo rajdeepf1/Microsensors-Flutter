@@ -95,7 +95,7 @@ class AddUser extends HookWidget {
           mobileNumber: phone,
           password: pass,
           roleId: id,
-          is_active: isActive
+          isActive: isActive
         );
 
         if (createRes is ApiData<UserResponseModel>) {
@@ -128,7 +128,7 @@ class AddUser extends HookWidget {
         } else if (createRes is ApiError<UserResponseModel>) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(createRes.message ?? "Failed to create user"),
+              content: Text(createRes.message),
             ),
           );
         }
@@ -174,10 +174,10 @@ class AddUser extends HookWidget {
                     text: "Name",
                     child: TextFormField(
                       controller: nameCtrl,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -193,10 +193,10 @@ class AddUser extends HookWidget {
                     text: "Email",
                     child: TextFormField(
                       controller: emailCtrl,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -212,10 +212,10 @@ class AddUser extends HookWidget {
                     text: "Phone",
                     child: TextFormField(
                       controller: phoneCtrl,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -230,18 +230,18 @@ class AddUser extends HookWidget {
                   UserInfoEditField(
                     text: "Role",
                     child: DropdownButtonFormField(
-                      value: roleId.value,
+                      initialValue: roleId.value,
                       items: roles,
                       icon: const Icon(Icons.expand_more),
                       onChanged: (value) => roleId.value = value,
                       style: TextStyle(
-                        color: AppColors.sub_heading_text_color,
+                        color: AppColors.subHeadingTextColor,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Roles',
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 16.0 * 1.5,
                           vertical: 16.0,
@@ -259,11 +259,11 @@ class AddUser extends HookWidget {
                     child: TextFormField(
                       controller: passCtrl,
                       obscureText: !showPassword.value,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         hintText: "Password",
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         suffixIcon: IconButton(
                           icon: Icon(
                             showPassword.value ? Icons.visibility : Icons.visibility_off,
@@ -290,11 +290,11 @@ class AddUser extends HookWidget {
                     child: TextFormField(
                       controller: confpassCtrl,
                       obscureText: !showConfPassword.value,
-                      style: TextStyle(color: AppColors.sub_heading_text_color),
+                      style: TextStyle(color: AppColors.subHeadingTextColor),
                       decoration: InputDecoration(
                         hintText: "Confirm Password",
                         filled: true,
-                        fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                        fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                         suffixIcon: IconButton(
                           icon: Icon(
                             showConfPassword.value ? Icons.visibility : Icons.visibility_off,
@@ -325,13 +325,13 @@ class AddUser extends HookWidget {
                       activeThumbColor: Colors.green,
                       activeTrackColor: Colors.greenAccent,
                       // track color when ON
-                      inactiveThumbColor: AppColors.app_blue_color,
+                      inactiveThumbColor: AppColors.appBlueColor,
                       // thumb color when OFF
-                      inactiveTrackColor: AppColors.app_blue_color
-                          .withOpacity(0.05),
+                      inactiveTrackColor: AppColors.appBlueColor
+                          .withValues(alpha: 0.05),
                       // track color when OFF
-                      trackOutlineColor: MaterialStateProperty.all(
-                        AppColors.app_blue_color.withOpacity(0.05),
+                      trackOutlineColor: WidgetStateProperty.all(
+                        AppColors.appBlueColor.withValues(alpha: 0.05),
                       ),
                     ),
                   ),

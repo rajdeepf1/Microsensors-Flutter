@@ -17,7 +17,7 @@ class OtpResponse {
       statusCode: json['statusCode'] is int
           ? json['statusCode'] as int
           : int.tryParse('${json['statusCode']}') ?? 0,
-      data: json['data'] != null ? json['data'].toString() : null,
+      data: json['data']?.toString(),
       error: json['error'] as String?,
     );
   }

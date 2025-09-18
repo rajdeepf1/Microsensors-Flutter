@@ -7,6 +7,7 @@ class StatsCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final double? width;
   final VoidCallback onTap;
 
   const StatsCard({
@@ -15,6 +16,7 @@ class StatsCard extends StatelessWidget {
     required this.value,
     required this.icon,
     this.color = Colors.blue,
+    this.width,
     required this.onTap,
   });
 
@@ -24,11 +26,11 @@ class StatsCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
-      width: 160,
+      width: width ?? 160,
       child: Card(
-        color: AppColors.card_color,
+        color: AppColors.cardColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.card_radius),
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -36,7 +38,7 @@ class StatsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                backgroundColor: color.withOpacity(0.1),
+                backgroundColor: color.withValues(alpha: 0.1),
                 child: Icon(icon, color: color),
               ),
               const SizedBox(width: 12),

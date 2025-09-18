@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-
 import '../../../utils/colors.dart';
 import '../../add_product/presentation/add_product.dart';
 
@@ -34,10 +33,10 @@ class QuantityField extends HookWidget {
         controller: controller,
         readOnly: true, // user can only change via buttons
         textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.heading_text_color),
+        style: TextStyle(color: AppColors.headingTextColor),
         decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16.0 * 1.5,
             vertical: 16.0,

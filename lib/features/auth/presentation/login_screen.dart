@@ -48,7 +48,6 @@ class LoginScreen extends HookWidget {
       loading.value = true;
       try {
         final res = await repo.fetchEmailByPhone(phone);
-
         // res is ApiState<UserResponseModel>
         if (res is ApiData<UserResponseModel>) {
           final wrapper = res.data; // UserResponseModel (the wrapper)
@@ -77,7 +76,7 @@ class LoginScreen extends HookWidget {
           }
         } else if (res is ApiError<UserResponseModel>) {
           // ApiError should expose message / error fields
-          final msg = res.message ?? res.error?.toString() ?? 'Unknown error';
+          final msg = res.message;
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Login failed: $msg')));
@@ -144,7 +143,7 @@ class LoginScreen extends HookWidget {
             ).showSnackBar(SnackBar(content: Text(msg)));
           }
         } else if (res is ApiError<OtpResponse>) {
-          final msg = res.message ?? res.error?.toString() ?? 'Verify failed';
+          final msg = res.message;
           await LocalStorageService().removeUser();
           ScaffoldMessenger.of(
             context,
@@ -171,14 +170,16 @@ class LoginScreen extends HookWidget {
       try {
         final res = await repo.sendOtp(foundUser.value!);
         if (res is ApiData<bool> && res.data == true) {
-          for (final c in otpControllers) c.clear();
+          for (final c in otpControllers) {
+            c.clear();
+          }
           FocusScope.of(context).requestFocus(otpFocusNodes[0]);
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('OTP resent')));
         } else if (res is ApiError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Resend failed: ${res ?? 'Unknown'}')),
+            SnackBar(content: Text('Resend failed: $res')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -238,14 +239,14 @@ class LoginScreen extends HookWidget {
                       style: TextStyle(
                         fontSize: 38,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.heading_text_color,
+                        color: AppColors.headingTextColor,
                       ),
                     ),
                     Text(
                       "Login to continue",
                       style: TextStyle(
                         fontSize: 16,
-                        color: AppColors.text_color,
+                        color: AppColors.textColor,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -255,13 +256,13 @@ class LoginScreen extends HookWidget {
                         controller: phoneController,
                         keyboardType: TextInputType.number,
                         style: TextStyle(
-                          color: AppColors.sub_heading_text_color,
+                          color: AppColors.subHeadingTextColor,
                         ),
                         decoration: InputDecoration(
                           filled: true,
                           hint: Text("Enter Number"),
                           prefixIcon: const Icon(Icons.phone_android_outlined),
-                          fillColor: AppColors.app_blue_color.withOpacity(0.05),
+                          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16.0 * 1.5,
                             vertical: 16.0,
@@ -288,14 +289,14 @@ class LoginScreen extends HookWidget {
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal:
-                                      AppSizes.large_button_horizontal_padding,
+                                      AppSizes.largeButtonHorizontalPadding,
                                 ),
-                                backgroundColor: AppColors.button_color,
+                                backgroundColor: AppColors.buttonColor,
                               ),
                               child: Text(
                                 "Login",
                                 style: TextStyle(
-                                  color: AppColors.button_text_color,
+                                  color: AppColors.buttonTextColor,
                                 ),
                               ),
                             ),
@@ -317,7 +318,7 @@ class LoginScreen extends HookWidget {
                                           (value) =>
                                               handleOtpInput(value, index),
                                       style: TextStyle(
-                                        color: AppColors.sub_heading_text_color,
+                                        color: AppColors.subHeadingTextColor,
                                         fontSize: 20,
                                         // bigger font for OTP digits (optional)
                                         fontWeight: FontWeight.bold,
@@ -325,8 +326,8 @@ class LoginScreen extends HookWidget {
                                       decoration: InputDecoration(
                                         filled: true,
                                         counterText: "",
-                                        fillColor: AppColors.app_blue_color
-                                            .withOpacity(0.05),
+                                        fillColor: AppColors.appBlueColor
+                                            .withValues(alpha: 0.05),
                                         contentPadding:
                                             const EdgeInsets.symmetric(
                                               horizontal: 14.0,
@@ -352,14 +353,14 @@ class LoginScreen extends HookWidget {
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal:
-                                      AppSizes.large_button_horizontal_padding,
+                                      AppSizes.largeButtonHorizontalPadding,
                                 ),
-                                backgroundColor: AppColors.button_color,
+                                backgroundColor: AppColors.buttonColor,
                               ),
                               child: Text(
                                 "Verify",
                                 style: TextStyle(
-                                  color: AppColors.button_text_color,
+                                  color: AppColors.buttonTextColor,
                                 ),
                               ),
                             ),
@@ -378,7 +379,7 @@ class LoginScreen extends HookWidget {
                         Expanded(
                           child: Divider(
                             thickness: 1,
-                            color: AppColors.app_blue_color,
+                            color: AppColors.appBlueColor,
                           ),
                         ),
                         Padding(
@@ -387,14 +388,14 @@ class LoginScreen extends HookWidget {
                             "OR",
                             style: TextStyle(
                               fontSize: 16,
-                              color: AppColors.text_color,
+                              color: AppColors.textColor,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Divider(
                             thickness: 1,
-                            color: AppColors.app_blue_color,
+                            color: AppColors.appBlueColor,
                           ),
                         ),
                       ],
@@ -430,7 +431,7 @@ class LoginScreen extends HookWidget {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 16,
-                          color: AppColors.text_color, // default color
+                          color: AppColors.textColor, // default color
                         ),
                         children: [
                           const TextSpan(
@@ -439,7 +440,7 @@ class LoginScreen extends HookWidget {
                           TextSpan(
                             text: " Click Here",
                             style: TextStyle(
-                              color: AppColors.app_blue_color,
+                              color: AppColors.appBlueColor,
                               // highlighted blue
                               fontWeight: FontWeight.bold,
                             ),
