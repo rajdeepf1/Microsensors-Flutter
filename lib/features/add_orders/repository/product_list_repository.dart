@@ -11,9 +11,9 @@ class ProductPageResult {
   ProductPageResult({required this.items, this.total});
 }
 
-class ProductListRepositoryRepository {
+class SalesProductListRepository {
   final ApiClient _client;
-  ProductListRepositoryRepository([ApiClient? client]) : _client = client ?? ApiClient();
+  SalesProductListRepository([ApiClient? client]) : _client = client ?? ApiClient();
 
   Future<ApiState<ProductPageResult>> fetchProductsPage({
     required int page,

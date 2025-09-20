@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:microsensors/features/add_orders/presentation/product_details.dart';
 import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
 import 'package:microsensors/utils/constants.dart';
@@ -19,7 +20,7 @@ class AddOrders extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = useMemoized(() => ProductListRepositoryRepository());
+    final repo = useMemoized(() => SalesProductListRepository());
     const int pageSize = 20;
 
     final totalPages = useState<int?>(null);
@@ -214,6 +215,66 @@ class ProductCardWidget extends StatelessWidget {
       }
     }
 
+    void _openDetailsSheet(BuildContext context) async {
+      final FocusNode productNameFocusNode = FocusNode();
+      final enableSaveNotifier = ValueNotifier<bool>(false);
+
+      final bool? result = await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true, // allows full-screen height
+        backgroundColor: Colors.transparent, // to apply rounded corners easily
+        builder: (BuildContext ctx) {
+          // Use FractionallySizedBox to control sheet height (0.95 -> ~full-screen)
+          return FractionallySizedBox(
+            heightFactor: 0.95,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Material(
+                // Material so AppBar / buttons use Material styles
+                color: Colors.white,
+                child: SafeArea(
+                  top: false,
+                  // keep top as part of the sheet (AppBar handles status)
+                  child: Scaffold(
+                    appBar: AppBar(
+                      elevation: 0,
+                      backgroundColor: Colors.white,
+                      iconTheme: const IconThemeData(color: Colors.black),
+                      title: Text(
+                        name,
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      leading: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ),
+                    body: SalesProductDetails(
+                      productId: productId,
+                      name: name,
+                      description: description,
+                      sku: sku,
+                      status: status,
+                      createdBy: createdBy,
+                      createdAt: createdAt,
+                      avatarUrl: avatarUrl??"",
+                      productNameFocusNode: productNameFocusNode,
+                      enableSaveNotifier: enableSaveNotifier,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      if (result == true) {
+        //await onRefresh?.call();
+      }
+    }
+
+
     return Card(
       elevation: 2,
       color: cardBg,
@@ -280,7 +341,7 @@ class ProductCardWidget extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {_openDetailsSheet(context);},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
