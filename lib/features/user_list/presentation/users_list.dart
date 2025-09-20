@@ -14,6 +14,7 @@ class UsersList extends StatelessWidget {
       length: 2,
       child: MainLayout(
         title: "Users",
+        screenType: ScreenType.tab,
         tabBar: TabBar(
           tabs: const [
             Tab(text: "Sales Persons",),

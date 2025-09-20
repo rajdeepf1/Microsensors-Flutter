@@ -7,10 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
-import '../../../models/product/product_list_response.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
-import '../repository/sales_dashboard_repository.dart';
 
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:microsensors/core/local_storage_service.dart';
@@ -20,20 +18,7 @@ class SalesUserDashboard extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = useMemoized(() => SalesDashboardRepository());
     final fcmService = useMemoized(() => FcmService());
-
-    //final usersState = useState<ApiState<List<UserDataModel>>>(const ApiInitial());
-    final productsState = useState<ApiState<List<ProductDataModel>>>(
-      const ApiInitial(),
-    );
-
-    // load both counts
-    Future<void> loadAll() async {
-      productsState.value = const ApiLoading();
-
-      productsState.value = await repo.fetchProducts();
-    }
 
     // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
@@ -200,12 +185,6 @@ class SalesUserDashboard extends HookWidget {
         openedAppSub?.cancel();
       };
     }, const []); // run once on mount
-
-    // existing loadAll effect
-    useEffect(() {
-      loadAll();
-      return null;
-    }, []);
 
     return Scaffold(
       body: Scrollbar(

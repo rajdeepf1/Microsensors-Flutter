@@ -60,7 +60,7 @@ class ProductList extends HookWidget {
               status: p.status,
               createdBy: p.createdByUsername,
               createdAt: p.formattedCreatedAt,
-              avatarUrl: avatarUrl!,
+              avatarUrl: avatarUrl??"",
               onRefresh: loadProducts,
             );
           },
@@ -114,7 +114,7 @@ class ProductCardWidget extends StatelessWidget {
   final String status;
   final String createdBy;
   final String createdAt;
-  final String avatarUrl;
+  final String? avatarUrl;
   final Future<void> Function()? onRefresh;
 
   const ProductCardWidget({
@@ -189,7 +189,7 @@ class ProductCardWidget extends StatelessWidget {
                     status: status,
                     createdBy: createdBy,
                     createdAt: createdAt,
-                    avatarUrl: avatarUrl,
+                    avatarUrl: avatarUrl??"",
                     productNameFocusNode: productNameFocusNode,
                     enableSaveNotifier: enableSaveNotifier,
                   ),

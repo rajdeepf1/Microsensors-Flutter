@@ -23,7 +23,7 @@ class HomeScreen extends HookConsumerWidget {
 
     return MainLayout(
       title: "Home",
-      isHome: true,
+      screenType: ScreenType.home,
       child: AppBottomNavigationBar(),
     );
   }

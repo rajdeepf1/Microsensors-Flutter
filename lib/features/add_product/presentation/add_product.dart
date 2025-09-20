@@ -66,7 +66,7 @@ class AddProduct extends HookWidget {
           productName: name,
           description:
               descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-          price: null,
+          price: 0,
           stockQuantity: 0,
           sku: sku,
           status: status.value ? 'ACTIVE' : 'INACTIVE',
