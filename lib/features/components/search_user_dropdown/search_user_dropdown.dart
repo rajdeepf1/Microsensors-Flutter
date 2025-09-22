@@ -3,31 +3,15 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:microsensors/models/user_model/user_model.dart';
 
+import '../../../utils/colors.dart';
 import '../../../utils/constants.dart';
 import '../smart_image/smart_image.dart';
 
-class User {
-
-  final String id;
-  final String name;
-  final String email;
-  final String? avatarUrl;
-
-  User({required this.id, required this.name, required this.email, this.avatarUrl});
-  String initials() {
-    final parts = name.split(' ').where((s) => s.isNotEmpty).toList();
-    if (parts.isEmpty) return '';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-
-  @override
-  String toString() => '$name <$email>';
-}
 class SearchUserDropdown extends HookWidget {
-  final Future<List<User>> Function(String query) searchFn;
-  final void Function(User user) onUserSelected;
+  final Future<List<UserDataModel>> Function(String query) searchFn;
+  final void Function(UserDataModel user) onUserSelected;
   final String? hintText;
 
   /// Maximum height you want the overlay to be (it will be reduced if insufficient space)
@@ -57,7 +41,7 @@ class SearchUserDropdown extends HookWidget {
     final overlayEntryRef = useRef<OverlayEntry?>(null);
     final debounceRef = useRef<Timer?>(null);
 
-    final suggestions = useState<List<User>>([]);
+    final suggestions = useState<List<UserDataModel>>([]);
     final isLoading = useState<bool>(false);
 
     final isOverlayOpen = useState<bool>(false);
@@ -107,12 +91,12 @@ class SearchUserDropdown extends HookWidget {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       leading:
 
-                      SmartImage(imageUrl: user.avatarUrl,baseUrl: Constants.apiBaseUrl,username: user.name,shape: ImageShape.circle,),
+                      SmartImage(imageUrl: user.userImage,baseUrl: Constants.apiBaseUrl,username: user.username,shape: ImageShape.circle,),
 
-                      title: Text(user.name, style: TextStyle(fontWeight: FontWeight.w600)),
+                      title: Text(user.username, style: TextStyle(fontWeight: FontWeight.w600)),
                       subtitle: Text(user.email, style: TextStyle(color: Colors.grey[600])),
                       onTap: () {
-                        controller.text = user.name;
+                        controller.text = user.username;
                         onUserSelected(user);
                         overlayEntryRef.value?.remove();
                         overlayEntryRef.value = null;
@@ -251,7 +235,8 @@ class SearchUserDropdown extends HookWidget {
         decoration:
         InputDecoration(
           filled: true,
-          fillColor: Colors.blue.withOpacity(0.05),
+          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
+          hint: Text(hintText!),
           contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           border: const OutlineInputBorder(
             borderSide: BorderSide.none,
