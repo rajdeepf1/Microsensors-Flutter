@@ -1,17 +1,20 @@
+// lib/features/dashboard/presentation/sales_user_dashboard.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
+import 'package:microsensors/features/sales_user_dashboard/presentation/orders_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
-
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:microsensors/core/local_storage_service.dart';
+import '../../../core/local_storage_service.dart';
+import '../repository/sales_dashboard_repository.dart';
+import '../../../models/orders/order_models.dart';
 
 class SalesUserDashboard extends HookWidget {
   const SalesUserDashboard({super.key});
@@ -19,8 +22,17 @@ class SalesUserDashboard extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final fcmService = useMemoized(() => FcmService());
+    final repo = useMemoized(() => SalesDashboardRepository());
 
-    // ---------- FCM & token registration (runs when Dashboard mounts) ----------
+    // user + preview states
+    final salesUser = useState<UserDataModel?>(null);
+    final loadingUser = useState<bool>(true);
+
+    final items = useState<List<OrderListItem>>([]);
+    final loadingPreview = useState<bool>(false);
+    final previewError = useState<String?>(null);
+
+    // ---- load stored user and init FCM (runs once) ----
     useEffect(() {
       StreamSubscription<RemoteMessage>? onMessageSub;
       StreamSubscription<String>? tokenRefreshSub;
@@ -28,7 +40,6 @@ class SalesUserDashboard extends HookWidget {
 
       final FlutterLocalNotificationsPlugin localNotifications =
           FlutterLocalNotificationsPlugin();
-      // we will reuse the channel created in main.dart ("high_importance_channel")
       const AndroidNotificationChannel androidChannel =
           AndroidNotificationChannel(
             'high_importance_channel',
@@ -37,7 +48,6 @@ class SalesUserDashboard extends HookWidget {
             importance: Importance.max,
           );
 
-      // function to show local notification using local plugin instance
       Future<void> showLocalNotification(RemoteMessage message) async {
         final notification = message.notification;
         if (notification == null) return;
@@ -62,129 +72,110 @@ class SalesUserDashboard extends HookWidget {
         );
       }
 
-      // start async block
+      // async bootstrap
       () async {
         try {
-          // 1) Load stored user
+          // Load stored user
           final storedUser = await LocalStorageService().getUser();
+          salesUser.value = storedUser;
+          loadingUser.value = false;
 
-          // 2) initialize the local plugin (safe to call even if main already created channel)
+          // after we know user, attempt loading preview (if user exists)
+          if (storedUser != null) {
+            // load preview items (calls repo)
+            await _loadPreviewForUser(
+              repo,
+              storedUser.userId,
+              items,
+              loadingPreview,
+              previewError,
+            );
+          }
+
+          // initialize local notifications plugin
           const androidInit = AndroidInitializationSettings(
             '@mipmap/ic_launcher',
           );
           final initSettings = InitializationSettings(android: androidInit);
           await localNotifications.initialize(initSettings);
 
-          // 3) Request permission for notifications (iOS/Android 13+)
+          // request permissions
           final messaging = FirebaseMessaging.instance;
-          final settings = await messaging.requestPermission(
+          await messaging.requestPermission(
             alert: true,
             badge: true,
             sound: true,
-            provisional: false,
-          );
-          debugPrint(
-            'Dashboard FCM permission: ${settings.authorizationStatus}',
           );
 
-          // 4) Get the token (first time)
+          // get token and register
           final token = await messaging.getToken();
-          debugPrint('Dashboard FCM token: $token');
-
-          // --- SAFELY CALL registerToken and handle ApiState result ---
-          if (storedUser == null) {
-            debugPrint(
-              'No stored user found - skipping token registration for now.',
-            );
-          } else if (token == null) {
-            debugPrint('Device token is null - cannot register token.');
-          } else {
-            // call your registerToken which returns ApiState<UserDataModel>
+          if (storedUser != null && token != null) {
             final ApiState<UserDataModel> res = await fcmService.registerToken(
               userId: storedUser.userId,
               token: token,
             );
-
             if (res is ApiData<UserDataModel>) {
-              // success - backend returned canonical user object in data
-              final UserDataModel savedUser = res.data;
-              await LocalStorageService().saveUser(savedUser);
-              debugPrint(
-                "FCM token saved successfully and stored user updated (id=${savedUser.userId})",
-              );
-            } else if (res is ApiError<UserDataModel>) {
-              // server returned an error state
-              debugPrint("FCM token registration failed: ${res.message}");
+              await LocalStorageService().saveUser(res.data);
+              salesUser.value = res.data;
             } else {
-              // defensive: unexpected state
-              debugPrint(
-                "FCM token registration returned unexpected state: $res",
-              );
+              // ignore errors for now; logs would help
             }
           }
 
-          // 5) Foreground message handler: show local notification and optionally update UI
+          // listeners
           onMessageSub = FirebaseMessaging.onMessage.listen((message) {
-            debugPrint('Dashboard - onMessage: ${message.messageId}');
             showLocalNotification(message);
           });
 
-          // 6) Token refresh: re-register token for stored user
           tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
             newToken,
           ) async {
-            debugPrint('Dashboard - token refreshed: $newToken');
-
-            // handle nulls defensively
             final currentStored = await LocalStorageService().getUser();
-            if (currentStored == null) {
-              debugPrint(
-                'No stored user when token refreshed - skipping registration.',
-              );
-              return;
-            }
-
-            final ApiState<UserDataModel> refreshRes = await fcmService
-                .registerToken(userId: currentStored.userId, token: newToken);
-
-            if (refreshRes is ApiData<UserDataModel>) {
-              await LocalStorageService().saveUser(refreshRes.data);
-              debugPrint(
-                'FCM Token Refreshed and saved successfully (id=${refreshRes.data.userId})',
-              );
-            } else if (refreshRes is ApiError<UserDataModel>) {
-              debugPrint(
-                'FCM refresh registration failed: ${refreshRes.message}',
-              );
-            } else {
-              debugPrint('FCM refresh returned unexpected state: $refreshRes');
+            if (currentStored != null) {
+              final ApiState<UserDataModel> refreshRes = await fcmService
+                  .registerToken(userId: currentStored.userId, token: newToken);
+              if (refreshRes is ApiData<UserDataModel>) {
+                await LocalStorageService().saveUser(refreshRes.data);
+                salesUser.value = refreshRes.data;
+              }
             }
           });
 
-          // 7) Handle taps when app in background -> user opens app
           openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
-            debugPrint('Dashboard - onMessageOpenedApp: ${message.messageId}');
+            // handle navigation from notification if needed
           });
 
-          // 8) If app was launched from terminated state by a notification
           final initialMessage = await messaging.getInitialMessage();
           if (initialMessage != null) {
-            debugPrint(
-              'Dashboard - initialMessage: ${initialMessage.messageId}',
-            );
+            // launched from notification
           }
         } catch (e) {
-          debugPrint('Dashboard FCM init error: $e');
+          loadingUser.value = false;
+          debugPrint('Dashboard FCM/init error: $e');
         }
       }();
 
-      // cleanup
       return () {
         onMessageSub?.cancel();
         tokenRefreshSub?.cancel();
         openedAppSub?.cancel();
       };
-    }, const []); // run once on mount
+    }, const []);
+
+    // ---- helper to reload preview manually ----
+    Future<void> reloadPreview() async {
+      if (salesUser.value == null) {
+        previewError.value = 'No user available';
+        return;
+      }
+      await _loadPreviewForUser(
+        repo,
+        salesUser.value!.userId,
+        items,
+        loadingPreview,
+        previewError,
+      );
+    }
 
     return Scaffold(
       body: Scrollbar(
@@ -195,6 +186,7 @@ class SalesUserDashboard extends HookWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Stats header
               Text(
                 "Stats",
                 style: TextStyle(
@@ -204,7 +196,7 @@ class SalesUserDashboard extends HookWidget {
                 ),
               ),
 
-              // Horizontal scroll stats cards
+              const SizedBox(height: 12),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -239,47 +231,153 @@ class SalesUserDashboard extends HookWidget {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
-              Text(
-                "Recent Orders: ",
-                style: TextStyle(
-                  color: AppColors.headingTextColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              SizedBox(height: 150),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              // header row
+              Row(
                 children: [
-                  Center(
-                    child: Material(
-                      // provides ink surface for ripple
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(40),
-                        // optional ripple shape
-                        onTap: () => context.push("/add-orders"),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Icon(
-                            Icons.add,
-                            size: 48, // make it larger if you want
-                            color: Colors.blue, // optional color
-                          ),
-                        ),
+                  Expanded(
+                    child: Text(
+                      "Recent Orders:",
+                      style: TextStyle(
+                        color: AppColors.headingTextColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  Text(
-                    "Please Add Orders",
-                    style: TextStyle(color: Colors.blue, fontSize: 20),
+                  TextButton(
+                    onPressed: () {
+                      // navigate to full orders page
+                      // context.push('/orders');
+                    },
+                    child: Text('See All'),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.refresh),
+                    onPressed: reloadPreview,
                   ),
                 ],
               ),
+
+              // --- user loader ---
+              if (loadingUser.value)
+                SizedBox(
+                  height: 160,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                // Card containing preview area
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Column(
+                    children: [
+                      // preview content: loading / error / empty (Add Order) / list
+                      if (loadingPreview.value)
+                        SizedBox(
+                          height: 140,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (previewError.value != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Failed to load orders',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                previewError.value!,
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: reloadPreview,
+                                child: Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      else if (items.value.isEmpty)
+                        // EMPTY -> show Add Order CTA
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.add,
+                                    size: 48,
+                                    color: AppColors.appBlueColor,
+                                  ),
+                                  onPressed: () {
+                                    context.push("/add-orders");
+                                  },
+                                ),
+                                Text(
+                                  "Create an order",
+                                  style: TextStyle(
+                                    color: AppColors.appBlueColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: [
+                            // cards
+                            ...items.value.map(
+                              (o) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: OrderCardWidget(context, o),
+                              ),
+                            ),
+
+                            // show "See more" when preview is full (i.e. 4 items)
+                            if (items.value.length >= 4)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 6,
+                                  bottom: 8,
+                                ),
+                                child: Center(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          20,
+                                        ),
+                                      ),
+                                    ),
+                                    icon: Icon(Icons.chevron_right),
+                                    label: Text('See more'),
+                                    onPressed: () {
+                                      // navigate to full orders page — adjust route if different
+                                      context.push(
+                                        '/sales-orders-list',
+                                      ); // or Navigator.pushNamed(context, '/orders');
+                                    },
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -291,17 +389,6 @@ class SalesUserDashboard extends HookWidget {
         overlayOpacity: 0,
         spacing: 10,
         children: [
-          // SpeedDialChild(
-          //   child: Icon(Icons.person_add,
-          //       size: 28, color: AppColors.fab_foreground_icon_color),
-          //   label: "Add User",
-          //   labelStyle: TextStyle(color: AppColors.heading_text_color),
-          //   backgroundColor: Colors.blue,
-          //   onTap: () {
-          //     print("Add User Clicked");
-          //     context.push("/add-user");
-          //   },
-          // ),
           SpeedDialChild(
             child: Icon(
               Icons.add_box,
@@ -319,12 +406,35 @@ class SalesUserDashboard extends HookWidget {
       ),
     );
   }
-
-  // String _stateToString(ApiState<List<dynamic>> state) {
-  //   if (state is ApiInitial) return "-";
-  //   if (state is ApiLoading) return "...";
-  //   if (state is ApiError) return "!";
-  //   if (state is ApiData<List<dynamic>>) return state.data.length.toString();
-  //   return "-";
-  // }
 }
+
+/// Loads preview items via repo and updates the provided states.
+/// Kept outside the widget to keep build() tidy.
+Future<void> _loadPreviewForUser(
+  SalesDashboardRepository repo,
+  int userId,
+  ValueNotifier<List<OrderListItem>> items,
+  ValueNotifier<bool> loading,
+  ValueNotifier<String?> error,
+) async {
+  loading.value = true;
+  error.value = null;
+  try {
+    final res = await repo.fetchOrders(salesId: userId, page: 0, size: 10);
+    if (res is ApiData<PagedResponse<OrderListItem>>) {
+      items.value = res.data.data.take(4).toList();
+    } else if (res is ApiError<PagedResponse<OrderListItem>>) {
+      error.value = res.message ?? 'API error';
+      items.value = [];
+    } else {
+      error.value = 'Unexpected API state';
+      items.value = [];
+    }
+  } catch (e) {
+    error.value = e.toString();
+    items.value = [];
+  } finally {
+    loading.value = false;
+  }
+}
+

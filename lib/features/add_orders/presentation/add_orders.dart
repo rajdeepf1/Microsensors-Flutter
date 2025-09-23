@@ -143,14 +143,14 @@ class AddOrders extends HookWidget {
             builderDelegate: PagedChildBuilderDelegate<ProductDataModel>(
               itemBuilder: (context, product, index) {
                 return ProductCardWidget(
-                  productId: product.productId ?? 0,
-                  name: product.productName ?? 'Unnamed product',
-                  description: product.description ?? '',
-                  sku: product.sku ?? '',
+                  productId: product.productId,
+                  name: product.productName,
+                  description: product.description,
+                  sku: product.sku,
                   avatarUrl: product.productImage,
-                  createdAt: product.createdAt ?? '',
-                  status: product.status ?? 'UNKNOWN',
-                  createdBy: product.createdByUsername ?? '',
+                  createdAt: product.createdAt,
+                  status: product.status,
+                  createdBy: product.createdByUsername,
                 );
               },
               firstPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),

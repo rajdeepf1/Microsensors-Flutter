@@ -7,6 +7,7 @@ import 'package:microsensors/features/auth/presentation/email_password_login_scr
 import 'package:microsensors/features/my_account/presentation/my_account.dart';
 import 'package:microsensors/features/notification/presentation/notification.dart';
 import 'package:microsensors/features/product_list/presentation/product_list.dart';
+import 'package:microsensors/features/sales_user_dashboard/presentation/sales_orders_list.dart';
 import 'package:microsensors/features/user_list/presentation/users_list.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
@@ -69,6 +70,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/add-orders',
         builder: (context, state) => const AddOrders(),
+      ),
+      GoRoute(
+        path: '/sales-orders-list',
+        builder: (context, state) => const SalesOrdersList(),
       ),
     ],
   );
