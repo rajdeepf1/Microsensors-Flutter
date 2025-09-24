@@ -35,8 +35,8 @@ class SalesUserDashboard extends HookWidget {
 
     // for stats
     final statsState = useState<OrderStats?>(null);
-    final loading = useState<bool>(true);
-    final error = useState<String?>(null);
+    final loadingStats = useState<bool>(true);
+    final statsError = useState<String?>(null);
 
     // ---- load stored user and init FCM (runs once) ----
     useEffect(() {
@@ -45,14 +45,14 @@ class SalesUserDashboard extends HookWidget {
       StreamSubscription<RemoteMessage>? openedAppSub;
 
       final FlutterLocalNotificationsPlugin localNotifications =
-          FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
       const AndroidNotificationChannel androidChannel =
-          AndroidNotificationChannel(
-            'high_importance_channel',
-            'High Importance Notifications',
-            description: 'This channel is used for important notifications.',
-            importance: Importance.max,
-          );
+      AndroidNotificationChannel(
+        'high_importance_channel',
+        'High Importance Notifications',
+        description: 'This channel is used for important notifications.',
+        importance: Importance.max,
+      );
 
       Future<void> showLocalNotification(RemoteMessage message) async {
         final notification = message.notification;
@@ -86,89 +86,85 @@ class SalesUserDashboard extends HookWidget {
           salesUser.value = storedUser;
           loadingUser.value = false;
 
-          // after we know user, attempt loading preview (if user exists)
           if (storedUser != null) {
-            // load preview items (calls repo)
+            // load preview items
             await _loadPreviewForUser(
-              repo,
-              storedUser.userId,
-              items,
-              loadingPreview,
-              previewError,
+            repo,
+            storedUser.userId,
+            items,
+            loadingPreview,
+            previewError,
             );
-          }
 
-          // initialize local notifications plugin
-          const androidInit = AndroidInitializationSettings(
-            '@mipmap/ic_launcher',
-          );
-          final initSettings = InitializationSettings(android: androidInit);
-          await localNotifications.initialize(initSettings);
-
-          // request permissions
-          final messaging = FirebaseMessaging.instance;
-          await messaging.requestPermission(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-
-          // get token and register
-          final token = await messaging.getToken();
-          if (storedUser != null && token != null) {
-            final ApiState<UserDataModel> res = await fcmService.registerToken(
-              userId: storedUser.userId,
-              token: token,
+            // initialize local notifications plugin
+            const androidInit = AndroidInitializationSettings(
+              '@mipmap/ic_launcher',
             );
-            if (res is ApiData<UserDataModel>) {
-              await LocalStorageService().saveUser(res.data);
-              salesUser.value = res.data;
-            } else {
-              // ignore errors for now; logs would help
-            }
-          }
+            final initSettings = InitializationSettings(android: androidInit);
+            await localNotifications.initialize(initSettings);
 
-          // listeners
-          onMessageSub = FirebaseMessaging.onMessage.listen((message) {
-            showLocalNotification(message);
-          });
+            // request permissions
+            final messaging = FirebaseMessaging.instance;
+            await messaging.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
 
-          tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
-            newToken,
-          ) async {
-            final currentStored = await LocalStorageService().getUser();
-            if (currentStored != null) {
-              final ApiState<UserDataModel> refreshRes = await fcmService
-                  .registerToken(userId: currentStored.userId, token: newToken);
-              if (refreshRes is ApiData<UserDataModel>) {
-                await LocalStorageService().saveUser(refreshRes.data);
-                salesUser.value = refreshRes.data;
+            // get token and register
+            final token = await messaging.getToken();
+            if (token != null) {
+              final ApiState<UserDataModel> res = await fcmService.registerToken(
+                userId: storedUser.userId,
+                token: token,
+              );
+              if (res is ApiData<UserDataModel>) {
+                await LocalStorageService().saveUser(res.data);
+                salesUser.value = res.data;
               }
             }
-          });
 
-          openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
-            // handle navigation from notification if needed
-          });
+            // listeners
+            onMessageSub = FirebaseMessaging.onMessage.listen((message) {
+              showLocalNotification(message);
+            });
 
-          final initialMessage = await messaging.getInitialMessage();
-          if (initialMessage != null) {
-            // launched from notification
+            tokenRefreshSub =
+                FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+                  final currentStored = await LocalStorageService().getUser();
+                  if (currentStored != null) {
+                    final ApiState<UserDataModel> refreshRes =
+                    await fcmService.registerToken(
+                      userId: currentStored.userId,
+                      token: newToken,
+                    );
+                    if (refreshRes is ApiData<UserDataModel>) {
+                      await LocalStorageService().saveUser(refreshRes.data);
+                      salesUser.value = refreshRes.data;
+                    }
+                  }
+                });
+
+            openedAppSub =
+                FirebaseMessaging.onMessageOpenedApp.listen((message) {
+                  // handle navigation from notification if needed
+                });
+
+            final initialMessage = await messaging.getInitialMessage();
+            if (initialMessage != null) {
+              // launched from notification
+            }
+
+            // load stats
+            await _loadStatsForUser(
+            repo,
+            storedUser.userId,
+            statsState,
+            loadingStats,
+            statsError,
+            context,
+            );
           }
-
-          loading.value = true;
-          error.value = null;
-          final res = await repo.fetchOrderStats(salesId: storedUser!.userId);
-          if (res is ApiData<OrderStats>) {
-            statsState.value = res.data;
-          } else if (res is ApiError<OrderStats>) {
-            error.value = res.message ?? 'Failed to load stats';
-          } else {
-            error.value = 'Unexpected response';
-          }
-          loading.value = false;
-
-
         } catch (e) {
           loadingUser.value = false;
           debugPrint('Dashboard FCM/init error: $e');
@@ -182,8 +178,8 @@ class SalesUserDashboard extends HookWidget {
       };
     }, const []);
 
-    // ---- helper to reload preview manually ----
-    Future<void> reloadPreview() async {
+    // ---- helper to reload preview + stats manually ----
+    Future<void> reloadAll() async {
       if (salesUser.value == null) {
         previewError.value = 'No user available';
         return;
@@ -194,6 +190,14 @@ class SalesUserDashboard extends HookWidget {
         items,
         loadingPreview,
         previewError,
+      );
+      await _loadStatsForUser(
+        repo,
+        salesUser.value!.userId,
+        statsState,
+        loadingStats,
+        statsError,
+        context,
       );
     }
 
@@ -223,9 +227,11 @@ class SalesUserDashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Active Orders",
-                      value: loading.value
+                      value: loadingStats.value
                           ? "..."
-                          : (statsState.value != null ? statsState.value!.active.toString() : "--"),
+                          : (statsState.value != null
+                          ? statsState.value!.active.toString()
+                          : "--"),
                       icon: Icons.play_for_work,
                       color: Colors.green,
                       width: 180,
@@ -234,9 +240,11 @@ class SalesUserDashboard extends HookWidget {
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "In Production",
-                      value: loading.value
+                      value: loadingStats.value
                           ? "..."
-                          : (statsState.value != null ? statsState.value!.inProduction.toString() : "--"),
+                          : (statsState.value != null
+                          ? statsState.value!.inProduction.toString()
+                          : "--"),
                       icon: Icons.factory,
                       color: Colors.blue,
                       width: 180,
@@ -245,9 +253,11 @@ class SalesUserDashboard extends HookWidget {
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "Dispatched",
-                      value: loading.value
+                      value: loadingStats.value
                           ? "..."
-                          : (statsState.value != null ? statsState.value!.dispatched.toString() : "--"),
+                          : (statsState.value != null
+                          ? statsState.value!.dispatched.toString()
+                          : "--"),
                       icon: Icons.double_arrow,
                       color: Colors.purple,
                       width: 180,
@@ -274,33 +284,32 @@ class SalesUserDashboard extends HookWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      // navigate to full orders page
-                       context.push('/sales-orders-list');
+                      context.push('/sales-orders-list');
                     },
-                    child: Text('See All'),
+                    child: const Text('See All'),
                   ),
                   IconButton(
-                    icon: Icon(Icons.refresh),
-                    onPressed: reloadPreview,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: "Refresh",
+                    onPressed: reloadAll,
                   ),
                 ],
               ),
 
               // --- user loader ---
               if (loadingUser.value)
-                SizedBox(
+                const SizedBox(
                   height: 160,
                   child: Center(child: CircularProgressIndicator()),
                 )
               else
-                // Card containing preview area
+              // Card containing preview area
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Column(
                     children: [
-                      // preview content: loading / error / empty (Add Order) / list
                       if (loadingPreview.value)
-                        SizedBox(
+                        const SizedBox(
                           height: 140,
                           child: Center(child: CircularProgressIndicator()),
                         )
@@ -309,98 +318,90 @@ class SalesUserDashboard extends HookWidget {
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           child: Column(
                             children: [
-                              Text(
+                              const Text(
                                 'Failed to load orders',
                                 style: TextStyle(color: Colors.red),
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               Text(
                                 previewError.value!,
                                 textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
                               ElevatedButton(
-                                onPressed: reloadPreview,
-                                child: Text('Retry'),
+                                onPressed: reloadAll,
+                                child: const Text('Retry'),
                               ),
                             ],
                           ),
                         )
                       else if (items.value.isEmpty)
                         // EMPTY -> show Add Order CTA
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.add,
-                                    size: 48,
-                                    color: AppColors.appBlueColor,
-                                  ),
-                                  onPressed: () {
-                                    context.push("/add-orders");
-                                  },
-                                ),
-                                Text(
-                                  "Create an order",
-                                  style: TextStyle(
-                                    color: AppColors.appBlueColor,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        Column(
-                          children: [
-                            // cards
-                            ...items.value.map(
-                              (o) => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                child: OrderCardWidget(context, o),
-                              ),
-                            ),
-
-                            // show "See more" when preview is full (i.e. 4 items)
-                            if (items.value.length >= 4)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 6,
-                                  bottom: 8,
-                                ),
-                                child: Center(
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          20,
-                                        ),
-                                      ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.add,
+                                      size: 48,
+                                      color: AppColors.appBlueColor,
                                     ),
-                                    icon: Icon(Icons.chevron_right),
-                                    label: Text('See more'),
                                     onPressed: () {
-                                      // navigate to full orders page — adjust route if different
-                                      context.push(
-                                        '/sales-orders-list',
-                                      ); // or Navigator.pushNamed(context, '/orders');
+                                      context.push("/add-orders");
                                     },
                                   ),
+                                  Text(
+                                    "Create an order",
+                                    style: TextStyle(
+                                      color: AppColors.appBlueColor,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          Column(
+                            children: [
+                              ...items.value.map(
+                                    (o) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: OrderCardWidget(context, o),
                                 ),
                               ),
-                          ],
-                        ),
+                              if (items.value.length >= 4)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 6,
+                                    bottom: 8,
+                                  ),
+                                  child: Center(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.chevron_right),
+                                      label: const Text('See more'),
+                                      onPressed: () {
+                                        context.push('/sales-orders-list');
+                                      },
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                     ],
                   ),
                 ),
@@ -435,14 +436,13 @@ class SalesUserDashboard extends HookWidget {
 }
 
 /// Loads preview items via repo and updates the provided states.
-/// Kept outside the widget to keep build() tidy.
 Future<void> _loadPreviewForUser(
-  SalesDashboardRepository repo,
-  int userId,
-  ValueNotifier<List<OrderListItem>> items,
-  ValueNotifier<bool> loading,
-  ValueNotifier<String?> error,
-) async {
+    SalesDashboardRepository repo,
+    int userId,
+    ValueNotifier<List<OrderListItem>> items,
+    ValueNotifier<bool> loading,
+    ValueNotifier<String?> error,
+    ) async {
   loading.value = true;
   error.value = null;
   try {
@@ -464,3 +464,36 @@ Future<void> _loadPreviewForUser(
   }
 }
 
+/// Loads stats for the given user id and updates provided state notifiers.
+Future<void> _loadStatsForUser(
+    SalesDashboardRepository repo,
+    int userId,
+    ValueNotifier<OrderStats?> statsState,
+    ValueNotifier<bool> loadingStats,
+    ValueNotifier<String?> statsError,
+    BuildContext ctx,
+    ) async {
+  loadingStats.value = true;
+  statsError.value = null;
+  try {
+    final res = await repo.fetchOrderStats(salesId: userId);
+    if (res is ApiData<OrderStats>) {
+      statsState.value = res.data;
+    } else if (res is ApiError<OrderStats>) {
+      statsError.value = res.message ?? 'Failed to load stats';
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(content: Text(statsError.value!)),
+      );
+    } else {
+      statsError.value = 'Unexpected response';
+    }
+  } catch (e, st) {
+    statsError.value = 'Error loading stats';
+    debugPrint('Stats load error: $e\n$st');
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      const SnackBar(content: Text('Failed to load stats')),
+    );
+  } finally {
+    loadingStats.value = false;
+  }
+}

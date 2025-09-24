@@ -9,7 +9,6 @@ import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_models.dart';
-import '../../../models/user_model/user_model.dart';
 import '../repository/sales_dashboard_repository.dart';
 import 'orders_card.dart'; // adjust path if needed
 
@@ -64,7 +63,7 @@ class SalesOrdersList extends HookWidget {
           if (res is ApiData<PagedResponse<OrderListItem>>) {
             final pageResult = res.data;
 
-            if (pageResult.total != null && totalPages.value == null) {
+            if (totalPages.value == null) {
               totalPages.value =
                   (pageResult.total + pageSize - 1) ~/ pageSize;
               debugPrint(

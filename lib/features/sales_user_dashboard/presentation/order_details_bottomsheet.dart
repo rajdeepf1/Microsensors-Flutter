@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
@@ -13,7 +12,7 @@ class OrderDetailsBottomsheet extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = _statusColor(orderItem.currentStatus).withOpacity(0.12);
+    final cardColor = _statusColor(orderItem.currentStatus).withValues(alpha: 0.12);
 
     // canonical steps (same as timeline widget)
     final steps = <String>[
@@ -216,7 +215,7 @@ Widget _buildStatusChip(String status) {
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.16)),
+      border: Border.all(color: color.withValues(alpha: 0.16)),
     ),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 14, color: color),
@@ -422,9 +421,9 @@ class AnimatedIndicatorHook extends HookWidget {
               color: color,
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: color.withOpacity(0.18), blurRadius: 6, offset: const Offset(0, 2)),
+                BoxShadow(color: color.withValues(alpha: 0.18), blurRadius: 6, offset: const Offset(0, 2)),
               ],
-              border: Border.all(color: Colors.white.withOpacity(0.85), width: 2),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 2),
             ),
             alignment: Alignment.center,
             child: Container(

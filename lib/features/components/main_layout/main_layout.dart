@@ -3,7 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/sizes.dart';
 import '../../../core/app_state.dart';
-import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/constants.dart';
 import '../smart_image/smart_image.dart';

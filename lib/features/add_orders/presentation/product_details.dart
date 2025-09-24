@@ -131,7 +131,7 @@ class SalesProductDetails extends HookWidget {
         final createRes = await repo.createOrder(req);
 
         if (createRes is ApiData<OrderResponse>) {
-          final orderData = createRes.data.data;
+          //final orderData = createRes.data.data;
 
           if (createRes.data.success) {
             ScaffoldMessenger.of(context).showSnackBar(

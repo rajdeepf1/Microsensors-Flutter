@@ -215,7 +215,7 @@ class ProductCardWidget extends StatelessWidget {
       }
     }
 
-    void _openDetailsSheet(BuildContext context) async {
+    void openDetailsSheet(BuildContext context) async {
       final FocusNode productNameFocusNode = FocusNode();
       final enableSaveNotifier = ValueNotifier<bool>(false);
 
@@ -341,7 +341,7 @@ class ProductCardWidget extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ElevatedButton(
-                      onPressed: () {_openDetailsSheet(context);},
+                      onPressed: () {openDetailsSheet(context);},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
@@ -364,7 +364,7 @@ class ProductCardWidget extends StatelessWidget {
               child: Container(
                 width: 120,
                 height: 120,
-                color: accent.withOpacity(0.12),
+                color: accent.withValues(alpha: 0.12),
                 child: avatarUrl != null && avatarUrl!.isNotEmpty
                     ? SmartImage(
                   imageUrl: avatarUrl,

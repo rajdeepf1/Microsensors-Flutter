@@ -1,5 +1,4 @@
 // models/order_models.dart
-import 'package:flutter/foundation.dart';
 import 'package:microsensors/models/orders/status_history_item.dart';
 
 int _toInt(dynamic v) {
@@ -8,22 +7,22 @@ int _toInt(dynamic v) {
   return int.tryParse(v.toString()) ?? 0;
 }
 
-String _toStr(dynamic v) {
-  if (v == null) return '';
-  return v.toString();
-}
-
-DateTime _toDate(dynamic v) {
-  if (v == null) return DateTime.now();
-  try {
-    return DateTime.parse(v.toString()).toLocal();
-  } catch (_) {
-    // fallback: try parsing numeric millis, else now
-    final numVal = int.tryParse(v.toString());
-    if (numVal != null) return DateTime.fromMillisecondsSinceEpoch(numVal).toLocal();
-    return DateTime.now();
-  }
-}
+// String _toStr(dynamic v) {
+//   if (v == null) return '';
+//   return v.toString();
+// }
+//
+// DateTime _toDate(dynamic v) {
+//   if (v == null) return DateTime.now();
+//   try {
+//     return DateTime.parse(v.toString()).toLocal();
+//   } catch (_) {
+//     // fallback: try parsing numeric millis, else now
+//     final numVal = int.tryParse(v.toString());
+//     if (numVal != null) return DateTime.fromMillisecondsSinceEpoch(numVal).toLocal();
+//     return DateTime.now();
+//   }
+// }
 
 class OrderListItem {
   final int orderId;

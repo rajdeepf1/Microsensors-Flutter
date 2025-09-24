@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -84,7 +83,7 @@ class SearchUserDropdown extends HookWidget {
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
                   itemCount: suggestions.value.length,
-                  separatorBuilder: (_, __) => Divider(height: 1),
+                  separatorBuilder: (context, index) => Divider(height: 1),
                   itemBuilder: (context, index) {
                     final user = suggestions.value[index];
                     return ListTile(
@@ -133,7 +132,7 @@ class SearchUserDropdown extends HookWidget {
       final showAbove = availableBelow < maxOverlayHeight && availableAbove > availableBelow;
 
       overlayEntryRef.value = createOverlay(availableAbove, availableBelow, renderBox, showAbove);
-      Overlay.of(context)!.insert(overlayEntryRef.value!);
+      Overlay.of(context).insert(overlayEntryRef.value!);
 
       // update flag so AnimatedSwitcher shows the close icon
       isOverlayOpen.value = true;

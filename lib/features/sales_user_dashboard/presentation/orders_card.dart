@@ -8,7 +8,7 @@ import 'order_details_bottomsheet.dart';
 
 Widget OrderCardWidget(BuildContext context, OrderListItem orderItem) {
 
-  void _openDetailsSheet(BuildContext context) async {
+  void openDetailsSheet(BuildContext context) async {
 
     final bool? result = await showModalBottomSheet(
       context: context,
@@ -64,7 +64,7 @@ Widget OrderCardWidget(BuildContext context, OrderListItem orderItem) {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-          _openDetailsSheet(context);
+          openDetailsSheet(context);
         },
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -201,9 +201,9 @@ Widget _buildStatusChip(String status) {
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.12),
+      color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.16)),
+      border: Border.all(color: color.withValues(alpha: 0.16)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
