@@ -10,6 +10,7 @@ import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/features/sales_user_dashboard/presentation/orders_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
+import '../../../models/orders/sales_order_stats.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
 import '../../../core/local_storage_service.dart';
@@ -31,6 +32,11 @@ class SalesUserDashboard extends HookWidget {
     final items = useState<List<OrderListItem>>([]);
     final loadingPreview = useState<bool>(false);
     final previewError = useState<String?>(null);
+
+    // for stats
+    final statsState = useState<OrderStats?>(null);
+    final loading = useState<bool>(true);
+    final error = useState<String?>(null);
 
     // ---- load stored user and init FCM (runs once) ----
     useEffect(() {
@@ -149,6 +155,20 @@ class SalesUserDashboard extends HookWidget {
           if (initialMessage != null) {
             // launched from notification
           }
+
+          loading.value = true;
+          error.value = null;
+          final res = await repo.fetchOrderStats(salesId: storedUser!.userId);
+          if (res is ApiData<OrderStats>) {
+            statsState.value = res.data;
+          } else if (res is ApiError<OrderStats>) {
+            error.value = res.message ?? 'Failed to load stats';
+          } else {
+            error.value = 'Unexpected response';
+          }
+          loading.value = false;
+
+
         } catch (e) {
           loadingUser.value = false;
           debugPrint('Dashboard FCM/init error: $e');
@@ -203,7 +223,9 @@ class SalesUserDashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Active Orders",
-                      value: "--",
+                      value: loading.value
+                          ? "..."
+                          : (statsState.value != null ? statsState.value!.active.toString() : "--"),
                       icon: Icons.play_for_work,
                       color: Colors.green,
                       width: 180,
@@ -212,7 +234,9 @@ class SalesUserDashboard extends HookWidget {
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "In Production",
-                      value: "--",
+                      value: loading.value
+                          ? "..."
+                          : (statsState.value != null ? statsState.value!.inProduction.toString() : "--"),
                       icon: Icons.factory,
                       color: Colors.blue,
                       width: 180,
@@ -221,7 +245,9 @@ class SalesUserDashboard extends HookWidget {
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "Dispatched",
-                      value: "--",
+                      value: loading.value
+                          ? "..."
+                          : (statsState.value != null ? statsState.value!.dispatched.toString() : "--"),
                       icon: Icons.double_arrow,
                       color: Colors.purple,
                       width: 180,
