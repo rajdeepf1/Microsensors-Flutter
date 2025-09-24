@@ -4,8 +4,53 @@ import 'package:flutter/material.dart';
 import '../../../models/orders/order_models.dart';
 import '../../../utils/constants.dart';
 import '../../components/smart_image/smart_image.dart';
+import 'order_details_bottomsheet.dart';
 
 Widget OrderCardWidget(BuildContext context, OrderListItem orderItem) {
+
+  void _openDetailsSheet(BuildContext context) async {
+
+    final bool? result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // allows full-screen height
+      backgroundColor: Colors.transparent, // to apply rounded corners easily
+      builder: (BuildContext ctx) {
+        // Use FractionallySizedBox to control sheet height (0.95 -> ~full-screen)
+        return FractionallySizedBox(
+          heightFactor: 0.95,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Material(
+              // Material so AppBar / buttons use Material styles
+              color: Colors.white,
+              child: SafeArea(
+                top: false,
+                // keep top as part of the sheet (AppBar handles status)
+                child: Scaffold(
+                  appBar: AppBar(
+                    elevation: 0,
+                    backgroundColor: Colors.white,
+                    iconTheme: const IconThemeData(color: Colors.black),
+                    title: Text(
+                      orderItem.productName,
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    leading: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ),
+                  body: OrderDetailsBottomsheet(orderItem: orderItem,),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+  }
+
 
   return Card(
     elevation: 4,
@@ -19,7 +64,7 @@ Widget OrderCardWidget(BuildContext context, OrderListItem orderItem) {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-
+          _openDetailsSheet(context);
         },
         child: Container(
           padding: const EdgeInsets.all(16),

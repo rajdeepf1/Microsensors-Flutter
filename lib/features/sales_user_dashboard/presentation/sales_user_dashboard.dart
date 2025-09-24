@@ -249,7 +249,7 @@ class SalesUserDashboard extends HookWidget {
                   TextButton(
                     onPressed: () {
                       // navigate to full orders page
-                      // context.push('/orders');
+                       context.push('/sales-orders-list');
                     },
                     child: Text('See All'),
                   ),
