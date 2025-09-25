@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:microsensors/features/dashboard/presentation/dashboard.dart';
 import 'package:microsensors/features/profile/presentation/profile.dart';
 import 'package:microsensors/features/sales_user_dashboard/presentation/sales_user_dashboard.dart';
@@ -7,6 +8,7 @@ import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/utils/colors.dart';
 
 import '../../../core/local_storage_service.dart';
+import '../../production_user_dashboard/presentation/production_user_dashboard.dart';
 
 class AppBottomNavigationBar extends HookWidget {
   const AppBottomNavigationBar({super.key});
@@ -48,9 +50,22 @@ class AppBottomNavigationBar extends HookWidget {
     }
 
     // build pages after we have the user
-    final int storedUserId = localUser.value?.userId ?? 0;
+    final String storedUserRole = localUser.value?.roleName ?? '';
+
+    Widget? screen;
+
+    switch(storedUserRole){
+
+      case 'Admin': screen = Dashboard();
+      case 'Sales': screen = SalesUserDashboard();
+      case 'Production Manager': screen = ProductionUserDashboard();
+
+      default: context.go("/login");
+
+    }
+
     final pages = [
-      Center(child: storedUserId == 1 ? Dashboard() : SalesUserDashboard()),
+      Center(child: screen),
       const Center(child: ProfileScreen()),
     ];
 
