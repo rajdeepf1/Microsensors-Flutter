@@ -11,6 +11,7 @@ enum ScreenType {
   home,
   search,
   tab,
+  home_search
 }
 
 
@@ -156,8 +157,49 @@ class MainLayout extends HookWidget {
             title: Text(title, style: TextStyle(color: AppColors.whiteTextColor)),
             elevation: 5,
             bottom: tabBar,
-      //default:
+        );
 
+      case ScreenType.home_search:
+        return AppBar(
+          toolbarHeight: 100,
+          elevation: 5,
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSizes.userImageRadius),
+                child: SmartImage(
+                  imageUrl: userImage,
+                  baseUrl: Constants.apiBaseUrl,
+                  width: 70,
+                  height: 70,
+                  shape: ImageShape.circle,
+                  username: username,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Hello, $username!",
+                      style: TextStyle(
+                          fontSize: 18, color: AppColors.whiteTextColor)),
+                  Text(role,
+                      style: TextStyle(
+                          fontSize: 14, color: AppColors.whiteTextColor)),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.search, size: 30),
+                onPressed: () => context.push("/production-manager-history-search"),
+              ),
+              IconButton(
+                icon: const Icon(Icons.notifications_none_outlined, size: 30),
+                onPressed: () => context.push("/notification"),
+              ),
+            ],
+          ),
         );
     }
   }

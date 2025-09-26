@@ -103,6 +103,24 @@ class PmOrderDetailsBottomsheet extends HookWidget {
       if (newStatus == null) return;
       if (newStatus == status.value) return;
 
+      // --- BEGIN: guard against disallowed transitions ---
+      final allowedList = orderItem.allowedNextStatuses ?? <String>[];
+      final bool allowedMatch = allowedList.any((s) =>
+      s != null && s.trim().toLowerCase() == newStatus.trim().toLowerCase());
+
+      if (!allowedMatch) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Cannot change status to "$newStatus". Allowed next status${allowedList.length == 1 ? '' : 'es'}: '
+                  '${allowedList.isEmpty ? 'None' : allowedList.join(", ")}',
+            ),
+          ),
+        );
+        return; // abort — do not call API
+      }
+      // --- END guard ---
+
       final prevStatus = status.value;
       final prevStepTimes = Map<String, DateTime?>.from(stepTimesState.value);
 

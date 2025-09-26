@@ -1,5 +1,6 @@
 // lib/services/production_manager_repository.dart
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:microsensors/models/orders/production_manager_change_status_response.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
@@ -19,6 +20,9 @@ class ProductionManagerRepository {
     String? status,
     int page = 0,
     int size = 20,
+    String? q,
+    String? dateFrom,
+    String? dateTo,
   }) async {
     try {
       final params = <String, dynamic>{
@@ -33,6 +37,8 @@ class ProductionManagerRepository {
         'orders/pm/$pmId',
         queryParameters: params,
       );
+
+      debugPrint("RESP----->${response}");
 
       if (response.statusCode == 200) {
         final raw = response.data;

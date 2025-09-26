@@ -1,55 +1,73 @@
-// lib/presentation/production_user_dashboard.dart
-import 'dart:async';
-
-import 'package:firebase_messaging/firebase_messaging.dart';
+// lib/features/production_user_dashboard/presentation/production_manager_history_search.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-import 'package:microsensors/core/api_state.dart';
-import 'package:microsensors/core/local_storage_service.dart';
+import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/features/production_user_dashboard/presentation/pm_order_details_bottomsheet.dart';
-import 'package:microsensors/models/orders/production_manager_order_list.dart'; // PmOrderListItem & PagedResponse
-import 'package:microsensors/models/user_model/user_model.dart';
-import 'package:microsensors/services/fcm_service.dart';
 
+import '../../../core/api_state.dart';
+import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_models.dart';
-import '../../../models/orders/production_manager_stats.dart';
+import '../../../models/orders/production_manager_order_list.dart';
+import '../../../models/user_model/user_model.dart';
+import '../../../utils/constants.dart';
+import '../../components/smart_image/smart_image.dart';
 import '../repository/production_manager_repo.dart';
 
-// If you have a SmartImage component / OrderDetailsBottomsheet adjust imports:
-import '../../components/smart_image/smart_image.dart';
-import '../../../utils/constants.dart';
-
-/// Production manager dashboard:
-/// - Top horizontal status pills (with counts)
-/// - Beautiful list of orders filtered by status using card design from reference
-class ProductionUserDashboard extends HookWidget {
-  const ProductionUserDashboard({super.key});
+class ProductionManagerHistorySearch extends HookWidget {
+  const ProductionManagerHistorySearch({super.key});
 
   @override
   Widget build(BuildContext context) {
     final repo = useMemoized(() => ProductionManagerRepository());
-    final fcmService = useMemoized(() => FcmService());
-
-    // Reactive state
     final productionManager = useState<UserDataModel?>(null);
-    final counts = useState<Map<String, int>>({});
     final paged = useState<PagedResponse<PmOrderListItem>?>(null);
-    final activeStatus = useState<String>('Created');
-
-    final loadingStats = useState<bool>(true);
     final loadingOrders = useState<bool>(true);
     final error = useState<String?>(null);
 
-    const statuses = [
-      'Created',
-      'Received',
-      'Production Started',
-      'Production Completed',
-      'Dispatched',
-      'Acknowledged',
-    ];
+    Future<void> _loadOrders() async {
+      loadingOrders.value = true;
+      error.value = null;
+      try {
+        final pmId = productionManager.value?.userId;
+        if (pmId == null) {
+          // no PM available yet — nothing to load
+          loadingOrders.value = false;
+          return;
+        }
+        final ApiState<PagedResponse<PmOrderListItem>> resp =
+        await repo.fetchOrders(pmId: pmId, page: 0, size: 20);
+        if (resp is ApiData<PagedResponse<PmOrderListItem>>) {
+          paged.value = resp.data;
+        } else if (resp is ApiError<PagedResponse<PmOrderListItem>>) {
+          error.value = resp.message;
+        }
+      } catch (e) {
+        error.value = 'Failed to load orders: $e';
+      } finally {
+        loadingOrders.value = false;
+      }
+    }
+
+    // Proper useEffect pattern: create inner async function and call it
+    useEffect(() {
+      var mounted = true;
+      () async {
+        try {
+          final stored = await LocalStorageService().getUser();
+          if (!mounted) return;
+          productionManager.value = stored;
+          // only load orders after productionManager is set (or attempted)
+          await _loadOrders();
+        } catch (e) {
+          if (!mounted) return;
+          error.value = 'Init error: $e';
+        }
+      }();
+      return () {
+        mounted = false;
+      };
+    }, const []);
 
     // ---------------------------
     // Small UI helpers (declare before use)
@@ -92,7 +110,7 @@ class ProductionUserDashboard extends HookWidget {
       if (diff.inDays < 7) return '${diff.inDays}d';
       final weeks = (diff.inDays / 7).floor();
       if (weeks < 4) return '${weeks}w';
-      return '${date.day}/${date.month}/${date.year}';
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
     }
 
     Widget _buildStatusChip(String status) {
@@ -123,62 +141,6 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-    // ---------------------------
-    // Data helpers (load from repo)
-    // ---------------------------
-    Future<void> _loadStats() async {
-      loadingStats.value = true;
-      error.value = null;
-      try {
-        final pmId = productionManager.value?.userId;
-        if (pmId == null) {
-          loadingStats.value = false;
-          return;
-        }
-        final ApiState<PmOrderStats> resp = await repo.fetchStats(pmId: pmId);
-        if (resp is ApiData<PmOrderStats>) {
-          counts.value = resp.data.toMap();
-        } else if (resp is ApiError<PmOrderStats>) {
-          error.value = resp.message;
-        }
-      } catch (e) {
-        error.value = 'Failed to load stats: $e';
-      } finally {
-        loadingStats.value = false;
-      }
-    }
-
-    Future<void> _loadOrders(String status) async {
-      loadingOrders.value = true;
-      error.value = null;
-      try {
-        final pmId = productionManager.value?.userId;
-        if (pmId == null) {
-          loadingOrders.value = false;
-          return;
-        }
-        final ApiState<PagedResponse<PmOrderListItem>> resp =
-        await repo.fetchOrders(pmId: pmId, status: status, page: 0, size: 50);
-        if (resp is ApiData<PagedResponse<PmOrderListItem>>) {
-          // PagedResponse should expose `content` list
-          paged.value = resp.data;
-        } else if (resp is ApiError<PagedResponse<PmOrderListItem>>) {
-          error.value = resp.message;
-        }
-      } catch (e) {
-        error.value = 'Failed to load orders: $e';
-      } finally {
-        loadingOrders.value = false;
-      }
-    }
-
-    Future<void> _loadAll() async {
-      await Future.wait([_loadStats(), _loadOrders(activeStatus.value)]);
-    }
-
-    // ---------------------------
-    // Card widget (reference look)
-    // ---------------------------
     Widget orderCard(BuildContext ctx, PmOrderListItem item) {
       final accent = _statusColor(item.currentStatus);
 
@@ -211,7 +173,7 @@ class ProductionUserDashboard extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      body: PmOrderDetailsBottomsheet(orderItem: item,),
+                      body: PmOrderDetailsBottomsheet(orderItem: item),
                     ),
                   ),
                 ),
@@ -220,10 +182,10 @@ class ProductionUserDashboard extends HookWidget {
           },
         );
 
-        // if bottomsheet returned true -> indicates something changed -> you can refresh
+        // currently you don't process the result here; if you want to refresh
+        // when bottomsheet returns true, you can do:
         if (result == true) {
-          await _loadStats();
-          await _loadOrders(activeStatus.value);
+          await _loadOrders();
         }
       }
 
@@ -236,7 +198,7 @@ class ProductionUserDashboard extends HookWidget {
           borderRadius: BorderRadius.circular(20),
           child: InkWell(
             borderRadius: BorderRadius.circular(20),
-             onTap: openDetailsSheet,
+            onTap: openDetailsSheet,
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
@@ -251,9 +213,6 @@ class ProductionUserDashboard extends HookWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-
-                  // thumbnail
-                  //_productAvatar(item),
 
                   SmartImage(
                     imageUrl: item.productImage,
@@ -359,161 +318,6 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-
-
-    // ---------------------------
-    // useEffect: FCM init + initial load
-    // ---------------------------
-    useEffect(() {
-      StreamSubscription<RemoteMessage>? onMessageSub;
-      StreamSubscription<String>? tokenRefreshSub;
-      StreamSubscription<RemoteMessage>? openedAppSub;
-
-      final FlutterLocalNotificationsPlugin localNotifications =
-      FlutterLocalNotificationsPlugin();
-      const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
-        'high_importance_channel',
-        'High Importance Notifications',
-        description: 'Used for important notifications.',
-        importance: Importance.max,
-      );
-
-      Future<void> showLocalNotification(RemoteMessage message) async {
-        final notification = message.notification;
-        if (notification == null) return;
-        final details = NotificationDetails(
-          android: AndroidNotificationDetails(
-            androidChannel.id,
-            androidChannel.name,
-            channelDescription: androidChannel.description,
-            icon: '@mipmap/ic_launcher',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        );
-        await localNotifications.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          details,
-          payload: message.data.isNotEmpty ? message.data.toString() : null,
-        );
-      }
-
-      // async init
-      () async {
-        try {
-          final storedUser = await LocalStorageService().getUser();
-          productionManager.value = storedUser;
-
-          // initialize local notifications plugin
-          const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-          final initSettings = InitializationSettings(android: androidInit);
-          await localNotifications.initialize(initSettings);
-
-          // request permission and get token
-          final messaging = FirebaseMessaging.instance;
-          await messaging.requestPermission(alert: true, badge: true, sound: true);
-          final token = await messaging.getToken();
-
-          if (token != null && storedUser != null) {
-            final ApiState<UserDataModel> res = await fcmService.registerToken(
-              userId: storedUser.userId,
-              token: token,
-            );
-            if (res is ApiData<UserDataModel>) {
-              await LocalStorageService().saveUser(res.data);
-              productionManager.value = res.data;
-            }
-          }
-
-          // listeners
-          onMessageSub = FirebaseMessaging.onMessage.listen(showLocalNotification);
-          tokenRefreshSub =
-              FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-                final currentStored = await LocalStorageService().getUser();
-                if (currentStored != null) {
-                  final refreshRes = await fcmService.registerToken(
-                    userId: currentStored.userId,
-                    token: newToken,
-                  );
-                  if (refreshRes is ApiData<UserDataModel>) {
-                    await LocalStorageService().saveUser(refreshRes.data);
-                    productionManager.value = refreshRes.data;
-                  }
-                }
-              });
-
-          openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
-            // handle navigation from notification if needed
-          });
-
-          // load after user is set (if any)
-          await _loadAll();
-        } catch (e, st) {
-          debugPrint('Dashboard init error: $e\n$st');
-          await _loadAll();
-        }
-      }();
-
-      return () {
-        onMessageSub?.cancel();
-        tokenRefreshSub?.cancel();
-        openedAppSub?.cancel();
-      };
-    }, const []); // run once
-
-    // ---------------------------
-    // Build UI pieces that use helpers above
-    // ---------------------------
-    Widget buildChips() {
-      if (loadingStats.value) {
-        return const SizedBox(height: 72, child: Center(child: CircularProgressIndicator()));
-      }
-
-      return SizedBox(
-        height: 72,
-        child: ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          scrollDirection: Axis.horizontal,
-          itemCount: statuses.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, i) {
-            final s = statuses[i];
-            final selected = s == activeStatus.value;
-            final count = counts.value[s] ?? 0;
-            return ChoiceChip(
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(s, style: TextStyle(color: selected ? Colors.white : Colors.black87)),
-                  const SizedBox(width: 6),
-                  CircleAvatar(
-                    radius: 10,
-                    backgroundColor: selected ? Colors.white : Colors.black26,
-                    child: Text(
-                      count.toString(),
-                      style: TextStyle(fontSize: 12, color: selected ? Colors.black : Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              selected: selected,
-              onSelected: (_) async {
-                if (activeStatus.value == s) return;
-                activeStatus.value = s;
-                await _loadOrders(s);
-                await _loadStats();
-              },
-              selectedColor: _statusColor(s),
-              backgroundColor: Colors.grey.shade200,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            );
-          },
-        ),
-      );
-    }
-
     Widget buildList() {
       if (loadingOrders.value) {
         return const Center(child: CircularProgressIndicator());
@@ -522,17 +326,11 @@ class ProductionUserDashboard extends HookWidget {
         return Center(child: Text('Error: ${error.value}'));
       }
 
-      // prefer `content` field on PagedResponse if your repository maps that
       final items = paged.value?.data ?? [];
-
-      if (items.isEmpty) {
-        return Center(child: Text('No orders in "${activeStatus.value}"'));
-      }
 
       return RefreshIndicator(
         onRefresh: () async {
-          await _loadStats();
-          await _loadOrders(activeStatus.value);
+          await _loadOrders();
         },
         child: ListView.separated(
           padding: const EdgeInsets.all(12),
@@ -546,16 +344,6 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-    // ---------------------------
-    // Final scaffold
-    // ---------------------------
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        buildChips(),
-        const Divider(height: 1),
-        Expanded(child: buildList()),
-      ],
-    );
+    return MainLayout(title: "Search", screenType: ScreenType.search, child: buildList());
   }
 }
