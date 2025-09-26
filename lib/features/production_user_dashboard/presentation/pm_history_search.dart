@@ -30,6 +30,16 @@ class ProductionManagerHistorySearch extends HookWidget {
     final totalPages = useState<int?>(null);
     final searchQuery = useState<String>('');
     final debounceRef = useRef<Timer?>(null);
+    final dateRange = useState<DateTimeRange?>(null);
+
+    String? _formatDateForApi(DateTime? dt) {
+      if (dt == null) return null;
+      // backend usually expects yyyy-MM-dd
+      final y = dt.year.toString().padLeft(4, '0');
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      return '$y-$m-$d';
+    }
 
     // PagingController constructed in same style as SalesOrdersList
     final pagingController = useMemoized(
@@ -58,6 +68,8 @@ class ProductionManagerHistorySearch extends HookWidget {
             page: pageKey,
             size: pageSize,
             q: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+            dateFrom: _formatDateForApi(dateRange.value?.start),
+            dateTo: _formatDateForApi(dateRange.value?.end),
           );
 
           if (res is ApiError<PagedResponse<PmOrderListItem>>) {
@@ -79,8 +91,19 @@ class ProductionManagerHistorySearch extends HookWidget {
           return <PmOrderListItem>[];
         },
       ),
-      [repo, searchQuery.value],
+      [repo, searchQuery.value,dateRange.value],
     );
+
+
+
+    void _onDateRangeChanged(DateTimeRange? picked) {
+      // store date range and refresh list
+      dateRange.value = picked;
+      totalPages.value = null; // reset cached total pages
+      try {
+        pagingController.refresh();
+      } catch (_) {}
+    }
 
     // initial fetch on mount
     useEffect(() {
@@ -115,6 +138,9 @@ class ProductionManagerHistorySearch extends HookWidget {
         } catch (_) {}
       });
     }
+
+
+
 
     // ---------- UI helpers (kept from your original) ----------
     Color _statusColor(String? status) {
@@ -366,8 +392,9 @@ class ProductionManagerHistorySearch extends HookWidget {
     // Build UI using PagingListener so builder has (context, state, fetchNextPage)
     return MainLayout(
       title: "Search History",
-      screenType: ScreenType.search,
+      screenType: ScreenType.search_calender,
       onSearchChanged: onSearchChanged,
+      onDateRangeChanged: _onDateRangeChanged,
       child: PagingListener<int, PmOrderListItem>(
         controller: pagingController,
         builder: (context, state, fetchNextPage) {
