@@ -115,6 +115,7 @@ flutter:
      - assets/images/user.png
      - assets/animations/adduser.json
      - assets/animations/addproduct.json
+     - assets/animations/orderactivity.json
 #     - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

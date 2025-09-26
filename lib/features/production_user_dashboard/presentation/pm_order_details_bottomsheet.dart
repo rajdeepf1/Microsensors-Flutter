@@ -99,15 +99,6 @@ class PmOrderDetailsBottomsheet extends HookWidget {
       buildInitialStepTimes(),
     );
 
-    // show simple loading dialog
-    void _showLoadingDialog() {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
-    }
-
     // when user selects a status from dropdown: update status and set timestamp now + call backend
     Future<void> onStatusSelected(String? newStatus) async {
       if (newStatus == null) return;
@@ -442,7 +433,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                     UserInfoEditField(
                       text: "Status",
                       child: DropdownButtonFormField<String>(
-                        value: status.value,
+                        initialValue: status.value,
                         items: statusItems,
                         icon: const Icon(Icons.expand_more),
                         onChanged:
@@ -454,7 +445,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                         decoration: InputDecoration(
                           hintText: 'Select Status',
                           filled: true,
-                          fillColor: AppColors.appBlueColor.withOpacity(0.05),
+                          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16.0 * 1.5,
                             vertical: 16.0,
@@ -510,9 +501,9 @@ Widget _buildStatusChip(String? status) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.12),
+      color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.16)),
+      border: Border.all(color: color.withValues(alpha: 0.16)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
@@ -603,14 +594,6 @@ String _timeAgo(dynamic dt) {
   final weeks = (diff.inDays / 7).floor();
   if (weeks < 4) return '${weeks}w';
   return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-}
-
-String _initials(String? name) {
-  final n = (name ?? '').trim();
-  if (n.isEmpty) return 'P';
-  final parts = n.split(RegExp(r'\s+'));
-  if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 /// ZigZagTicketClipper (unchanged logic but fixed types)
@@ -745,13 +728,13 @@ class AnimatedIndicatorHook extends HookWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.18),
+                  color: color.withValues(alpha: 0.18),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ],
               border: Border.all(
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
                 width: 2,
               ),
             ),

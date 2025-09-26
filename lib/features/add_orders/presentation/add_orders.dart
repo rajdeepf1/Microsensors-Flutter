@@ -60,7 +60,7 @@ class AddOrders extends HookWidget {
           final result = await repo.fetchProductsPage(
             page: pageKey,
             pageSize: pageSize,
-            search: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+            search: searchQuery.value.isNotEmpty ? _normalizeSearch(searchQuery.value) : null,
             dateFrom: _formatDateForApi(dateRange.value?.start),
             dateTo: _formatDateForApi(dateRange.value?.end),
           );

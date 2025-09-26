@@ -1,9 +1,9 @@
-// lib/features/production_user_dashboard/presentation/production_manager_history_search.dart
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:microsensors/features/components/main_layout/main_layout.dart';
+import 'package:microsensors/features/dashboard/repository/dashboard_repository.dart';
 import 'package:microsensors/features/production_user_dashboard/presentation/pm_order_details_bottomsheet.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
@@ -11,14 +11,15 @@ import '../../../models/orders/order_models.dart';
 import '../../../models/orders/production_manager_order_list.dart';
 import '../../../utils/constants.dart';
 import '../../components/smart_image/smart_image.dart';
-import '../repository/production_manager_repo.dart';
 
-class ProductionManagerHistorySearch extends HookWidget {
-  const ProductionManagerHistorySearch({super.key});
+class OrderActivities extends HookWidget {
+
+  const OrderActivities({super.key});
+
 
   @override
   Widget build(BuildContext context) {
-    final repo = useMemoized(() => ProductionManagerRepository());
+    final repo = useMemoized(() => DashboardRepository());
 
     const int pageSize = 20;
     const int initialPage = 0; // backend expects 0-based
@@ -54,13 +55,12 @@ class ProductionManagerHistorySearch extends HookWidget {
           return lastKey + 1;
         },
         fetchPage: (int pageKey) async {
-          debugPrint('PMHistory.fetchPage: page=$pageKey, q="${searchQuery.value}"');
+          debugPrint('History.fetchPage: page=$pageKey, q="${searchQuery.value}"');
 
           final storedUser = await LocalStorageService().getUser();
           if (storedUser == null) throw Exception('No stored user');
 
           final res = await repo.fetchOrders(
-            pmId: storedUser.userId,
             page: pageKey,
             size: pageSize,
             q: searchQuery.value.isNotEmpty ? searchQuery.value : null,
@@ -78,7 +78,7 @@ class ProductionManagerHistorySearch extends HookWidget {
             if (totalPages.value == null) {
               final tot = pageResult.total ?? 0;
               totalPages.value = tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
-              debugPrint('PMHistory: totalPages=${totalPages.value}, total=${pageResult.total}');
+              debugPrint('History: totalPages=${totalPages.value}, total=${pageResult.total}');
             }
 
             return pageResult.data ?? <PmOrderListItem>[];
@@ -367,6 +367,11 @@ class ProductionManagerHistorySearch extends HookWidget {
                                     'Assigned by: ${item.salesPersonName ?? "Unassigned"}',
                                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                                   ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Assigned to: ${item.productionManagerName ?? "Unassigned"}',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  ),
                                 ],
                               ),
                             ),
@@ -387,7 +392,7 @@ class ProductionManagerHistorySearch extends HookWidget {
 
     // Build UI using PagingListener so builder has (context, state, fetchNextPage)
     return MainLayout(
-      title: "Search History",
+      title: "Order Activities",
       screenType: ScreenType.search_calender,
       onSearchChanged: onSearchChanged,
       onDateRangeChanged: _onDateRangeChanged,

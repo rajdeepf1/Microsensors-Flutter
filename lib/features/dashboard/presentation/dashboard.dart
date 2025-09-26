@@ -28,6 +28,24 @@ class Dashboard extends HookWidget {
     final usersState = useState<ApiState<List<UserDataModel>>>(const ApiInitial());
     final productsState = useState<ApiState<List<ProductDataModel>>>(const ApiInitial());
 
+    final countState = useState<int?>(null);
+    final loading = useState<bool>(false);
+    final error = useState<String?>(null);
+
+    Future<void> loadOrders() async {
+      loading.value = true;
+      error.value = null;
+      try {
+        final cnt = await repo.fetchOrdersCount();
+        countState.value = cnt;
+      } catch (e) {
+        error.value = e.toString();
+        countState.value = null;
+      } finally {
+        loading.value = false;
+      }
+    }
+
     // load both counts
     Future<void> loadAll() async {
       usersState.value = const ApiLoading();
@@ -35,7 +53,12 @@ class Dashboard extends HookWidget {
 
       usersState.value = await repo.fetchUsers();
       productsState.value = await repo.fetchProducts();
+
+      loadOrders();
     }
+
+
+
 
     // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
@@ -207,7 +230,7 @@ class Dashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Orders",
-                      value: "--",
+                      value: countState.value.toString() ?? "--",
                       icon: Icons.shopping_cart,
                       color: Colors.green,
                       onTap: () {},
@@ -267,6 +290,28 @@ class Dashboard extends HookWidget {
                   context.push("/products");
                 },
               ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                "Orders Activities",
+                style: TextStyle(
+                    color: AppColors.headingTextColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+
+              ProductsLottieCard(
+                lottiePath: "assets/animations/orderactivity.json",
+                icon: Icons.shopping_cart,
+                label: "Activities",
+                onTap: () {
+                  context.push("/order-activities");
+                },
+              ),
+
+              SizedBox(height: 50,)
+
             ],
           ),
         ),

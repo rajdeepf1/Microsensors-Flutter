@@ -4,6 +4,7 @@ import 'package:microsensors/features/add_orders/presentation/add_orders.dart';
 import 'package:microsensors/features/add_product/presentation/add_product.dart';
 import 'package:microsensors/features/add_user/presentation/add_user.dart';
 import 'package:microsensors/features/auth/presentation/email_password_login_screen.dart';
+import 'package:microsensors/features/dashboard/presentation/order_activities.dart';
 import 'package:microsensors/features/my_account/presentation/my_account.dart';
 import 'package:microsensors/features/notification/presentation/notification.dart';
 import 'package:microsensors/features/product_list/presentation/product_list.dart';
@@ -79,6 +80,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/production-manager-history-search',
         builder: (context, state) => ProductionManagerHistorySearch(),
+      ),
+      GoRoute(
+        path: '/order-activities',
+        builder: (context, state) => OrderActivities(),
       ),
     ],
   );

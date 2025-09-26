@@ -423,7 +423,7 @@ class ProductCardWidget extends StatelessWidget {
               child: Container(
                 width: 120,
                 height: 120,
-                color: accent.withOpacity(0.12),
+                color: accent.withValues(alpha: 0.12),
                 child: SmartImage(
                   imageUrl: avatarUrl,
                   baseUrl: Constants.apiBaseUrl,

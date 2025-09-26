@@ -477,7 +477,7 @@ class ProductionUserDashboard extends HookWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           scrollDirection: Axis.horizontal,
           itemCount: statuses.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          separatorBuilder: (context, i) => const SizedBox(width: 8),
           itemBuilder: (context, i) {
             final s = statuses[i];
             final selected = s == activeStatus.value;
@@ -537,7 +537,7 @@ class ProductionUserDashboard extends HookWidget {
         child: ListView.separated(
           padding: const EdgeInsets.all(12),
           itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (context, idx) => const SizedBox(height: 12),
           itemBuilder: (context, idx) {
             final o = items[idx];
             return orderCard(context, o);

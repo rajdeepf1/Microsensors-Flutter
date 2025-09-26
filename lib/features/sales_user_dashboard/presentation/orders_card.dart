@@ -6,7 +6,7 @@ import '../../../utils/constants.dart';
 import '../../components/smart_image/smart_image.dart';
 import 'order_details_bottomsheet.dart';
 
-Widget OrderCardWidget(BuildContext context, OrderListItem orderItem) {
+Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
 
   void openDetailsSheet(BuildContext context) async {
 

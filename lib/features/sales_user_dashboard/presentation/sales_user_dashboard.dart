@@ -372,7 +372,7 @@ class SalesUserDashboard extends HookWidget {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 8,
                                   ),
-                                  child: OrderCardWidget(context, o),
+                                  child: orderCardWidget(context, o),
                                 ),
                               ),
                               if (items.value.length >= 4)

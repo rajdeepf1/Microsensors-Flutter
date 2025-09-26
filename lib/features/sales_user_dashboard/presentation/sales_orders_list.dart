@@ -163,7 +163,7 @@ class SalesOrdersList extends HookWidget {
               itemBuilder: (context, order, index) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: OrderCardWidget(context, order),
+                  child: orderCardWidget(context, order),
                 );
               },
               firstPageProgressIndicatorBuilder: (_) =>
