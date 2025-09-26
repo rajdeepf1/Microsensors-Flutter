@@ -26,6 +26,22 @@ class AddOrders extends HookWidget {
     final totalPages = useState<int?>(null);
     final searchQuery = useState<String>("");
     final debounceRef = useRef<Timer?>(null);
+    final dateRange = useState<DateTimeRange?>(null);
+
+    String? _normalizeSearch(String? q) {
+      if (q == null) return null;
+      final t = q.trim();
+      return t.isEmpty ? null : t;
+    }
+
+    String? _formatDateForApi(DateTime? dt) {
+      if (dt == null) return null;
+      final y = dt.year.toString().padLeft(4, '0');
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      return '$y-$m-$d';
+    }
+
 
     // paging controller: v5 constructor requires getNextPageKey and fetchPage
     final pagingController = useMemoized(
@@ -45,6 +61,8 @@ class AddOrders extends HookWidget {
             page: pageKey,
             pageSize: pageSize,
             search: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+            dateFrom: _formatDateForApi(dateRange.value?.start),
+            dateTo: _formatDateForApi(dateRange.value?.end),
           );
 
           if (result is ApiError<ProductPageResult>) {
@@ -71,8 +89,16 @@ class AddOrders extends HookWidget {
         },
       ),
       // recreate controller when repo or searchQuery changes so new query starts fresh
-      [repo, searchQuery.value],
+      [repo, searchQuery.value, dateRange.value],
     );
+
+    void _onDateRangeChanged(DateTimeRange? picked) {
+      dateRange.value = picked;
+      totalPages.value = null;
+      try {
+        pagingController.refresh();
+      } catch (_) {}
+    }
 
     // When the controller is created/recreated, refresh first page and ensure dispose
     useEffect(() {
@@ -93,6 +119,8 @@ class AddOrders extends HookWidget {
       };
     }, [pagingController]);
 
+
+
     // Debounced search callback to be passed to MainLayout
     void onSearchChanged(String q) {
       debounceRef.value?.cancel();
@@ -110,8 +138,9 @@ class AddOrders extends HookWidget {
 
     return MainLayout(
       title: "Add Orders",
-      screenType: ScreenType.search,
+      screenType: ScreenType.search_calender,
       onSearchChanged: onSearchChanged, // wire up the AppBar textfield -> this callback
+      onDateRangeChanged: _onDateRangeChanged,
       child: PagingListener<int, ProductDataModel>(
         controller: pagingController,
         builder: (context, state, fetchNextPage) {

@@ -21,16 +21,18 @@ class SalesProductListRepository {
   Future<ApiState<ProductPageResult>> fetchProductsPage({
     required int page,
     required int pageSize,
-    String? status,
-    String? search
+    String? search,
+    String? dateFrom,
+    String? dateTo,
   }) async {
     try {
       final params = <String, dynamic>{
         'page': page,
         'pageSize': pageSize,
       };
-      if (status != null) params['status'] = status;
       if (search != null && search.isNotEmpty) params['q'] = search;
+      if (dateFrom != null && dateFrom.isNotEmpty) params['dateFrom'] = dateFrom;
+      if (dateTo != null && dateTo.isNotEmpty) params['dateTo'] = dateTo;
 
       final response = await _client.get('products', queryParameters: params);
 
