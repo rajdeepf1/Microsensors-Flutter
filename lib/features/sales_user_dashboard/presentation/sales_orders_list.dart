@@ -25,6 +25,17 @@ class SalesOrdersList extends HookWidget {
     final totalPages = useState<int?>(null);
     final searchQuery = useState<String>("");
     final debounceRef = useRef<Timer?>(null);
+    final dateRange = useState<DateTimeRange?>(null);
+
+    String? _formatDateForApi(DateTime? dt) {
+      if (dt == null) return null;
+      final y = dt.year.toString().padLeft(4, '0');
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      return '$y-$m-$d';
+    }
+
+
 
     final pagingController = useMemoized(
           () => PagingController<int, OrderListItem>(
@@ -54,6 +65,8 @@ class SalesOrdersList extends HookWidget {
             page: pageKey,
             size: pageSize,
             q: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+            dateFrom: _formatDateForApi(dateRange.value?.start),
+            dateTo: _formatDateForApi(dateRange.value?.end),
           );
 
           if (res is ApiError<PagedResponse<OrderListItem>>) {
@@ -76,8 +89,16 @@ class SalesOrdersList extends HookWidget {
           return <OrderListItem>[];
         },
       ),
-      [repo, searchQuery.value],
+      [repo, searchQuery.value, dateRange.value],
     );
+
+    void _onDateRangeChanged(DateTimeRange? picked) {
+      dateRange.value = picked;
+      totalPages.value = null;
+      try {
+        pagingController.refresh();
+      } catch (_) {}
+    }
 
     useEffect(() {
       try {
@@ -111,8 +132,9 @@ class SalesOrdersList extends HookWidget {
 
     return MainLayout(
       title: 'Orders',
-      screenType: ScreenType.search,
+      screenType: ScreenType.search_calender,
       onSearchChanged: onSearchChanged,
+      onDateRangeChanged: _onDateRangeChanged,
       child: PagingListener<int, OrderListItem>(
         controller: pagingController,
         builder: (context, state, fetchNextPage) {
