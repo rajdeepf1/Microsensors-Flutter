@@ -29,16 +29,30 @@ class ProductionManagerRepository {
         'page': page,
         'size': size,
       };
+
+      // add optional filters only when provided
       if (status != null && status.isNotEmpty) {
         params['status'] = status;
       }
+      if (q != null && q.isNotEmpty) {
+        params['q'] = q;
+      }
+      if (dateFrom != null && dateFrom.isNotEmpty) {
+        params['dateFrom'] = dateFrom;
+      }
+      if (dateTo != null && dateTo.isNotEmpty) {
+        params['dateTo'] = dateTo;
+      }
+
+      // debug: print final URI (handy while testing)
+      debugPrint('GET orders/pm/$pmId params: $params');
 
       final response = await _client.get(
         'orders/pm/$pmId',
         queryParameters: params,
       );
 
-      debugPrint("RESP----->${response}");
+      debugPrint("RESP status=${response.statusCode} data=${response.data}");
 
       if (response.statusCode == 200) {
         final raw = response.data;
@@ -57,8 +71,7 @@ class ProductionManagerRepository {
       }
       return ApiError('Server error: ${response.statusCode}');
     } on DioException catch (e) {
-      final msg = (e.response?.data is Map &&
-          e.response!.data['error'] != null)
+      final msg = (e.response?.data is Map && e.response!.data['error'] != null)
           ? e.response!.data['error'].toString()
           : e.message ?? 'Network error';
       return ApiError(msg, error: e);
@@ -66,6 +79,7 @@ class ProductionManagerRepository {
       return ApiError('Unexpected error: $e', error: e, stackTrace: st);
     }
   }
+
 
   Future<ApiState<PmOrderStats>> fetchStats({
     required int pmId,

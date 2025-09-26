@@ -1,7 +1,10 @@
 // lib/features/production_user_dashboard/presentation/production_manager_history_search.dart
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+
 import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/features/production_user_dashboard/presentation/pm_order_details_bottomsheet.dart';
 
@@ -20,58 +23,100 @@ class ProductionManagerHistorySearch extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final repo = useMemoized(() => ProductionManagerRepository());
-    final productionManager = useState<UserDataModel?>(null);
-    final paged = useState<PagedResponse<PmOrderListItem>?>(null);
-    final loadingOrders = useState<bool>(true);
-    final error = useState<String?>(null);
 
-    Future<void> _loadOrders() async {
-      loadingOrders.value = true;
-      error.value = null;
+    const int pageSize = 20;
+    const int initialPage = 0; // backend expects 0-based
+
+    final totalPages = useState<int?>(null);
+    final searchQuery = useState<String>('');
+    final debounceRef = useRef<Timer?>(null);
+
+    // PagingController constructed in same style as SalesOrdersList
+    final pagingController = useMemoized(
+          () => PagingController<int, PmOrderListItem>(
+        getNextPageKey: (PagingState<int, PmOrderListItem> state) {
+          if (state.pages == null || state.pages!.isEmpty) return initialPage;
+
+          final lastKey = (state.keys?.isNotEmpty ?? false)
+              ? state.keys!.last
+              : (initialPage + state.pages!.length - 1);
+
+          if (totalPages.value != null && lastKey >= (totalPages.value! - 1)) {
+            return null;
+          }
+
+          return lastKey + 1;
+        },
+        fetchPage: (int pageKey) async {
+          debugPrint('PMHistory.fetchPage: page=$pageKey, q="${searchQuery.value}"');
+
+          final storedUser = await LocalStorageService().getUser();
+          if (storedUser == null) throw Exception('No stored user');
+
+          final res = await repo.fetchOrders(
+            pmId: storedUser.userId,
+            page: pageKey,
+            size: pageSize,
+            q: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+          );
+
+          if (res is ApiError<PagedResponse<PmOrderListItem>>) {
+            throw Exception(res.message ?? 'API error');
+          }
+
+          if (res is ApiData<PagedResponse<PmOrderListItem>>) {
+            final pageResult = res.data;
+
+            if (totalPages.value == null) {
+              final tot = pageResult.total ?? 0;
+              totalPages.value = tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
+              debugPrint('PMHistory: totalPages=${totalPages.value}, total=${pageResult.total}');
+            }
+
+            return pageResult.data ?? <PmOrderListItem>[];
+          }
+
+          return <PmOrderListItem>[];
+        },
+      ),
+      [repo, searchQuery.value],
+    );
+
+    // initial fetch on mount
+    useEffect(() {
       try {
-        final pmId = productionManager.value?.userId;
-        if (pmId == null) {
-          // no PM available yet — nothing to load
-          loadingOrders.value = false;
-          return;
-        }
-        final ApiState<PagedResponse<PmOrderListItem>> resp =
-        await repo.fetchOrders(pmId: pmId, page: 0, size: 20);
-        if (resp is ApiData<PagedResponse<PmOrderListItem>>) {
-          paged.value = resp.data;
-        } else if (resp is ApiError<PagedResponse<PmOrderListItem>>) {
-          error.value = resp.message;
-        }
-      } catch (e) {
-        error.value = 'Failed to load orders: $e';
-      } finally {
-        loadingOrders.value = false;
+        pagingController.fetchNextPage();
+      } catch (_) {
+        try {
+          pagingController.refresh();
+        } catch (_) {}
       }
+
+      return () {
+        debounceRef.value?.cancel();
+        try {
+          pagingController.dispose();
+        } catch (_) {}
+      };
+    }, [pagingController]);
+
+    // search change handler
+    void onSearchChanged(String q) {
+      debounceRef.value?.cancel();
+      debounceRef.value = Timer(const Duration(milliseconds: 400), () {
+        final trimmed = q.trim();
+        if (trimmed == searchQuery.value) return;
+
+        searchQuery.value = trimmed;
+        totalPages.value = null;
+
+        try {
+          pagingController.refresh();
+        } catch (_) {}
+      });
     }
 
-    // Proper useEffect pattern: create inner async function and call it
-    useEffect(() {
-      var mounted = true;
-      () async {
-        try {
-          final stored = await LocalStorageService().getUser();
-          if (!mounted) return;
-          productionManager.value = stored;
-          // only load orders after productionManager is set (or attempted)
-          await _loadOrders();
-        } catch (e) {
-          if (!mounted) return;
-          error.value = 'Init error: $e';
-        }
-      }();
-      return () {
-        mounted = false;
-      };
-    }, const []);
-
-    // ---------------------------
-    // Small UI helpers (declare before use)
-    // ---------------------------
+    // ---------- UI helpers (kept from your original) ----------
     Color _statusColor(String? status) {
       final s = (status ?? '').toLowerCase();
       if (s == 'created') return Colors.green;
@@ -119,9 +164,9 @@ class ProductionManagerHistorySearch extends HookWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.16)),
+          border: Border.all(color: color.withOpacity(0.16)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -182,10 +227,10 @@ class ProductionManagerHistorySearch extends HookWidget {
           },
         );
 
-        // currently you don't process the result here; if you want to refresh
-        // when bottomsheet returns true, you can do:
         if (result == true) {
-          await _loadOrders();
+          try {
+            pagingController.refresh();
+          } catch (_) {}
         }
       }
 
@@ -208,7 +253,7 @@ class ProductionManagerHistorySearch extends HookWidget {
                     width: 6,
                     height: 110,
                     decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.18),
+                      color: accent.withOpacity(0.18),
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
@@ -318,32 +363,54 @@ class ProductionManagerHistorySearch extends HookWidget {
       );
     }
 
-    Widget buildList() {
-      if (loadingOrders.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      if (error.value != null) {
-        return Center(child: Text('Error: ${error.value}'));
-      }
+    // Build UI using PagingListener so builder has (context, state, fetchNextPage)
+    return MainLayout(
+      title: "PM History",
+      screenType: ScreenType.search,
+      onSearchChanged: onSearchChanged,
+      child: PagingListener<int, PmOrderListItem>(
+        controller: pagingController,
+        builder: (context, state, fetchNextPage) {
+          if (state.isLoading && (state.pages?.isEmpty ?? true)) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-      final items = paged.value?.data ?? [];
+          if (state.error != null && (state.pages?.isEmpty ?? true)) {
+            return Center(
+              child: ElevatedButton(
+                onPressed: () => fetchNextPage(),
+                child: const Text('Retry'),
+              ),
+            );
+          }
 
-      return RefreshIndicator(
-        onRefresh: () async {
-          await _loadOrders();
+          if (state.pages?.isEmpty ?? true) {
+            return const Center(child: Text('No orders found'));
+          }
+
+          return PagedListView<int, PmOrderListItem>(
+            state: state,
+            fetchNextPage: fetchNextPage,
+            padding: const EdgeInsets.all(12),
+            builderDelegate: PagedChildBuilderDelegate<PmOrderListItem>(
+              itemBuilder: (context, order, index) => orderCard(context, order),
+              firstPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),
+              newPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),
+              firstPageErrorIndicatorBuilder: (_) => Center(
+                child: ElevatedButton(
+                  onPressed: () => fetchNextPage(),
+                  child: const Text('Retry'),
+                ),
+              ),
+              noItemsFoundIndicatorBuilder: (_) => const Center(child: Text('No orders found')),
+              noMoreItemsIndicatorBuilder: (_) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: Text('No more orders')),
+              ),
+            ),
+          );
         },
-        child: ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, idx) {
-            final o = items[idx];
-            return orderCard(context, o);
-          },
-        ),
-      );
-    }
-
-    return MainLayout(title: "Search", screenType: ScreenType.search, child: buildList());
+      ),
+    );
   }
 }
