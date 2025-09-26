@@ -1,5 +1,9 @@
+// lib/features/product_list/presentation/product_list.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
 import 'package:microsensors/features/components/status_pill/status_pill.dart';
 import 'package:microsensors/features/product_list/presentation/edit_product.dart';
@@ -8,6 +12,7 @@ import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 import '../../../core/api_state.dart';
 import '../../../models/product/product_list_response.dart';
+import '../../add_orders/repository/product_list_repository.dart';
 import '../../components/main_layout/main_layout.dart';
 
 class ProductList extends HookWidget {
@@ -15,95 +20,201 @@ class ProductList extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final apiState = useState<ApiState<List<ProductDataModel>>>(
-      const ApiInitial(),
-    );
     final repo = useMemoized(() => ProductRepository());
 
-    Future<void> loadProducts() async {
-      apiState.value = const ApiLoading();
-      final result = await repo.fetchProducts();
-      apiState.value = result;
+    const int pageSize = 20;
+    const int initialPage = 0;
+
+    final totalPages = useState<int?>(null);
+    final searchQuery = useState<String>('');
+    final debounceRef = useRef<Timer?>(null);
+    final dateRange = useState<DateTimeRange?>(null);
+
+    String? _normalizeSearch(String? q) {
+      if (q == null) return null;
+      final t = q.trim();
+      return t.isEmpty ? null : t;
+    }
+
+    String? _formatDateForApi(DateTime? dt) {
+      if (dt == null) return null;
+      final y = dt.year.toString().padLeft(4, '0');
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      return '$y-$m-$d';
+    }
+
+
+    final pagingController = useMemoized(
+          () => PagingController<int, ProductDataModel>(
+        getNextPageKey: (PagingState<int, ProductDataModel> state) {
+          if (state.pages == null || state.pages!.isEmpty) return initialPage;
+
+          final lastKey = (state.keys?.isNotEmpty ?? false)
+              ? state.keys!.last
+              : (initialPage + state.pages!.length - 1);
+
+          if (totalPages.value != null && lastKey >= (totalPages.value! - 1)) {
+            return null;
+          }
+
+          return lastKey + 1;
+        },
+        fetchPage: (int pageKey) async {
+          debugPrint('Products.fetchPage: page=$pageKey, q="${searchQuery.value}"');
+
+          final res = await repo.fetchProductsPage(
+            page: pageKey,
+            pageSize: pageSize,
+            search: _normalizeSearch(searchQuery.value),
+            dateFrom: _formatDateForApi(dateRange.value?.start),
+            dateTo: _formatDateForApi(dateRange.value?.end),
+          );
+
+          if (res is ApiError<ProductPageResult>) {
+            throw Exception(res.message ?? 'API error');
+          }
+
+          if (res is ApiData<ProductPageResult>) {
+            final pageResult = res.data;
+            final items = pageResult.items ?? <ProductDataModel>[];
+            final total = pageResult.total ?? 0;
+
+            if (totalPages.value == null) {
+              totalPages.value =
+              total > 0 ? ((total + pageSize - 1) ~/ pageSize) : 0;
+              debugPrint('Products: totalPages=${totalPages.value}, total=$total');
+            }
+
+            return items;
+          }
+
+          return <ProductDataModel>[];
+        },
+      ),
+      [repo, searchQuery.value, dateRange.value],
+    );
+
+
+    void _onDateRangeChanged(DateTimeRange? picked) {
+      dateRange.value = picked;
+      totalPages.value = null;
+      try {
+        pagingController.refresh();
+      } catch (_) {}
     }
 
     useEffect(() {
-      loadProducts();
-      return null;
-    }, const []);
-
-    Widget body;
-
-    if (apiState.value is ApiInitial || apiState.value is ApiLoading) {
-      body = const Center(child: CircularProgressIndicator());
-    } else if (apiState.value is ApiError<List<ProductDataModel>>) {
-      final err = apiState.value as ApiError<List<ProductDataModel>>;
-      body = _RetryView(message: err.message, onRetry: loadProducts);
-    } else if (apiState.value is ApiData<List<ProductDataModel>>) {
-      final products = (apiState.value as ApiData<List<ProductDataModel>>).data;
-      if (products.isEmpty) {
-        body = _RetryView(message: 'No products found', onRetry: loadProducts);
-      } else {
-        body = ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: products.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final p = products[index];
-            final avatarUrl = p.productImage;
-            return ProductCardWidget(
-              productId: p.productId,
-              name: p.productName,
-              description: p.description,
-              price: p.price,
-              stockQuantity: p.stockQuantity,
-              sku: p.sku,
-              status: p.status,
-              createdBy: p.createdByUsername,
-              createdAt: p.formattedCreatedAt,
-              avatarUrl: avatarUrl??"",
-              onRefresh: loadProducts,
-            );
-          },
-        );
+      try {
+        pagingController.fetchNextPage();
+      } catch (_) {
+        try {
+          pagingController.refresh();
+        } catch (_) {}
       }
-    } else {
-      body = const Center(child: Text('Unknown state'));
+
+      return () {
+        debounceRef.value?.cancel();
+        try {
+          pagingController.dispose();
+        } catch (_) {}
+      };
+    }, [pagingController]);
+
+    void onSearchChanged(String q) {
+      debounceRef.value?.cancel();
+      debounceRef.value = Timer(const Duration(milliseconds: 400), () {
+        final trimmed = q.trim();
+        if (trimmed == searchQuery.value) return;
+
+        searchQuery.value = trimmed;
+        totalPages.value = null;
+
+        try {
+          pagingController.refresh();
+        } catch (_) {}
+      });
     }
 
-    return Scaffold(
-      body: MainLayout(title: "Products", child: SafeArea(child: body)),
-    );
-  }
-}
+    return MainLayout(
+      title: "Products",
+      screenType: ScreenType.search_calender,
+      onSearchChanged: onSearchChanged,
+      onDateRangeChanged: _onDateRangeChanged,
+      child: PagingListener<int, ProductDataModel>(
+        controller: pagingController,
+        builder: (context, state, fetchNextPage) {
+          if (state.isLoading && (state.pages?.isEmpty ?? true)) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-class _RetryView extends StatelessWidget {
-  final String message;
-  final Future<void> Function() onRetry;
+          if (state.error != null && (state.pages?.isEmpty ?? true)) {
+            return Center(
+              child: ElevatedButton(
+                onPressed: () => fetchNextPage(),
+                child: const Text('Retry'),
+              ),
+            );
+          }
 
-  const _RetryView({required this.message, required this.onRetry});
+          if (state.pages?.isEmpty ?? true) {
+            return const Center(child: Text('No products found'));
+          }
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => onRetry(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+          return PagedListView<int, ProductDataModel>(
+            state: state,
+            fetchNextPage: fetchNextPage,
+            padding: const EdgeInsets.all(16),
+            builderDelegate: PagedChildBuilderDelegate<ProductDataModel>(
+              itemBuilder: (context, product, index) {
+                final p = product;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: ProductCardWidget(
+                    productId: p.productId,
+                    name: p.productName ?? '',
+                    description: p.description ?? '',
+                    price: p.price ?? 0.0,
+                    stockQuantity: p.stockQuantity ?? 0,
+                    sku: p.sku ?? '',
+                    status: p.status ?? '',
+                    createdBy: p.createdByUsername ?? '',
+                    createdAt: p.formattedCreatedAt ?? '',
+                    avatarUrl: p.productImage,
+                    onRefresh: () async {
+                      totalPages.value = null;
+                      try {
+                        pagingController.refresh();
+                      } catch (_) {}
+                    },
+                  ),
+                );
+              },
+              firstPageProgressIndicatorBuilder: (_) =>
+              const Center(child: CircularProgressIndicator()),
+              newPageProgressIndicatorBuilder: (_) =>
+              const Center(child: CircularProgressIndicator()),
+              firstPageErrorIndicatorBuilder: (_) => Center(
+                child: ElevatedButton(
+                  onPressed: () => fetchNextPage(),
+                  child: const Text('Retry'),
+                ),
+              ),
+              noItemsFoundIndicatorBuilder: (_) =>
+              const Center(child: Text('No products found')),
+              noMoreItemsIndicatorBuilder: (_) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: Text('No more products')),
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
 
+/// ProductCardWidget (kept same as your original, only onRefresh is wired)
 class ProductCardWidget extends StatelessWidget {
   final int productId;
   final String name;
@@ -172,7 +283,6 @@ class ProductCardWidget extends StatelessWidget {
                           icon: const Icon(Icons.edit, color: Colors.black),
                           tooltip: "Edit",
                           onPressed: () {
-                            // TODO: handle edit action here
                             debugPrint("Edit button clicked for $name");
                             productNameFocusNode.requestFocus();
                             enableSaveNotifier.value = true;
@@ -189,7 +299,7 @@ class ProductCardWidget extends StatelessWidget {
                     status: status,
                     createdBy: createdBy,
                     createdAt: createdAt,
-                    avatarUrl: avatarUrl??"",
+                    avatarUrl: avatarUrl ?? "",
                     productNameFocusNode: productNameFocusNode,
                     enableSaveNotifier: enableSaveNotifier,
                   ),
@@ -313,7 +423,7 @@ class ProductCardWidget extends StatelessWidget {
               child: Container(
                 width: 120,
                 height: 120,
-                color: accent.withValues(alpha: 0.12),
+                color: accent.withOpacity(0.12),
                 child: SmartImage(
                   imageUrl: avatarUrl,
                   baseUrl: Constants.apiBaseUrl,

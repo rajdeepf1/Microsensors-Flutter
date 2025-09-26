@@ -7,43 +7,61 @@ import '../../../models/product/ProductDeleteResponse.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/product/product_request.dart';
 import '../../../models/product/product_response.dart';
+import '../../add_orders/repository/product_list_repository.dart';
 
 class ProductRepository {
   final ApiClient _client;
   ProductRepository([ApiClient? client]) : _client = client ?? ApiClient();
 
-  Future<ApiState<List<ProductDataModel>>> fetchProducts() async {
+  Future<ApiState<ProductPageResult>> fetchProductsPage({
+    required int page,
+    required int pageSize,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
+  }) async {
     try {
-      final response = await _client.get('products/all'); // adjust endpoint
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> json = (response.data as Map).cast<String, dynamic>();
-        final productListResponse = ProductListResponse.fromJson(json);
+      final params = <String, dynamic>{
+        'page': page,
+        'pageSize': pageSize,
+      };
+      if (search != null && search.isNotEmpty) params['q'] = search;
+      if (dateFrom != null && dateFrom.isNotEmpty) params['dateFrom'] = dateFrom;
+      if (dateTo != null && dateTo.isNotEmpty) params['dateTo'] = dateTo;
 
-        if (!productListResponse.success) {
-          return ApiError(productListResponse.error ?? 'Unknown API error');
-        }
+      final response = await _client.get('products', queryParameters: params);
 
-        final products = productListResponse.toProductList();
-        return ApiData(products);
-      } else {
+      if (response.statusCode != 200) {
         return ApiError('Server error: ${response.statusCode}');
       }
-    } on DioException catch (dioErr, st) {
-      // (same error handling pattern as your other repos)
-      if (dioErr.type == DioExceptionType.connectionTimeout ||
-          dioErr.type == DioExceptionType.receiveTimeout) {
-        return ApiError('Connection timed out', error: dioErr, stackTrace: st);
-      } else if (dioErr.response != null) {
-        final body = dioErr.response?.data;
-        final msg = (body is Map && body['error'] != null) ? body['error'].toString() : 'Request failed';
-        return ApiError(msg, error: dioErr, stackTrace: st);
+
+      final raw = response.data;
+      if (raw is Map && raw['data'] is Map) {
+        final payload = raw['data'] as Map;
+        final listRaw = payload['data'];
+        final total = payload['total'] is int ? payload['total'] as int : null;
+
+        List<ProductDataModel> items = [];
+        if (listRaw is List) {
+          items = listRaw
+              .map((e) => ProductDataModel.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+
+        return ApiData(ProductPageResult(items: items, total: total));
       } else {
-        return ApiError(dioErr.message ?? 'Network error', error: dioErr, stackTrace: st);
+        return const ApiError('Unexpected paged response format');
       }
+    } on DioException catch (dioErr, st) {
+      final msg = dioErr.response?.data is Map && dioErr.response?.data['error'] != null
+          ? dioErr.response?.data['error'].toString()
+          : dioErr.message ?? 'Network error';
+      return ApiError(msg!, error: dioErr, stackTrace: st);
     } catch (e, st) {
       return ApiError(e.toString(), error: e, stackTrace: st);
     }
   }
+
 
   Future<ApiState<ProductResponse>> uploadProductImage(int productId, File file) async {
     try {
