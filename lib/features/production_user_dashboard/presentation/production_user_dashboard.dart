@@ -211,7 +211,7 @@ class ProductionUserDashboard extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      body: PmOrderDetailsBottomsheet(orderItem: item,),
+                      body: PmOrderDetailsBottomsheet(orderItem: item,isHistorySearchScreen: false,),
                     ),
                   ),
                 ),

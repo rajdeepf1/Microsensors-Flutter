@@ -218,7 +218,7 @@ class ProductionManagerHistorySearch extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      body: PmOrderDetailsBottomsheet(orderItem: item),
+                      body: PmOrderDetailsBottomsheet(orderItem: item, isHistorySearchScreen: true,),
                     ),
                   ),
                 ),
@@ -365,7 +365,7 @@ class ProductionManagerHistorySearch extends HookWidget {
 
     // Build UI using PagingListener so builder has (context, state, fetchNextPage)
     return MainLayout(
-      title: "PM History",
+      title: "Search History",
       screenType: ScreenType.search,
       onSearchChanged: onSearchChanged,
       child: PagingListener<int, PmOrderListItem>(
