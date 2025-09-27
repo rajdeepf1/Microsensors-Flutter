@@ -113,6 +113,7 @@ class SalesUserDashboard extends HookWidget {
 
             // get token and register
             final token = await messaging.getToken();
+            debugPrint("SalesFCMToken------->${token}");
             if (token != null) {
               final ApiState<UserDataModel> res = await fcmService.registerToken(
                 userId: storedUser.userId,
@@ -131,6 +132,7 @@ class SalesUserDashboard extends HookWidget {
 
             tokenRefreshSub =
                 FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+                  debugPrint("SalesFCMRefreshToken------->${token}");
                   final currentStored = await LocalStorageService().getUser();
                   if (currentStored != null) {
                     final ApiState<UserDataModel> refreshRes =
@@ -450,7 +452,7 @@ Future<void> _loadPreviewForUser(
     if (res is ApiData<PagedResponse<OrderListItem>>) {
       items.value = res.data.data.take(4).toList();
     } else if (res is ApiError<PagedResponse<OrderListItem>>) {
-      error.value = res.message ?? 'API error';
+      error.value = res.message;
       items.value = [];
     } else {
       error.value = 'Unexpected API state';
@@ -480,7 +482,7 @@ Future<void> _loadStatsForUser(
     if (res is ApiData<OrderStats>) {
       statsState.value = res.data;
     } else if (res is ApiError<OrderStats>) {
-      statsError.value = res.message ?? 'Failed to load stats';
+      statsError.value = res.message;
       ScaffoldMessenger.of(ctx).showSnackBar(
         SnackBar(content: Text(statsError.value!)),
       );

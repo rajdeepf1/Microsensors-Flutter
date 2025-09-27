@@ -240,28 +240,35 @@ class ProductionUserDashboard extends HookWidget {
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left thin accent bar
                   Container(
                     width: 6,
-                    height: 110,
+                    height: 180,
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
+
                   const SizedBox(width: 12),
 
-                  // thumbnail
-                  //_productAvatar(item),
+                  Column(
+                    children: [
+                      SmartImage(
+                        imageUrl: item.productImage,
+                        baseUrl: Constants.apiBaseUrl,
+                        username: item.productName,
+                        shape: ImageShape.rectangle,
+                        height: 120,
+                        width: 120,
+                      ),
 
-                  SmartImage(
-                    imageUrl: item.productImage,
-                    baseUrl: Constants.apiBaseUrl,
-                    username: item.productName,
-                    shape: ImageShape.rectangle,
-                    height: 120,
-                    width: 120,
+                      const SizedBox(height: 12),
+
+                      _buildStatusChip(item.currentStatus ?? ''),
+                    ],
                   ),
 
                   const SizedBox(width: 12),
@@ -344,8 +351,6 @@ class ProductionUserDashboard extends HookWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            _buildStatusChip(item.currentStatus ?? ''),
                           ],
                         ),
                       ],

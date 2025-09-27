@@ -69,19 +69,19 @@ class ProductionManagerHistorySearch extends HookWidget {
           );
 
           if (res is ApiError<PagedResponse<PmOrderListItem>>) {
-            throw Exception(res.message ?? 'API error');
+            throw Exception(res.message);
           }
 
           if (res is ApiData<PagedResponse<PmOrderListItem>>) {
             final pageResult = res.data;
 
             if (totalPages.value == null) {
-              final tot = pageResult.total ?? 0;
+              final tot = pageResult.total;
               totalPages.value = tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
               debugPrint('PMHistory: totalPages=${totalPages.value}, total=${pageResult.total}');
             }
 
-            return pageResult.data ?? <PmOrderListItem>[];
+            return pageResult.data;
           }
 
           return <PmOrderListItem>[];
@@ -269,11 +269,12 @@ class ProductionManagerHistorySearch extends HookWidget {
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left thin accent bar
                   Container(
                     width: 6,
-                    height: 110,
+                    height: 180,
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(6),
@@ -281,14 +282,22 @@ class ProductionManagerHistorySearch extends HookWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  SmartImage(
-                    imageUrl: item.productImage,
-                    baseUrl: Constants.apiBaseUrl,
-                    username: item.productName,
-                    shape: ImageShape.rectangle,
-                    height: 120,
-                    width: 120,
+                  Column(
+                    children: [
+                      SmartImage(
+                        imageUrl: item.productImage,
+                        baseUrl: Constants.apiBaseUrl,
+                        username: item.productName,
+                        shape: ImageShape.rectangle,
+                        height: 120,
+                        width: 120,
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildStatusChip(item.currentStatus ?? ''),
+                    ],
                   ),
+
 
                   const SizedBox(width: 12),
 
@@ -370,8 +379,6 @@ class ProductionManagerHistorySearch extends HookWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            _buildStatusChip(item.currentStatus ?? ''),
                           ],
                         ),
                       ],
@@ -428,7 +435,7 @@ class ProductionManagerHistorySearch extends HookWidget {
               noItemsFoundIndicatorBuilder: (_) => const Center(child: Text('No orders found')),
               noMoreItemsIndicatorBuilder: (_) => const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: Text('No more orders')),
+                child: Center(child: SizedBox(height: 80,child: Text('No more orders'),)),
               ),
             ),
           );

@@ -59,8 +59,9 @@ class PmOrderDetailsBottomsheet extends HookWidget {
     // build initial stepTimes map from existing history (defensive parsing)
     Map<String, DateTime?> buildInitialStepTimes() {
       final Map<String, DateTime?> m = {};
+      // ignore: unnecessary_null_comparison
       if (orderItem.statusHistory != null) {
-        for (final h in orderItem.statusHistory!) {
+        for (final h in orderItem.statusHistory) {
           final key = (h.newStatus ?? '').trim();
           if (key.isNotEmpty) {
             DateTime? ts;
@@ -105,9 +106,10 @@ class PmOrderDetailsBottomsheet extends HookWidget {
       if (newStatus == status.value) return;
 
       // --- BEGIN: guard against disallowed transitions ---
-      final allowedList = orderItem.allowedNextStatuses ?? <String>[];
+      final allowedList = orderItem.allowedNextStatuses;
       final bool allowedMatch = allowedList.any(
         (s) =>
+            // ignore: unnecessary_null_comparison
             s != null &&
             s.trim().toLowerCase() == newStatus.trim().toLowerCase(),
       );
@@ -146,6 +148,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
         // get changedBy from local user (fallback to productionManagerId in orderItem)
         int changedBy = orderItem.productionManagerId ?? -1;
         final stored = await LocalStorageService().getUser();
+        // ignore: unnecessary_null_comparison
         if (stored != null && stored.userId != null) changedBy = stored.userId;
 
         final ApiState<ProductionManagerChangeStatusResponse> res = await repo
@@ -325,9 +328,9 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                                   SmartImage(
                                     imageUrl: orderItem.salesPersonImage,
                                     baseUrl: Constants.apiBaseUrl,
-                                    height: 56,
-                                    width: 56,
-                                    shape: ImageShape.rectangle,
+                                    height: 48,
+                                    width: 48,
+                                    shape: ImageShape.circle,
                                     username: orderItem.salesPersonName ?? '',
                                     fit: BoxFit.cover,
                                   ),
@@ -365,6 +368,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                               Icon(
                                 Icons.arrow_forward,
                                 color: AppColors.appBlueColor,
+                                size: 18,
                               ),
 
                               const Spacer(),
@@ -375,9 +379,9 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                                   SmartImage(
                                     imageUrl: orderItem.productionManagerImage,
                                     baseUrl: Constants.apiBaseUrl,
-                                    height: 56,
-                                    width: 56,
-                                    shape: ImageShape.rectangle,
+                                    height: 48,
+                                    width: 48,
+                                    shape: ImageShape.circle,
                                     username:
                                         orderItem.productionManagerName ?? '',
                                     fit: BoxFit.cover,
@@ -769,7 +773,7 @@ Widget buildStatusTimelineVerticalWithHook(
   ];
 
   int activeIndex = steps.indexWhere(
-    (s) => s.toLowerCase() == (currentStatus ?? '').toLowerCase(),
+    (s) => s.toLowerCase() == (currentStatus).toLowerCase(),
   );
   if (activeIndex < 0) activeIndex = 0;
 

@@ -7,9 +7,8 @@ import '../../components/smart_image/smart_image.dart';
 import 'order_details_bottomsheet.dart';
 
 Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
-
   void openDetailsSheet(BuildContext context) async {
-
+    // ignore: unused_local_variable
     final bool? result = await showModalBottomSheet(
       context: context,
       isScrollControlled: true, // allows full-screen height
@@ -40,7 +39,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ),
-                  body: OrderDetailsBottomsheet(orderItem: orderItem,),
+                  body: OrderDetailsBottomsheet(orderItem: orderItem),
                 ),
               ),
             ),
@@ -48,9 +47,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
         );
       },
     );
-
   }
-
 
   return Card(
     elevation: 4,
@@ -67,13 +64,14 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
           openDetailsSheet(context);
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Left thin accent bar
               Container(
                 width: 6,
-                height: 120,
+                height: 180,
                 decoration: BoxDecoration(
                   color: _statusColor(
                     orderItem.currentStatus,
@@ -81,16 +79,22 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                   borderRadius: BorderRadius.circular(6),
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-              // Thumbnail / avatar
-              SmartImage(
-                imageUrl: orderItem.productImage,
-                baseUrl: Constants.apiBaseUrl,
-                username: orderItem.productName,
-                shape: ImageShape.rectangle,
-                height: 120,
-                width: 120,
+              Column(
+                children: [
+                  SmartImage(
+                    imageUrl: orderItem.productImage,
+                    baseUrl: Constants.apiBaseUrl,
+                    username: orderItem.productName,
+                    shape: ImageShape.rectangle,
+                    height: 120,
+                    width: 120,
+                  ),
+                  const SizedBox(height: 12),
+                  // status chip
+                  _buildStatusChip(orderItem.currentStatus),
+                ],
               ),
 
               SizedBox(width: 12),
@@ -178,9 +182,6 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                             ],
                           ),
                         ),
-                        SizedBox(width: 8),
-                        // status chip
-                        _buildStatusChip(orderItem.currentStatus),
                       ],
                     ),
                   ],

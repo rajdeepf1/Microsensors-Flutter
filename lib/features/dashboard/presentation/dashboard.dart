@@ -230,7 +230,7 @@ class Dashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Orders",
-                      value: countState.value.toString() ?? "--",
+                      value: countState.value.toString(),
                       icon: Icons.shopping_cart,
                       color: Colors.green,
                       onTap: () {},

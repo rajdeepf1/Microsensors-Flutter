@@ -380,11 +380,12 @@ class UploadBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DottedBorder(
-      borderType: BorderType.RRect,
-      radius: const Radius.circular(12),
-      color: Colors.grey,
-      strokeWidth: 1.5,
-      dashPattern: const [6, 3],
+      options: RoundedRectDottedBorderOptions(
+        radius: const Radius.circular(12),
+        color: Colors.grey,
+        strokeWidth: 1.5,
+        dashPattern: const [6, 3],
+      ),
       // dash style
       child: Container(
         width: double.infinity,

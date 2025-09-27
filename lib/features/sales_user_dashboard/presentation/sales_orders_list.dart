@@ -70,7 +70,7 @@ class SalesOrdersList extends HookWidget {
           );
 
           if (res is ApiError<PagedResponse<OrderListItem>>) {
-            throw Exception(res.message ?? 'API error');
+            throw Exception(res.message);
           }
 
           if (res is ApiData<PagedResponse<OrderListItem>>) {

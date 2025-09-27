@@ -12,23 +12,32 @@ class HomeScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     // Load user from local storage once when HomeScreen is created
-
     final user = useState<UserDataModel?>(null);
 
     useEffect(() {
+      // start async load
       () async {
         final stored = await LocalStorageService().getUser();
         user.value = stored;
         AppState.instance.updateUser(stored);
       }();
-      return null; // cleanup not needed
+      return null; // no cleanup required
     }, const []);
+
+    // While user is loading show a loader (or a placeholder)
+    if (user.value == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // user is non-null here, safe to read roleName
+    final isPm = user.value!.roleName == 'Production Manager';
 
     return MainLayout(
       title: "Home",
-      screenType: user.value!.roleName == 'Production Manager'?ScreenType.home_search:ScreenType.home,
+      screenType: isPm ? ScreenType.home_search : ScreenType.home,
       child: AppBottomNavigationBar(),
     );
   }

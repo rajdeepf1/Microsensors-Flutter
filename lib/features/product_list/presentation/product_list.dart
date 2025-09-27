@@ -72,12 +72,12 @@ class ProductList extends HookWidget {
           );
 
           if (res is ApiError<ProductPageResult>) {
-            throw Exception(res.message ?? 'API error');
+            throw Exception(res.message);
           }
 
           if (res is ApiData<ProductPageResult>) {
             final pageResult = res.data;
-            final items = pageResult.items ?? <ProductDataModel>[];
+            final items = pageResult.items;
             final total = pageResult.total ?? 0;
 
             if (totalPages.value == null) {
@@ -172,14 +172,14 @@ class ProductList extends HookWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: ProductCardWidget(
                     productId: p.productId,
-                    name: p.productName ?? '',
-                    description: p.description ?? '',
-                    price: p.price ?? 0.0,
-                    stockQuantity: p.stockQuantity ?? 0,
-                    sku: p.sku ?? '',
-                    status: p.status ?? '',
-                    createdBy: p.createdByUsername ?? '',
-                    createdAt: p.formattedCreatedAt ?? '',
+                    name: p.productName,
+                    description: p.description,
+                    price: p.price,
+                    stockQuantity: p.stockQuantity,
+                    sku: p.sku,
+                    status: p.status,
+                    createdBy: p.createdByUsername,
+                    createdAt: p.formattedCreatedAt,
                     avatarUrl: p.productImage,
                     onRefresh: () async {
                       totalPages.value = null;
