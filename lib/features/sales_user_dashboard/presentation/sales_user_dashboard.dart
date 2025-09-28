@@ -38,35 +38,47 @@ class SalesUserDashboard extends HookWidget {
     final loadingStats = useState<bool>(true);
     final statsError = useState<String?>(null);
 
-    // ---- load stored user and init FCM (runs once) ----
+
+    // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
       StreamSubscription<RemoteMessage>? onMessageSub;
       StreamSubscription<String>? tokenRefreshSub;
       StreamSubscription<RemoteMessage>? openedAppSub;
 
-      final FlutterLocalNotificationsPlugin localNotifications =
-      FlutterLocalNotificationsPlugin();
-      const AndroidNotificationChannel androidChannel =
-      AndroidNotificationChannel(
+      final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+
+      // we will reuse the channel created in main.dart ("high_importance_channel")
+      const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
         'high_importance_channel',
         'High Importance Notifications',
         description: 'This channel is used for important notifications.',
         importance: Importance.max,
       );
 
+      // function to show local notification using local plugin instance
       Future<void> showLocalNotification(RemoteMessage message) async {
         final notification = message.notification;
         if (notification == null) return;
 
+        final androidDetails = AndroidNotificationDetails(
+          androidChannel.id,
+          androidChannel.name,
+          channelDescription: androidChannel.description,
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+
+        final darwinDetails = DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        );
+
         final details = NotificationDetails(
-          android: AndroidNotificationDetails(
-            androidChannel.id,
-            androidChannel.name,
-            channelDescription: androidChannel.description,
-            icon: '@mipmap/ic_launcher',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
+          android: androidDetails,
+          iOS: darwinDetails,
+          macOS: darwinDetails,
         );
 
         await localNotifications.show(
@@ -78,107 +90,124 @@ class SalesUserDashboard extends HookWidget {
         );
       }
 
-      // async bootstrap
+      // start async block
       () async {
         try {
-          // Load stored user
+          // 1) Load stored user
           final storedUser = await LocalStorageService().getUser();
-          salesUser.value = storedUser;
-          loadingUser.value = false;
 
-          if (storedUser != null) {
-            // load preview items
-            await _loadPreviewForUser(
-            repo,
-            storedUser.userId,
-            items,
-            loadingPreview,
-            previewError,
-            );
+          // 2) initialize the local plugin (safe to call even if main already created channel)
+          const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
 
-            // initialize local notifications plugin
-            const androidInit = AndroidInitializationSettings(
-              '@mipmap/ic_launcher',
-            );
-            final initSettings = InitializationSettings(android: androidInit);
-            await localNotifications.initialize(initSettings);
+          // IMPORTANT: include Darwin/iOS init settings to avoid the runtime error on iOS/macOS
+          final darwinInit = DarwinInitializationSettings(
+            requestAlertPermission: false, // you already request via FirebaseMessaging
+            requestBadgePermission: false,
+            requestSoundPermission: false,
+            // onDidReceiveLocalNotification: (id, title, body, payload) { ... } // optional older callback
+          );
 
-            // request permissions
-            final messaging = FirebaseMessaging.instance;
-            await messaging.requestPermission(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
+          final initSettings = InitializationSettings(
+            android: androidInit,
+            iOS: darwinInit,
+            macOS: darwinInit,
+          );
 
-            // get token and register
-            final token = await messaging.getToken();
-            debugPrint("SalesFCMToken------->${token}");
-            if (token != null) {
-              final ApiState<UserDataModel> res = await fcmService.registerToken(
-                userId: storedUser.userId,
-                token: token,
-              );
-              if (res is ApiData<UserDataModel>) {
-                await LocalStorageService().saveUser(res.data);
-                salesUser.value = res.data;
-              }
+          await localNotifications.initialize(
+            initSettings,
+            onDidReceiveNotificationResponse: (NotificationResponse response) {
+              debugPrint('Local notification tapped. Payload: ${response.payload}');
+            },
+          );
+
+          // Ensure the Android channel exists (no-op if already created)
+          await localNotifications
+              .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+              ?.createNotificationChannel(androidChannel);
+
+          // 3) Request permission for notifications (iOS/Android 13+)
+          final messaging = FirebaseMessaging.instance;
+          final settings = await messaging.requestPermission(
+            alert: true, badge: true, sound: true, provisional: false,
+          );
+          debugPrint('Dashboard FCM permission: ${settings.authorizationStatus}');
+
+          // 4) Get the token (first time)
+          final token = await messaging.getToken();
+          debugPrint('Dashboard FCM token: $token');
+
+          // --- SAFELY CALL registerToken and handle ApiState result ---
+          if (storedUser == null) {
+            debugPrint('No stored user found - skipping token registration for now.');
+          } else if (token == null) {
+            debugPrint('Device token is null - cannot register token.');
+          } else {
+            final ApiState<UserDataModel> res =
+                await fcmService.registerToken(userId: storedUser.userId, token: token);
+
+            if (res is ApiData<UserDataModel>) {
+              final UserDataModel savedUser = res.data;
+              await LocalStorageService().saveUser(savedUser);
+              debugPrint("FCM token saved successfully and stored user updated (id=${savedUser.userId})");
+            } else if (res is ApiError<UserDataModel>) {
+              debugPrint("FCM token registration failed: ${res.message}");
+            } else {
+              debugPrint("FCM token registration returned unexpected state: $res");
+            }
+          }
+
+          // 5) Foreground message handler: show local notification and optionally update UI
+          onMessageSub = FirebaseMessaging.onMessage.listen((message) {
+            debugPrint('Dashboard - onMessage: ${message.messageId}');
+            showLocalNotification(message);
+          });
+
+          // 6) Token refresh: re-register token for stored user
+          tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+            debugPrint('Dashboard - token refreshed: $newToken');
+
+            final currentStored = await LocalStorageService().getUser();
+            if (currentStored == null) {
+              debugPrint('No stored user when token refreshed - skipping registration.');
+              return;
             }
 
-            // listeners
-            onMessageSub = FirebaseMessaging.onMessage.listen((message) {
-              showLocalNotification(message);
-            });
+            final ApiState<UserDataModel> refreshRes =
+            await fcmService.registerToken(userId: currentStored.userId, token: newToken);
 
-            tokenRefreshSub =
-                FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-                  debugPrint("SalesFCMRefreshToken------->${token}");
-                  final currentStored = await LocalStorageService().getUser();
-                  if (currentStored != null) {
-                    final ApiState<UserDataModel> refreshRes =
-                    await fcmService.registerToken(
-                      userId: currentStored.userId,
-                      token: newToken,
-                    );
-                    if (refreshRes is ApiData<UserDataModel>) {
-                      await LocalStorageService().saveUser(refreshRes.data);
-                      salesUser.value = refreshRes.data;
-                    }
-                  }
-                });
-
-            openedAppSub =
-                FirebaseMessaging.onMessageOpenedApp.listen((message) {
-                  // handle navigation from notification if needed
-                });
-
-            final initialMessage = await messaging.getInitialMessage();
-            if (initialMessage != null) {
-              // launched from notification
+            if (refreshRes is ApiData<UserDataModel>) {
+              await LocalStorageService().saveUser(refreshRes.data);
+              debugPrint('FCM Token Refreshed and saved successfully (id=${refreshRes.data.userId})');
+            } else if (refreshRes is ApiError<UserDataModel>) {
+              debugPrint('FCM refresh registration failed: ${refreshRes.message}');
+            } else {
+              debugPrint('FCM refresh returned unexpected state: $refreshRes');
             }
+          });
 
-            // load stats
-            await _loadStatsForUser(
-            repo,
-            storedUser.userId,
-            statsState,
-            loadingStats,
-            statsError,
-            context,
-            );
+          // 7) Handle taps when app in background -> user opens app
+          openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
+            debugPrint('Dashboard - onMessageOpenedApp: ${message.messageId}');
+          });
+
+          // 8) If app was launched from terminated state by a notification
+          final initialMessage = await messaging.getInitialMessage();
+          if (initialMessage != null) {
+            debugPrint('Dashboard - initialMessage: ${initialMessage.messageId}');
           }
         } catch (e) {
-          loadingUser.value = false;
-          debugPrint('Dashboard FCM/init error: $e');
+          debugPrint('Dashboard FCM init error: $e');
         }
       }();
 
+      // cleanup
       return () {
         onMessageSub?.cancel();
         tokenRefreshSub?.cancel();
         openedAppSub?.cancel();
       };
-    }, const []);
+    }, const []); // run once on mount
 
     // ---- helper to reload preview + stats manually ----
     Future<void> reloadAll() async {

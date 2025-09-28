@@ -1,4 +1,4 @@
-// lib/main.dart
+// === FILE: lib/main.dart ===
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,21 +14,13 @@ import 'core/router_provider.dart';
 
 // For web
 const firebaseWebOptions = FirebaseOptions(
-
     apiKey: "AIzaSyCqDvbxxD1TkrVheYmZUERRzi_wX7B4atA",
-
     authDomain: "microsensors-a8c89.firebaseapp.com",
-
     projectId: "microsensors-a8c89",
-
     storageBucket: "microsensors-a8c89.firebasestorage.app",
-
     messagingSenderId: "559971445474",
-
     appId: "1:559971445474:web:d90e9b5b7e8206299b4cbb",
-
     measurementId: "G-76V23TRR12"
-
 );
 
 // Called when a Firebase message is received in background/terminated state.
@@ -67,9 +59,18 @@ const AndroidNotificationChannel _androidChannel = AndroidNotificationChannel(
 Future<void> _initLocalNotifications() async {
   const androidInitSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
+  // Add Darwin (iOS/macOS) init settings to avoid the runtime error on those platforms
+  final darwinInit = DarwinInitializationSettings(
+    requestAlertPermission: false,
+    requestBadgePermission: false,
+    requestSoundPermission: false,
+    // onDidReceiveLocalNotification: (id, title, body, payload) { /* optional old callback */ },
+  );
+
   final initSettings = InitializationSettings(
     android: androidInitSettings,
-    // add iOS settings when you need iOS support
+    iOS: darwinInit,
+    macOS: darwinInit,
   );
 
   await flutterLocalNotificationsPlugin.initialize(
@@ -93,15 +94,25 @@ Future<void> showLocalNotificationFromMessage(RemoteMessage message) async {
   final notification = message.notification;
   if (notification == null) return;
 
+  final androidDetails = AndroidNotificationDetails(
+    _androidChannel.id,
+    _androidChannel.name,
+    channelDescription: _androidChannel.description,
+    icon: '@mipmap/ic_launcher',
+    importance: Importance.max,
+    priority: Priority.high,
+  );
+
+  final darwinDetails = DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+  );
+
   final details = NotificationDetails(
-    android: AndroidNotificationDetails(
-      _androidChannel.id,
-      _androidChannel.name,
-      channelDescription: _androidChannel.description,
-      icon: '@mipmap/ic_launcher',
-      importance: Importance.max,
-      priority: Priority.high,
-    ),
+    android: androidDetails,
+    iOS: darwinDetails,
+    macOS: darwinDetails,
   );
 
   await flutterLocalNotificationsPlugin.show(
@@ -118,21 +129,20 @@ Future<void> showLocalNotificationFromMessage(RemoteMessage message) async {
 //
 
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
   await Firebase.initializeApp(
     // If you used FlutterFire CLI, pass options here:
-     //options: firebaseWebOptions,
+    // options: firebaseWebOptions,
   );
-
-  // Initialize local notifications (channels, handlers)
-  await _initLocalNotifications();
 
   // Register Firebase background handler BEFORE runApp
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Initialize local notifications (channels, handlers)
+  await _initLocalNotifications();
 
   // IMPORTANT: Do NOT add foreground listeners here if you intend to run them in Dashboard.
   // We'll set up permission, getToken, and foreground listeners in Dashboard so they are active only when user reaches that screen.

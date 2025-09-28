@@ -1,4 +1,4 @@
-// lib/features/dashboard/presentation/dashboard.dart
+// === FILE: lib/features/dashboard/presentation/dashboard.dart ===
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -59,7 +59,6 @@ class Dashboard extends HookWidget {
 
 
 
-
     // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
       StreamSubscription<RemoteMessage>? onMessageSub;
@@ -67,6 +66,7 @@ class Dashboard extends HookWidget {
       StreamSubscription<RemoteMessage>? openedAppSub;
 
       final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+
       // we will reuse the channel created in main.dart ("high_importance_channel")
       const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
         'high_importance_channel',
@@ -80,15 +80,25 @@ class Dashboard extends HookWidget {
         final notification = message.notification;
         if (notification == null) return;
 
+        final androidDetails = AndroidNotificationDetails(
+          androidChannel.id,
+          androidChannel.name,
+          channelDescription: androidChannel.description,
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+
+        final darwinDetails = DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        );
+
         final details = NotificationDetails(
-          android: AndroidNotificationDetails(
-            androidChannel.id,
-            androidChannel.name,
-            channelDescription: androidChannel.description,
-            icon: '@mipmap/ic_launcher',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
+          android: androidDetails,
+          iOS: darwinDetails,
+          macOS: darwinDetails,
         );
 
         await localNotifications.show(
@@ -106,10 +116,7 @@ class Dashboard extends HookWidget {
           // 1) Load stored user
           final storedUser = await LocalStorageService().getUser();
 
-          // 2) initialize the local plugin (safe to call even if main already created channel)
-          const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-          final initSettings = InitializationSettings(android: androidInit);
-          await localNotifications.initialize(initSettings);
+          // NOTE: DO NOT initialize localNotifications here. It is initialized once in main.dart.
 
           // 3) Request permission for notifications (iOS/Android 13+)
           final messaging = FirebaseMessaging.instance;
@@ -128,20 +135,16 @@ class Dashboard extends HookWidget {
           } else if (token == null) {
             debugPrint('Device token is null - cannot register token.');
           } else {
-            // call your registerToken which returns ApiState<UserDataModel>
             final ApiState<UserDataModel> res =
                 await fcmService.registerToken(userId: storedUser.userId, token: token);
 
             if (res is ApiData<UserDataModel>) {
-              // success - backend returned canonical user object in data
               final UserDataModel savedUser = res.data;
               await LocalStorageService().saveUser(savedUser);
               debugPrint("FCM token saved successfully and stored user updated (id=${savedUser.userId})");
             } else if (res is ApiError<UserDataModel>) {
-              // server returned an error state
               debugPrint("FCM token registration failed: ${res.message}");
             } else {
-              // defensive: unexpected state
               debugPrint("FCM token registration returned unexpected state: $res");
             }
           }
@@ -156,7 +159,6 @@ class Dashboard extends HookWidget {
           tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
             debugPrint('Dashboard - token refreshed: $newToken');
 
-            // handle nulls defensively
             final currentStored = await LocalStorageService().getUser();
             if (currentStored == null) {
               debugPrint('No stored user when token refreshed - skipping registration.');
@@ -190,7 +192,6 @@ class Dashboard extends HookWidget {
           debugPrint('Dashboard FCM init error: $e');
         }
       }();
-
 
       // cleanup
       return () {
