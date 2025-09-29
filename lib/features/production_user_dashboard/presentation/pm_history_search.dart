@@ -162,27 +162,6 @@ class ProductionManagerHistorySearch extends HookWidget {
       return Icons.info_outline;
     }
 
-    String _timeAgo(dynamic dt) {
-      DateTime? date;
-      if (dt == null) return '';
-      if (dt is DateTime)
-        date = dt;
-      else if (dt is String)
-        date = DateTime.tryParse(dt);
-      else {
-        date = DateTime.tryParse(dt.toString());
-      }
-      if (date == null) return '';
-      final diff = DateTime.now().difference(date);
-      if (diff.inSeconds < 60) return '${diff.inSeconds}s';
-      if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-      if (diff.inHours < 24) return '${diff.inHours}h';
-      if (diff.inDays < 7) return '${diff.inDays}d';
-      final weeks = (diff.inDays / 7).floor();
-      if (weeks < 4) return '${weeks}w';
-      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    }
-
     Widget _buildStatusChip(String status) {
       final color = _statusColor(status);
       final icon = _statusIcon(status);
@@ -351,7 +330,7 @@ class ProductionManagerHistorySearch extends HookWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _timeAgo(item.createdAt),
+                              Constants.timeAgo(item.createdAt),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey[500],

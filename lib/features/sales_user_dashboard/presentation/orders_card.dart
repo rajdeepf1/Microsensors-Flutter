@@ -139,7 +139,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          _timeAgo(orderItem.createdAt),
+                          Constants.timeAgo(orderItem.createdAt),
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[500],
@@ -261,17 +261,4 @@ IconData _statusIcon(String status) {
     default:
       return Icons.info;
   }
-}
-
-// small helper that returns relative time like "2h" or "3d"
-String _timeAgo(DateTime dt) {
-  final now = DateTime.now();
-  final diff = now.difference(dt);
-  if (diff.inSeconds < 60) return '${diff.inSeconds}s';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-  if (diff.inHours < 24) return '${diff.inHours}h';
-  if (diff.inDays < 7) return '${diff.inDays}d';
-  final weeks = (diff.inDays / 7).floor();
-  if (weeks < 4) return '${weeks}w';
-  return '${dt.day}/${dt.month}/${dt.year}';
 }

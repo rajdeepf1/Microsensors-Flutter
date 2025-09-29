@@ -274,7 +274,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                                 ),
                               ),
                               Text(
-                                _timeAgo(orderItem.createdAt),
+                                Constants.timeAgo(orderItem.createdAt),
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 12,
@@ -574,33 +574,6 @@ IconData _statusIcon(String? status) {
     default:
       return Icons.info;
   }
-}
-
-// friendly relative time; accepts String or DateTime-like input
-String _timeAgo(dynamic dt) {
-  DateTime? date;
-  if (dt == null) return '';
-  if (dt is DateTime)
-    date = dt;
-  else if (dt is String)
-    date = DateTime.tryParse(dt);
-  else {
-    try {
-      date = DateTime.parse(dt.toString());
-    } catch (_) {
-      date = null;
-    }
-  }
-  if (date == null) return '';
-  final now = DateTime.now();
-  final diff = now.difference(date);
-  if (diff.inSeconds < 60) return '${diff.inSeconds}s';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-  if (diff.inHours < 24) return '${diff.inHours}h';
-  if (diff.inDays < 7) return '${diff.inDays}d';
-  final weeks = (diff.inDays / 7).floor();
-  if (weeks < 4) return '${weeks}w';
-  return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 }
 
 /// ZigZagTicketClipper (unchanged logic but fixed types)

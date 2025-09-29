@@ -29,6 +29,10 @@ class Constants{
     return re.hasMatch(s);
   }
 
+  static String timeAgo(DateTime? dt) {
+    dt=dt!;
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
 
 
 }
