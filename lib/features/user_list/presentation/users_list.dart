@@ -25,12 +25,15 @@ class UsersList extends StatelessWidget {
           unselectedLabelColor: AppColors.tabTextColor,
           indicatorColor: AppColors.tabIndicatorColor,
         ),
-        child: TabBarView(
+        child: SafeArea(
+          top: false, // keep AppBar/tabBar at the top edge
+          bottom: true, // protect from bottom insets
+          child: TabBarView(
           children: [
             Center(child: SalesUserListScreen()),
             Center(child: ProductionManagerUserList()),
           ],
-        ),
+        ),)
       ),
     );
   }

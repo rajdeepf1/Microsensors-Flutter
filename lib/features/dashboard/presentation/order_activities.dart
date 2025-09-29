@@ -423,7 +423,11 @@ class OrderActivities extends HookWidget {
             return const Center(child: Text('No orders found'));
           }
 
-          return PagedListView<int, PmOrderListItem>(
+          return SafeArea(
+            top: false,   // MainLayout already handles top/appbar
+            bottom: true, // protect from home indicator / gesture area
+            child:
+          PagedListView<int, PmOrderListItem>(
             state: state,
             fetchNextPage: fetchNextPage,
             padding: const EdgeInsets.all(12),
@@ -443,6 +447,7 @@ class OrderActivities extends HookWidget {
                 child: Center(child: Text('No more orders')),
               ),
             ),
+          ),
           );
         },
       ),

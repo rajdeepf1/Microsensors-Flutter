@@ -39,13 +39,14 @@ class ProductionManagerHistorySearch extends HookWidget {
 
     // PagingController constructed in same style as SalesOrdersList
     final pagingController = useMemoized(
-          () => PagingController<int, PmOrderListItem>(
+      () => PagingController<int, PmOrderListItem>(
         getNextPageKey: (PagingState<int, PmOrderListItem> state) {
           if (state.pages == null || state.pages!.isEmpty) return initialPage;
 
-          final lastKey = (state.keys?.isNotEmpty ?? false)
-              ? state.keys!.last
-              : (initialPage + state.pages!.length - 1);
+          final lastKey =
+              (state.keys?.isNotEmpty ?? false)
+                  ? state.keys!.last
+                  : (initialPage + state.pages!.length - 1);
 
           if (totalPages.value != null && lastKey >= (totalPages.value! - 1)) {
             return null;
@@ -54,7 +55,9 @@ class ProductionManagerHistorySearch extends HookWidget {
           return lastKey + 1;
         },
         fetchPage: (int pageKey) async {
-          debugPrint('PMHistory.fetchPage: page=$pageKey, q="${searchQuery.value}"');
+          debugPrint(
+            'PMHistory.fetchPage: page=$pageKey, q="${searchQuery.value}"',
+          );
 
           final storedUser = await LocalStorageService().getUser();
           if (storedUser == null) throw Exception('No stored user');
@@ -77,8 +80,11 @@ class ProductionManagerHistorySearch extends HookWidget {
 
             if (totalPages.value == null) {
               final tot = pageResult.total;
-              totalPages.value = tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
-              debugPrint('PMHistory: totalPages=${totalPages.value}, total=${pageResult.total}');
+              totalPages.value =
+                  tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
+              debugPrint(
+                'PMHistory: totalPages=${totalPages.value}, total=${pageResult.total}',
+              );
             }
 
             return pageResult.data;
@@ -87,10 +93,8 @@ class ProductionManagerHistorySearch extends HookWidget {
           return <PmOrderListItem>[];
         },
       ),
-      [repo, searchQuery.value,dateRange.value],
+      [repo, searchQuery.value, dateRange.value],
     );
-
-
 
     void _onDateRangeChanged(DateTimeRange? picked) {
       // store date range and refresh list
@@ -135,9 +139,6 @@ class ProductionManagerHistorySearch extends HookWidget {
       });
     }
 
-
-
-
     // ---------- UI helpers (kept from your original) ----------
     Color _statusColor(String? status) {
       final s = (status ?? '').toLowerCase();
@@ -164,8 +165,10 @@ class ProductionManagerHistorySearch extends HookWidget {
     String _timeAgo(dynamic dt) {
       DateTime? date;
       if (dt == null) return '';
-      if (dt is DateTime) date = dt;
-      else if (dt is String) date = DateTime.tryParse(dt);
+      if (dt is DateTime)
+        date = dt;
+      else if (dt is String)
+        date = DateTime.tryParse(dt);
       else {
         date = DateTime.tryParse(dt.toString());
       }
@@ -220,7 +223,9 @@ class ProductionManagerHistorySearch extends HookWidget {
             return FractionallySizedBox(
               heightFactor: 0.95,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: Material(
                   color: Colors.white,
                   child: SafeArea(
@@ -240,7 +245,10 @@ class ProductionManagerHistorySearch extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      body: PmOrderDetailsBottomsheet(orderItem: item, isHistorySearchScreen: true,),
+                      body: PmOrderDetailsBottomsheet(
+                        orderItem: item,
+                        isHistorySearchScreen: true,
+                      ),
                     ),
                   ),
                 ),
@@ -298,7 +306,6 @@ class ProductionManagerHistorySearch extends HookWidget {
                     ],
                   ),
 
-
                   const SizedBox(width: 12),
 
                   // content
@@ -316,7 +323,9 @@ class ProductionManagerHistorySearch extends HookWidget {
                                     TextSpan(
                                       text: item.productName ?? '',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w700, fontSize: 16),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     const WidgetSpan(child: SizedBox(width: 8)),
                                     TextSpan(
@@ -343,7 +352,10 @@ class ProductionManagerHistorySearch extends HookWidget {
                             const SizedBox(width: 8),
                             Text(
                               _timeAgo(item.createdAt),
-                              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[500],
+                              ),
                             ),
                           ],
                         ),
@@ -355,7 +367,10 @@ class ProductionManagerHistorySearch extends HookWidget {
                           'SKU: ${item.sku ?? "-"}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
                         ),
 
                         const SizedBox(height: 8),
@@ -369,12 +384,18 @@ class ProductionManagerHistorySearch extends HookWidget {
                                 children: [
                                   Text(
                                     'Qty: ${item.quantity ?? 0}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Assigned by: ${item.salesPersonName ?? "Unassigned"}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -418,24 +439,39 @@ class ProductionManagerHistorySearch extends HookWidget {
             return const Center(child: Text('No orders found'));
           }
 
-          return PagedListView<int, PmOrderListItem>(
-            state: state,
-            fetchNextPage: fetchNextPage,
-            padding: const EdgeInsets.all(12),
-            builderDelegate: PagedChildBuilderDelegate<PmOrderListItem>(
-              itemBuilder: (context, order, index) => orderCard(context, order),
-              firstPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),
-              newPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),
-              firstPageErrorIndicatorBuilder: (_) => Center(
-                child: ElevatedButton(
-                  onPressed: () => fetchNextPage(),
-                  child: const Text('Retry'),
-                ),
-              ),
-              noItemsFoundIndicatorBuilder: (_) => const Center(child: Text('No orders found')),
-              noMoreItemsIndicatorBuilder: (_) => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: SizedBox(height: 80,child: Text('No more orders'),)),
+          return SafeArea(
+            top: false,
+            bottom: true,
+            child: PagedListView<int, PmOrderListItem>(
+              state: state,
+              fetchNextPage: fetchNextPage,
+              padding: const EdgeInsets.all(12),
+              builderDelegate: PagedChildBuilderDelegate<PmOrderListItem>(
+                itemBuilder:
+                    (context, order, index) => orderCard(context, order),
+                firstPageProgressIndicatorBuilder:
+                    (_) => const Center(child: CircularProgressIndicator()),
+                newPageProgressIndicatorBuilder:
+                    (_) => const Center(child: CircularProgressIndicator()),
+                firstPageErrorIndicatorBuilder:
+                    (_) => Center(
+                      child: ElevatedButton(
+                        onPressed: () => fetchNextPage(),
+                        child: const Text('Retry'),
+                      ),
+                    ),
+                noItemsFoundIndicatorBuilder:
+                    (_) => const Center(child: Text('No orders found')),
+                noMoreItemsIndicatorBuilder:
+                    (_) => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: SizedBox(
+                          height: 80,
+                          child: Text('No more orders'),
+                        ),
+                      ),
+                    ),
               ),
             ),
           );

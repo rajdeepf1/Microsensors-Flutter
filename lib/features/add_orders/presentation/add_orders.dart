@@ -42,25 +42,33 @@ class AddOrders extends HookWidget {
       return '$y-$m-$d';
     }
 
-
     // paging controller: v5 constructor requires getNextPageKey and fetchPage
     final pagingController = useMemoized(
-          () => PagingController<int, ProductDataModel>(
+      () => PagingController<int, ProductDataModel>(
         // next-key logic based on current PagingState
         getNextPageKey: (PagingState<int, ProductDataModel> state) {
           if (state.pages == null || state.pages!.isEmpty) return 1;
-          final lastKey = (state.keys?.isNotEmpty ?? false) ? state.keys!.last : state.pages!.length;
-          if (totalPages.value != null && lastKey >= totalPages.value!) return null;
+          final lastKey =
+              (state.keys?.isNotEmpty ?? false)
+                  ? state.keys!.last
+                  : state.pages!.length;
+          if (totalPages.value != null && lastKey >= totalPages.value!)
+            return null;
           return lastKey + 1;
         },
 
         // fetchPage MUST return FutureOr<List<ProductDataModel>>
         fetchPage: (int pageKey) async {
-          debugPrint('fetchPage called: page=$pageKey, search="${searchQuery.value}"');
+          debugPrint(
+            'fetchPage called: page=$pageKey, search="${searchQuery.value}"',
+          );
           final result = await repo.fetchProductsPage(
             page: pageKey,
             pageSize: pageSize,
-            search: searchQuery.value.isNotEmpty ? _normalizeSearch(searchQuery.value) : null,
+            search:
+                searchQuery.value.isNotEmpty
+                    ? _normalizeSearch(searchQuery.value)
+                    : null,
             dateFrom: _formatDateForApi(dateRange.value?.start),
             dateTo: _formatDateForApi(dateRange.value?.end),
           );
@@ -76,10 +84,14 @@ class AddOrders extends HookWidget {
             // compute and store totalPages (once)
             if (pageResult.total != null && totalPages.value == null) {
               totalPages.value = (pageResult.total! + pageSize - 1) ~/ pageSize;
-              debugPrint("✅ totalPages = ${totalPages.value}, total = ${pageResult.total}");
+              debugPrint(
+                "✅ totalPages = ${totalPages.value}, total = ${pageResult.total}",
+              );
             }
 
-            debugPrint("📦 fetchPage: page=$pageKey, items=${pageResult.items.length}");
+            debugPrint(
+              "📦 fetchPage: page=$pageKey, items=${pageResult.items.length}",
+            );
             // return the items for this page
             return pageResult.items;
           }
@@ -119,8 +131,6 @@ class AddOrders extends HookWidget {
       };
     }, [pagingController]);
 
-
-
     // Debounced search callback to be passed to MainLayout
     void onSearchChanged(String q) {
       debounceRef.value?.cancel();
@@ -139,13 +149,16 @@ class AddOrders extends HookWidget {
     return MainLayout(
       title: "Add Orders",
       screenType: ScreenType.search_calender,
-      onSearchChanged: onSearchChanged, // wire up the AppBar textfield -> this callback
+      onSearchChanged: onSearchChanged,
+      // wire up the AppBar textfield -> this callback
       onDateRangeChanged: _onDateRangeChanged,
       child: PagingListener<int, ProductDataModel>(
         controller: pagingController,
         builder: (context, state, fetchNextPage) {
           // debug info
-          debugPrint('builder: pages=${state.pages?.length}, isLoading=${state.isLoading}, hasNext=${state.hasNextPage}');
+          debugPrint(
+            'builder: pages=${state.pages?.length}, isLoading=${state.isLoading}, hasNext=${state.hasNextPage}',
+          );
 
           if (state.isLoading && (state.pages?.isEmpty ?? true)) {
             return const Center(child: CircularProgressIndicator());
@@ -164,36 +177,45 @@ class AddOrders extends HookWidget {
             return const Center(child: Text("No products found"));
           }
 
-          return PagedListView<int, ProductDataModel>(
-            // builder-style API requires state & fetchNextPage
-            state: state,
-            fetchNextPage: fetchNextPage,
-            padding: const EdgeInsets.all(16),
-            builderDelegate: PagedChildBuilderDelegate<ProductDataModel>(
-              itemBuilder: (context, product, index) {
-                return ProductCardWidget(
-                  productId: product.productId,
-                  name: product.productName,
-                  description: product.description,
-                  sku: product.sku,
-                  avatarUrl: product.productImage,
-                  createdAt: product.createdAt,
-                  status: product.status,
-                  createdBy: product.createdByUsername,
-                );
-              },
-              firstPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),
-              newPageProgressIndicatorBuilder: (_) => const Center(child: CircularProgressIndicator()),
-              noItemsFoundIndicatorBuilder: (_) => const Center(child: Text("No products found")),
-              noMoreItemsIndicatorBuilder: (_) => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: Text("No more products")),
-              ),
-              firstPageErrorIndicatorBuilder: (_) => Center(
-                child: ElevatedButton(
-                  onPressed: () => fetchNextPage(),
-                  child: const Text("Retry"),
-                ),
+          return SafeArea(
+            top: false, // MainLayout already handles top/appbar
+            bottom: true, // protect from home indicator / gesture area,
+            child: PagedListView<int, ProductDataModel>(
+              // builder-style API requires state & fetchNextPage
+              state: state,
+              fetchNextPage: fetchNextPage,
+              padding: const EdgeInsets.all(16),
+              builderDelegate: PagedChildBuilderDelegate<ProductDataModel>(
+                itemBuilder: (context, product, index) {
+                  return ProductCardWidget(
+                    productId: product.productId,
+                    name: product.productName,
+                    description: product.description,
+                    sku: product.sku,
+                    avatarUrl: product.productImage,
+                    createdAt: product.createdAt,
+                    status: product.status,
+                    createdBy: product.createdByUsername,
+                  );
+                },
+                firstPageProgressIndicatorBuilder:
+                    (_) => const Center(child: CircularProgressIndicator()),
+                newPageProgressIndicatorBuilder:
+                    (_) => const Center(child: CircularProgressIndicator()),
+                noItemsFoundIndicatorBuilder:
+                    (_) => const Center(child: Text("No products found")),
+                noMoreItemsIndicatorBuilder:
+                    (_) => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(child: Text("No more products")),
+                    ),
+                firstPageErrorIndicatorBuilder:
+                    (_) => Center(
+                      child: ElevatedButton(
+                        onPressed: () => fetchNextPage(),
+                        child: const Text("Retry"),
+                      ),
+                    ),
               ),
             ),
           );
@@ -257,7 +279,9 @@ class ProductCardWidget extends StatelessWidget {
           return FractionallySizedBox(
             heightFactor: 0.95,
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: Material(
                 // Material so AppBar / buttons use Material styles
                 color: Colors.white,
@@ -286,7 +310,7 @@ class ProductCardWidget extends StatelessWidget {
                       status: status,
                       createdBy: createdBy,
                       createdAt: createdAt,
-                      avatarUrl: avatarUrl??"",
+                      avatarUrl: avatarUrl ?? "",
                       productNameFocusNode: productNameFocusNode,
                       enableSaveNotifier: enableSaveNotifier,
                     ),
@@ -298,11 +322,10 @@ class ProductCardWidget extends StatelessWidget {
         },
       );
 
-      if (result == true) {
-        //await onRefresh?.call();
-      }
+      // if (result == true) {
+      //
+      // }
     }
-
 
     return Card(
       elevation: 2,
@@ -370,15 +393,28 @@ class ProductCardWidget extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ElevatedButton(
-                      onPressed: () {openDetailsSheet(context);},
+                      onPressed: () {
+                        openDetailsSheet(context);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
                         elevation: 2,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                      child: const Text('Details \u2192', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Details \u2192',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -394,17 +430,18 @@ class ProductCardWidget extends StatelessWidget {
                 width: 120,
                 height: 120,
                 color: accent.withValues(alpha: 0.12),
-                child: avatarUrl != null && avatarUrl!.isNotEmpty
-                    ? SmartImage(
-                  imageUrl: avatarUrl,
-                  baseUrl: Constants.apiBaseUrl,
-                  width: 120,
-                  height: 120,
-                  shape: ImageShape.rectangle,
-                  fit: BoxFit.cover,
-                  username: name,
-                )
-                    : _placeholderAvatar(name, 120, 120),
+                child:
+                    avatarUrl != null && avatarUrl!.isNotEmpty
+                        ? SmartImage(
+                          imageUrl: avatarUrl,
+                          baseUrl: Constants.apiBaseUrl,
+                          width: 120,
+                          height: 120,
+                          shape: ImageShape.rectangle,
+                          fit: BoxFit.cover,
+                          username: name,
+                        )
+                        : _placeholderAvatar(name, 120, 120),
               ),
             ),
           ],
@@ -418,7 +455,11 @@ class ProductCardWidget extends StatelessWidget {
     String initials = '';
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isNotEmpty) {
-      initials = parts.map((p) => p.isNotEmpty ? p[0].toUpperCase() : '').take(2).join();
+      initials =
+          parts
+              .map((p) => p.isNotEmpty ? p[0].toUpperCase() : '')
+              .take(2)
+              .join();
     }
     return Container(
       width: w,
@@ -427,7 +468,11 @@ class ProductCardWidget extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials.isNotEmpty ? initials : '—',
-        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade700,
+        ),
       ),
     );
   }

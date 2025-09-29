@@ -307,7 +307,7 @@ class MyAccount extends HookWidget {
               ],
             ),
           ),
-          const SizedBox(height: 70.0),
+          const SizedBox(height: 50.0),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -321,6 +321,7 @@ class MyAccount extends HookWidget {
               child: const Text("Save Update"),
             ),
           ),
+          const SizedBox(height: 100.0),
         ],
       ),
     ),

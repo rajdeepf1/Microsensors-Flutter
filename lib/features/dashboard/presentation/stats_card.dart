@@ -26,7 +26,7 @@ class StatsCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
-      width: width ?? 160,
+      width: width ?? 200,
       child: Card(
         color: AppColors.cardColor,
         shape: RoundedRectangleBorder(

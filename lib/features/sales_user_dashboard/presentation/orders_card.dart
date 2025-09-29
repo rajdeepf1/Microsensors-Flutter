@@ -24,6 +24,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
               color: Colors.white,
               child: SafeArea(
                 top: false,
+                bottom: true, // protect from home indicator / gesture area
                 // keep top as part of the sheet (AppBar handles status)
                 child: Scaffold(
                   appBar: AppBar(

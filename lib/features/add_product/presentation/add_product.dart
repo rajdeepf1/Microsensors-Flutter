@@ -178,7 +178,11 @@ class AddProduct extends HookWidget {
 
     return MainLayout(
       title: "Add Product",
-      child: SingleChildScrollView(
+      child: SafeArea(
+        top: true,
+        bottom: true,
+        child:
+      SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
@@ -346,7 +350,7 @@ class AddProduct extends HookWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16.0),
+            const SizedBox(height: 40.0),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -363,10 +367,11 @@ class AddProduct extends HookWidget {
                     : const Text("Add Product"),
               ),
             ),
-            SizedBox(height: 80),
+            SizedBox(height: 70),
           ],
         ),
       ),
+      )
     );
   }
 }

@@ -155,7 +155,11 @@ class AddUser extends HookWidget {
 
     return MainLayout(
       title: "Add User",
-      child: SingleChildScrollView(
+      child: SafeArea(
+        top: true,
+        bottom: true,
+        child:
+      SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
@@ -340,7 +344,7 @@ class AddUser extends HookWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 40.0),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -352,14 +356,16 @@ class AddUser extends HookWidget {
                 ),
                 onPressed: loading.value ? null : addUser,
                 child:
-                    loading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Add User"),
+                loading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Add User"),
               ),
             ),
+            SizedBox(height: 70,)
           ],
         ),
       ),
+      )
     );
   }
 }

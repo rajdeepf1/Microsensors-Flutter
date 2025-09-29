@@ -38,8 +38,7 @@ class SalesUserDashboard extends HookWidget {
     final loadingStats = useState<bool>(true);
     final statsError = useState<String?>(null);
 
-
-    // ---------- FCM & token registration (runs when Dashboard mounts) ----------
+      // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
       StreamSubscription<RemoteMessage>? onMessageSub;
       StreamSubscription<String>? tokenRefreshSub;
@@ -95,6 +94,28 @@ class SalesUserDashboard extends HookWidget {
         try {
           // 1) Load stored user
           final storedUser = await LocalStorageService().getUser();
+          salesUser.value = storedUser;
+          loadingUser.value = false;
+          if (storedUser != null) {
+            // load preview items
+            await _loadPreviewForUser(
+            repo,
+            storedUser.userId,
+            items,
+            loadingPreview,
+            previewError,
+            );
+
+            await _loadStatsForUser(
+            repo,
+            salesUser.value!.userId,
+            statsState,
+            loadingStats,
+            statsError,
+            context,
+            );
+
+          }
 
           // 2) initialize the local plugin (safe to call even if main already created channel)
           const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -201,6 +222,8 @@ class SalesUserDashboard extends HookWidget {
         }
       }();
 
+
+
       // cleanup
       return () {
         onMessageSub?.cancel();
@@ -215,6 +238,7 @@ class SalesUserDashboard extends HookWidget {
         previewError.value = 'No user available';
         return;
       }
+      debugPrint("Called");
       await _loadPreviewForUser(
         repo,
         salesUser.value!.userId,
@@ -265,7 +289,6 @@ class SalesUserDashboard extends HookWidget {
                           : "--"),
                       icon: Icons.play_for_work,
                       color: Colors.green,
-                      width: 180,
                       onTap: () {},
                     ),
                     const SizedBox(width: 12),
@@ -278,7 +301,6 @@ class SalesUserDashboard extends HookWidget {
                           : "--"),
                       icon: Icons.factory,
                       color: Colors.blue,
-                      width: 180,
                       onTap: () {},
                     ),
                     const SizedBox(width: 12),
@@ -291,7 +313,6 @@ class SalesUserDashboard extends HookWidget {
                           : "--"),
                       icon: Icons.double_arrow,
                       color: Colors.purple,
-                      width: 180,
                       onTap: () {},
                     ),
                   ],

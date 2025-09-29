@@ -161,7 +161,11 @@ class ProductList extends HookWidget {
             return const Center(child: Text('No products found'));
           }
 
-          return PagedListView<int, ProductDataModel>(
+          return SafeArea(
+            top: false,   // MainLayout already handles top/appbar
+            bottom: true, // protect from home indicator / gesture area
+            child:
+          PagedListView<int, ProductDataModel>(
             state: state,
             fetchNextPage: fetchNextPage,
             padding: const EdgeInsets.all(16),
@@ -207,6 +211,7 @@ class ProductList extends HookWidget {
                 child: Center(child: Text('No more products')),
               ),
             ),
+          ),
           );
         },
       ),

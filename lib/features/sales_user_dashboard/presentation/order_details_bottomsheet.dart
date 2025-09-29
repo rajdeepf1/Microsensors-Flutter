@@ -101,38 +101,42 @@ class OrderDetailsBottomsheet extends HookWidget {
 
                           const SizedBox(height: 12),
 
+                          Text('Assigned to', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+
+                          const SizedBox(height: 12),
+
                           // product row: thumbnail, name + sku, qty
                           Row(
                             children: [
-                              if (orderItem.productionManagerImage != null &&
-                                  orderItem.productionManagerImage!.isNotEmpty)
+                              // if (orderItem.productionManagerImage != null &&
+                              //     orderItem.productionManagerImage!.isNotEmpty)
                                 SmartImage(
                                   imageUrl: orderItem.productionManagerImage,
                                   baseUrl: Constants.apiBaseUrl,
-                                  height: 56,
-                                  width: 56,
-                                  shape: ImageShape.rectangle,
+                                  height: 48,
+                                  width: 48,
+                                  shape: ImageShape.circle,
                                   username: orderItem.productionManagerName,
                                   fit: BoxFit.cover,
-                                )
-                              else
-                                Container(
-                                  width: 56,
-                                  height: 56,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      _initials(orderItem.productionManagerName),
-                                      style: TextStyle(
-                                        color: Colors.grey.shade800,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
                                 ),
+                              // else
+                              //   Container(
+                              //     width: 56,
+                              //     height: 56,
+                              //     decoration: BoxDecoration(
+                              //       color: Colors.grey.shade300,
+                              //       borderRadius: BorderRadius.circular(10),
+                              //     ),
+                              //     child: Center(
+                              //       child: Text(
+                              //         _initials(orderItem.productionManagerName),
+                              //         style: TextStyle(
+                              //           color: Colors.grey.shade800,
+                              //           fontWeight: FontWeight.bold,
+                              //         ),
+                              //       ),
+                              //     ),
+                              //   ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
@@ -178,14 +182,13 @@ class OrderDetailsBottomsheet extends HookWidget {
             ),
 
             // make the gap below zigzag larger so the timeline doesn't overlap
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             const Text("Timeline", style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 12),
 
             // big left/top padding to guarantee first connector is visible
             Padding(
-              padding: const EdgeInsets.only(left: 18.0, right: 12.0, top: 16.0),
+              padding: const EdgeInsets.only(left: 18.0, right: 12.0, /*top: 16.0*/),
               child: SizedBox(
                 height: timelineHeight, // you already computed above
                 child: AbsorbPointer(
@@ -462,7 +465,7 @@ Widget buildStatusTimelineVerticalWithHook(String currentStatus, {Map<String, Da
   final Color pendingColor = Colors.grey.shade400;
 
   return Padding(
-    padding: const EdgeInsets.only(left: 16.0, top: 12.0, right: 8.0),
+    padding: const EdgeInsets.only(left: 16.0, /*top: 12.0,*/ right: 8.0),
     child: Timeline.tileBuilder(
       theme: TimelineThemeData(
         direction: Axis.vertical,
@@ -512,7 +515,7 @@ Widget buildStatusTimelineVerticalWithHook(String currentStatus, {Map<String, Da
           final double extraTop = index == 0 ? 12.0 : 0.0;
 
           return Padding(
-            padding: EdgeInsets.only(left: 14.0, bottom: 18.0, top: 6.0 + extraTop, right: 8.0),
+            padding: EdgeInsets.only(left: 14.0, bottom: 38.0, top: 38.0 + extraTop, right: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

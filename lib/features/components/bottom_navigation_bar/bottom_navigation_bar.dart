@@ -70,7 +70,7 @@ class AppBottomNavigationBar extends HookWidget {
     ];
 
     return Scaffold(
-      body: pages[currentIndex.value],
+      body: SafeArea(child: pages[currentIndex.value],bottom: true,top: true,),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: AppColors.appBlueColor,
         currentIndex: currentIndex.value,

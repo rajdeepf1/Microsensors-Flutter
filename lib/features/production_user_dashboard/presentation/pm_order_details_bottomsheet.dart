@@ -207,7 +207,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.all(10.0),
       child: SingleChildScrollView(
         child: Column(
           children: [
@@ -430,52 +430,55 @@ class PmOrderDetailsBottomsheet extends HookWidget {
 
             //here
             !isHistorySearchScreen
-                ? Column(
-                  children: [
-                    const SizedBox(height: 18),
-                    // Status dropdown -> updates timeline when changed
-                    UserInfoEditField(
-                      text: "Status",
-                      child: DropdownButtonFormField<String>(
-                        initialValue: status.value,
-                        items: statusItems,
-                        icon: const Icon(Icons.expand_more),
-                        onChanged:
-                            (value) async => await onStatusSelected(value),
-                        style: TextStyle(
-                          color: AppColors.subHeadingTextColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Select Status',
-                          filled: true,
-                          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16.0 * 1.5,
-                            vertical: 16.0,
+                ?
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Column(
+                    children: [
+                      const SizedBox(height: 18),
+                      // Status dropdown -> updates timeline when changed
+                      UserInfoEditField(
+                        text: "Status",
+                        child: DropdownButtonFormField<String>(
+                          initialValue: status.value,
+                          items: statusItems,
+                          icon: const Icon(Icons.expand_more),
+                          onChanged:
+                              (value) async => await onStatusSelected(value),
+                          style: TextStyle(
+                            color: AppColors.subHeadingTextColor,
+                            fontWeight: FontWeight.bold,
                           ),
-                          border: const OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.all(Radius.circular(50)),
+                          decoration: InputDecoration(
+                            hintText: 'Select Status',
+                            filled: true,
+                            fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 16.0,
+                            ),
+                            border: const OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                              borderRadius: BorderRadius.all(Radius.circular(50)),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                )
+                    ],
+                  ),
+            )
                 : SizedBox.shrink(),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
 
             const Text("Timeline", style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 12),
 
             // timeline area (reacts to status.value and stepTimesState.value)
             Padding(
               padding: const EdgeInsets.only(
                 left: 18.0,
                 right: 12.0,
-                top: 16.0,
+                //top: 16.0,
               ),
               child: SizedBox(
                 height: timelineHeight,
@@ -784,7 +787,7 @@ Widget buildStatusTimelineVerticalWithHook(
   final Color pendingColor = Colors.grey.shade400;
 
   return Padding(
-    padding: const EdgeInsets.only(left: 16.0, top: 12.0, right: 8.0),
+    padding: const EdgeInsets.only(left: 16.0, /*top: 12.0,*/ right: 8.0),
     child: Timeline.tileBuilder(
       theme: TimelineThemeData(
         direction: Axis.vertical,
@@ -836,8 +839,8 @@ Widget buildStatusTimelineVerticalWithHook(
           return Padding(
             padding: EdgeInsets.only(
               left: 14.0,
-              bottom: 18.0,
-              top: 6.0 + extraTop,
+              bottom: 38.0,
+              top: 38.0 + extraTop,
               right: 8.0,
             ),
             child: Column(

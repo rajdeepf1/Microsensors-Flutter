@@ -79,8 +79,10 @@ class ProductionUserDashboard extends HookWidget {
     String _timeAgo(dynamic dt) {
       DateTime? date;
       if (dt == null) return '';
-      if (dt is DateTime) date = dt;
-      else if (dt is String) date = DateTime.tryParse(dt);
+      if (dt is DateTime)
+        date = dt;
+      else if (dt is String)
+        date = DateTime.tryParse(dt);
       else {
         date = DateTime.tryParse(dt.toString());
       }
@@ -157,8 +159,8 @@ class ProductionUserDashboard extends HookWidget {
           loadingOrders.value = false;
           return;
         }
-        final ApiState<PagedResponse<PmOrderListItem>> resp =
-        await repo.fetchOrders(pmId: pmId, status: status, page: 0, size: 50);
+        final ApiState<PagedResponse<PmOrderListItem>> resp = await repo
+            .fetchOrders(pmId: pmId, status: status, page: 0, size: 50);
         if (resp is ApiData<PagedResponse<PmOrderListItem>>) {
           // PagedResponse should expose `content` list
           paged.value = resp.data;
@@ -191,7 +193,9 @@ class ProductionUserDashboard extends HookWidget {
             return FractionallySizedBox(
               heightFactor: 0.95,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: Material(
                   color: Colors.white,
                   child: SafeArea(
@@ -211,7 +215,10 @@ class ProductionUserDashboard extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      body: PmOrderDetailsBottomsheet(orderItem: item,isHistorySearchScreen: false,),
+                      body: PmOrderDetailsBottomsheet(
+                        orderItem: item,
+                        isHistorySearchScreen: false,
+                      ),
                     ),
                   ),
                 ),
@@ -236,7 +243,7 @@ class ProductionUserDashboard extends HookWidget {
           borderRadius: BorderRadius.circular(20),
           child: InkWell(
             borderRadius: BorderRadius.circular(20),
-             onTap: openDetailsSheet,
+            onTap: openDetailsSheet,
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
@@ -288,7 +295,9 @@ class ProductionUserDashboard extends HookWidget {
                                     TextSpan(
                                       text: item.productName ?? '',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w700, fontSize: 16),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     const WidgetSpan(child: SizedBox(width: 8)),
                                     TextSpan(
@@ -315,7 +324,10 @@ class ProductionUserDashboard extends HookWidget {
                             const SizedBox(width: 8),
                             Text(
                               _timeAgo(item.createdAt),
-                              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[500],
+                              ),
                             ),
                           ],
                         ),
@@ -327,7 +339,10 @@ class ProductionUserDashboard extends HookWidget {
                           'SKU: ${item.sku ?? "-"}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
                         ),
 
                         const SizedBox(height: 8),
@@ -341,12 +356,18 @@ class ProductionUserDashboard extends HookWidget {
                                 children: [
                                   Text(
                                     'Qty: ${item.quantity ?? 0}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Assigned by: ${item.salesPersonName ?? "Unassigned"}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -364,22 +385,23 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-
     // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
       StreamSubscription<RemoteMessage>? onMessageSub;
       StreamSubscription<String>? tokenRefreshSub;
       StreamSubscription<RemoteMessage>? openedAppSub;
 
-      final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+      final FlutterLocalNotificationsPlugin localNotifications =
+          FlutterLocalNotificationsPlugin();
 
       // we will reuse the channel created in main.dart ("high_importance_channel")
-      const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
-        'high_importance_channel',
-        'High Importance Notifications',
-        description: 'This channel is used for important notifications.',
-        importance: Importance.max,
-      );
+      const AndroidNotificationChannel androidChannel =
+          AndroidNotificationChannel(
+            'high_importance_channel',
+            'High Importance Notifications',
+            description: 'This channel is used for important notifications.',
+            importance: Importance.max,
+          );
 
       // function to show local notification using local plugin instance
       Future<void> showLocalNotification(RemoteMessage message) async {
@@ -421,13 +443,18 @@ class ProductionUserDashboard extends HookWidget {
         try {
           // 1) Load stored user
           final storedUser = await LocalStorageService().getUser();
-
+          productionManager.value = storedUser;
+          // Api call
+          _loadAll();
           // 2) initialize the local plugin (safe to call even if main already created channel)
-          const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+          const androidInit = AndroidInitializationSettings(
+            '@mipmap/ic_launcher',
+          );
 
           // IMPORTANT: include Darwin/iOS init settings to avoid the runtime error on iOS/macOS
           final darwinInit = DarwinInitializationSettings(
-            requestAlertPermission: false, // you already request via FirebaseMessaging
+            requestAlertPermission: false,
+            // you already request via FirebaseMessaging
             requestBadgePermission: false,
             requestSoundPermission: false,
             // onDidReceiveLocalNotification: (id, title, body, payload) { ... } // optional older callback
@@ -442,22 +469,30 @@ class ProductionUserDashboard extends HookWidget {
           await localNotifications.initialize(
             initSettings,
             onDidReceiveNotificationResponse: (NotificationResponse response) {
-              debugPrint('Local notification tapped. Payload: ${response.payload}');
+              debugPrint(
+                'Local notification tapped. Payload: ${response.payload}',
+              );
             },
           );
 
           // Ensure the Android channel exists (no-op if already created)
           await localNotifications
               .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+                AndroidFlutterLocalNotificationsPlugin
+              >()
               ?.createNotificationChannel(androidChannel);
 
           // 3) Request permission for notifications (iOS/Android 13+)
           final messaging = FirebaseMessaging.instance;
           final settings = await messaging.requestPermission(
-            alert: true, badge: true, sound: true, provisional: false,
+            alert: true,
+            badge: true,
+            sound: true,
+            provisional: false,
           );
-          debugPrint('Dashboard FCM permission: ${settings.authorizationStatus}');
+          debugPrint(
+            'Dashboard FCM permission: ${settings.authorizationStatus}',
+          );
 
           // 4) Get the token (first time)
           final token = await messaging.getToken();
@@ -465,21 +500,29 @@ class ProductionUserDashboard extends HookWidget {
 
           // --- SAFELY CALL registerToken and handle ApiState result ---
           if (storedUser == null) {
-            debugPrint('No stored user found - skipping token registration for now.');
+            debugPrint(
+              'No stored user found - skipping token registration for now.',
+            );
           } else if (token == null) {
             debugPrint('Device token is null - cannot register token.');
           } else {
-            final ApiState<UserDataModel> res =
-                await fcmService.registerToken(userId: storedUser.userId, token: token);
+            final ApiState<UserDataModel> res = await fcmService.registerToken(
+              userId: storedUser.userId,
+              token: token,
+            );
 
             if (res is ApiData<UserDataModel>) {
               final UserDataModel savedUser = res.data;
               await LocalStorageService().saveUser(savedUser);
-              debugPrint("FCM token saved successfully and stored user updated (id=${savedUser.userId})");
+              debugPrint(
+                "FCM token saved successfully and stored user updated (id=${savedUser.userId})",
+              );
             } else if (res is ApiError<UserDataModel>) {
               debugPrint("FCM token registration failed: ${res.message}");
             } else {
-              debugPrint("FCM token registration returned unexpected state: $res");
+              debugPrint(
+                "FCM token registration returned unexpected state: $res",
+              );
             }
           }
 
@@ -490,23 +533,31 @@ class ProductionUserDashboard extends HookWidget {
           });
 
           // 6) Token refresh: re-register token for stored user
-          tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+          tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
+            newToken,
+          ) async {
             debugPrint('Dashboard - token refreshed: $newToken');
 
             final currentStored = await LocalStorageService().getUser();
             if (currentStored == null) {
-              debugPrint('No stored user when token refreshed - skipping registration.');
+              debugPrint(
+                'No stored user when token refreshed - skipping registration.',
+              );
               return;
             }
 
-            final ApiState<UserDataModel> refreshRes =
-            await fcmService.registerToken(userId: currentStored.userId, token: newToken);
+            final ApiState<UserDataModel> refreshRes = await fcmService
+                .registerToken(userId: currentStored.userId, token: newToken);
 
             if (refreshRes is ApiData<UserDataModel>) {
               await LocalStorageService().saveUser(refreshRes.data);
-              debugPrint('FCM Token Refreshed and saved successfully (id=${refreshRes.data.userId})');
+              debugPrint(
+                'FCM Token Refreshed and saved successfully (id=${refreshRes.data.userId})',
+              );
             } else if (refreshRes is ApiError<UserDataModel>) {
-              debugPrint('FCM refresh registration failed: ${refreshRes.message}');
+              debugPrint(
+                'FCM refresh registration failed: ${refreshRes.message}',
+              );
             } else {
               debugPrint('FCM refresh returned unexpected state: $refreshRes');
             }
@@ -520,7 +571,9 @@ class ProductionUserDashboard extends HookWidget {
           // 8) If app was launched from terminated state by a notification
           final initialMessage = await messaging.getInitialMessage();
           if (initialMessage != null) {
-            debugPrint('Dashboard - initialMessage: ${initialMessage.messageId}');
+            debugPrint(
+              'Dashboard - initialMessage: ${initialMessage.messageId}',
+            );
           }
         } catch (e) {
           debugPrint('Dashboard FCM init error: $e');
@@ -535,13 +588,15 @@ class ProductionUserDashboard extends HookWidget {
       };
     }, const []); // run once on mount
 
-
     // ---------------------------
     // Build UI pieces that use helpers above
     // ---------------------------
     Widget buildChips() {
       if (loadingStats.value) {
-        return const SizedBox(height: 72, child: Center(child: CircularProgressIndicator()));
+        return const SizedBox(
+          height: 72,
+          child: Center(child: CircularProgressIndicator()),
+        );
       }
 
       return SizedBox(
@@ -559,14 +614,22 @@ class ProductionUserDashboard extends HookWidget {
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(s, style: TextStyle(color: selected ? Colors.white : Colors.black87)),
+                  Text(
+                    s,
+                    style: TextStyle(
+                      color: selected ? Colors.white : Colors.black87,
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   CircleAvatar(
                     radius: 10,
                     backgroundColor: selected ? Colors.white : Colors.black26,
                     child: Text(
                       count.toString(),
-                      style: TextStyle(fontSize: 12, color: selected ? Colors.black : Colors.white),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: selected ? Colors.black : Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -580,6 +643,9 @@ class ProductionUserDashboard extends HookWidget {
               },
               selectedColor: _statusColor(s),
               backgroundColor: Colors.grey.shade200,
+              elevation: 4,
+              checkmarkColor: Colors.white,
+              shape: RoundedRectangleBorder(side: BorderSide.none,borderRadius: BorderRadius.all(Radius.circular(25))),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             );
           },
@@ -604,8 +670,7 @@ class ProductionUserDashboard extends HookWidget {
 
       return RefreshIndicator(
         onRefresh: () async {
-          await _loadStats();
-          await _loadOrders(activeStatus.value);
+          _loadAll();
         },
         child: ListView.separated(
           padding: const EdgeInsets.all(12),
@@ -622,13 +687,17 @@ class ProductionUserDashboard extends HookWidget {
     // ---------------------------
     // Final scaffold
     // ---------------------------
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        buildChips(),
-        const Divider(height: 1),
-        Expanded(child: buildList()),
-      ],
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          buildChips(),
+          const Divider(height: 1),
+          Expanded(child: buildList()),
+        ],
+      ),
     );
   }
 }
