@@ -16,6 +16,7 @@ import '../../components/main_layout/main_layout.dart';
 import '../../components/user/profile_pic.dart';
 import '../../components/user/user_info_edit_field.dart';
 import '../../profile/repository/user_repository.dart';
+import '../repository/account_repository.dart';
 
 class MyAccount extends HookWidget {
   const MyAccount({super.key});
@@ -35,8 +36,14 @@ class MyAccount extends HookWidget {
     final loading = useState(false);
     final message = useState<String?>(null);
 
-    final showOldPassword = useState(false);
+    final accountRepo = useMemoized(() => AccountRepository());
+
+
+    final showCurrentPassword = useState(false);
     final showNewPassword = useState(false);
+
+    final currentPwdLoading = useState<bool>(false);
+    final currentPwdError = useState<String?>(null);
 
     final user = currentUser;
     final username = user?.username ?? "";
@@ -49,8 +56,38 @@ class MyAccount extends HookWidget {
     final nameCtrl = useTextEditingController(text: username);
     final emailCtrl = useTextEditingController(text: useremail);
     final phoneCtrl = useTextEditingController(text: userphone);
-    final oldPassCtrl = useTextEditingController();
+    final currentPasswordCtrl = useTextEditingController();
     final newPassCtrl = useTextEditingController();
+
+    Future<void> fetchCurrentPassword() async {
+      if (user == null) return;
+      currentPwdLoading.value = true;
+      currentPwdError.value = null;
+      try {
+        final res = await accountRepo.fetchUserCurrentPassword(user.userId);
+        if (res is ApiData<String>) {
+          currentPasswordCtrl.text = res.data;
+        } else if (res is ApiError<String>) {
+          currentPasswordCtrl.text = '';
+          currentPwdError.value = res.message ?? 'Failed to fetch password';
+        } else {
+          currentPasswordCtrl.text = '';
+          currentPwdError.value = 'Unexpected response';
+        }
+      } catch (e) {
+        currentPasswordCtrl.text = '';
+        currentPwdError.value = e.toString();
+      } finally {
+        currentPwdLoading.value = false;
+      }
+    }
+
+    useEffect(() {
+      // fetch once when widget mounts and when current user changes
+      fetchCurrentPassword();
+      return null; // no cleanup
+    }, [user?.userId]);
+
 
     Future<void> pickAndUpload() async {
       try {
@@ -100,7 +137,7 @@ class MyAccount extends HookWidget {
       final name = nameCtrl.text.trim();
       final email = emailCtrl.text.trim();
       final phone = phoneCtrl.text.trim();
-      final oldPass = oldPassCtrl.text;
+      final currentPassword = currentPasswordCtrl.text;
       final newPass = newPassCtrl.text;
 
       if (email.isNotEmpty && !Constants.isValidEmail(email)) {
@@ -113,7 +150,7 @@ class MyAccount extends HookWidget {
         return;
       }
 
-      if (newPass.isNotEmpty && oldPass.isEmpty) {
+      if (newPass.isNotEmpty && currentPassword.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter your old password to change password')));
         return;
       }
@@ -124,7 +161,7 @@ class MyAccount extends HookWidget {
         userName: (name.isNotEmpty && name != user.username) ? name : username,
         email: (email.isNotEmpty && email != user.email) ? email : useremail,
         phoneNumber: (phone.isNotEmpty && phone != user.mobileNumber) ? phone : userphone,
-        oldPassword: oldPass.isNotEmpty ? oldPass : null,
+        oldPassword: currentPassword.isNotEmpty ? currentPassword : null,
         newPassword: newPass.isNotEmpty ? newPass : null,
       );
 
@@ -147,6 +184,13 @@ class MyAccount extends HookWidget {
             // persist locally and broadcast
             await LocalStorageService().saveUser(updatedUser);
             AppState.instance.updateUser(updatedUser);
+
+            // If user changed password, show it in currentPasswordCtrl (req.newPassword may be null)
+            if (req.newPassword != null && req.newPassword!.isNotEmpty) {
+              currentPasswordCtrl.text = req.newPassword!;
+              // clear newPass field visually
+              newPassCtrl.clear();
+            }
 
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
           } else {
@@ -248,19 +292,20 @@ class MyAccount extends HookWidget {
                   ),
                 ),
                 UserInfoEditField(
-                  text: "Old Password",
+                  text: "Current Password",
                   child: TextFormField(
-                    controller: oldPassCtrl,
-                    obscureText: !showOldPassword.value, // toggle visibility
+                    controller: currentPasswordCtrl,
+                    readOnly: true,
+                    obscureText: !showCurrentPassword.value, // toggle visibility
                     style: TextStyle(color: AppColors.subHeadingTextColor),
                     decoration: InputDecoration(
                       suffixIcon: IconButton(
                         icon: Icon(
-                          showOldPassword.value ? Icons.visibility : Icons.visibility_off,
+                          showCurrentPassword.value ? Icons.visibility : Icons.visibility_off,
                           size: 20,
                         ),
                         onPressed: () {
-                          showOldPassword.value = !showOldPassword.value;
+                          showCurrentPassword.value = !showCurrentPassword.value;
                         },
                       ),
                       filled: true,

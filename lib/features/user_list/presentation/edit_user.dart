@@ -15,6 +15,7 @@ import '../../../models/user_model/user_model.dart';
 import '../../../models/user_model/user_update_request.dart';
 import '../../components/user/profile_pic.dart';
 import '../../components/user/user_info_edit_field.dart';
+import '../../my_account/repository/account_repository.dart';
 
 class EditUser extends HookWidget {
   final int userId;
@@ -44,6 +45,16 @@ class EditUser extends HookWidget {
   Widget build(BuildContext context) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
+    final accountRepo = useMemoized(() => AccountRepository());
+
+
+    final showCurrentPassword = useState(false);
+    final showNewPassword = useState(false);
+
+    final currentPwdLoading = useState<bool>(false);
+    final currentPwdError = useState<String?>(null);
+
+
     final repo = useMemoized(() => SalesManagersUserRepository());
     final loading = useState(false);
     final deleteLoading = useState(false);
@@ -58,6 +69,40 @@ class EditUser extends HookWidget {
     final nameCtrl = useTextEditingController(text: name);
     final emailCtrl = useTextEditingController(text: email);
     final phoneCtrl = useTextEditingController(text: mobileNumber);
+
+    final currentPasswordCtrl = useTextEditingController();
+    final newPassCtrl = useTextEditingController();
+
+
+    Future<void> fetchCurrentPassword() async {
+      if (userId == null) return;
+      currentPwdLoading.value = true;
+      currentPwdError.value = null;
+      try {
+        final res = await accountRepo.fetchUserCurrentPassword(userId);
+        if (res is ApiData<String>) {
+          currentPasswordCtrl.text = res.data;
+        } else if (res is ApiError<String>) {
+          currentPasswordCtrl.text = '';
+          currentPwdError.value = res.message ?? 'Failed to fetch password';
+        } else {
+          currentPasswordCtrl.text = '';
+          currentPwdError.value = 'Unexpected response';
+        }
+      } catch (e) {
+        currentPasswordCtrl.text = '';
+        currentPwdError.value = e.toString();
+      } finally {
+        currentPwdLoading.value = false;
+      }
+    }
+
+    useEffect(() {
+      // fetch once when widget mounts and when current user changes
+      fetchCurrentPassword();
+      return null; // no cleanup
+    }, [userId]);
+
 
     // role map
     final Map<String, int> roleMap = {
@@ -374,6 +419,37 @@ class EditUser extends HookWidget {
                     ),
                   ),
                 ),
+
+                UserInfoEditField(
+                  text: "Password",
+                  child: TextFormField(
+                    controller: currentPasswordCtrl,
+                    readOnly: true,
+                    obscureText: !showCurrentPassword.value, // toggle visibility
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
+                    decoration: InputDecoration(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          showCurrentPassword.value ? Icons.visibility : Icons.visibility_off,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          showCurrentPassword.value = !showCurrentPassword.value;
+                        },
+                      ),
+                      filled: true,
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0 * 1.5, vertical: 16.0,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(50)),
+                      ),
+                    ),
+                  ),
+                ),
+
                 UserInfoEditField(
                   text: "Active Status",
                   child: Switch(

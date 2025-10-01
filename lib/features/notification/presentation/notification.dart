@@ -6,6 +6,6 @@ class Notification extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MainLayout(title: "Notifications", child: Text("Notifications"));
+    return MainLayout(title: "Notifications", screenType: ScreenType.search_calender,child: Text("Notifications"));
   }
 }
