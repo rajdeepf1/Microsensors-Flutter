@@ -119,24 +119,6 @@ class OrderDetailsBottomsheet extends HookWidget {
                                   username: orderItem.productionManagerName,
                                   fit: BoxFit.cover,
                                 ),
-                              // else
-                              //   Container(
-                              //     width: 56,
-                              //     height: 56,
-                              //     decoration: BoxDecoration(
-                              //       color: Colors.grey.shade300,
-                              //       borderRadius: BorderRadius.circular(10),
-                              //     ),
-                              //     child: Center(
-                              //       child: Text(
-                              //         _initials(orderItem.productionManagerName),
-                              //         style: TextStyle(
-                              //           color: Colors.grey.shade800,
-                              //           fontWeight: FontWeight.bold,
-                              //         ),
-                              //       ),
-                              //     ),
-                              //   ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(

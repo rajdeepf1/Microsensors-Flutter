@@ -21,7 +21,6 @@ class AddProduct extends HookWidget {
     // controllers
     final nameCtrl = useTextEditingController();
     final descCtrl = useTextEditingController();
-    //final priceCtrl = useTextEditingController();
     final skuCtrl = useTextEditingController();
     final skuTimestamp = useState<String?>(null);
 
@@ -31,17 +30,6 @@ class AddProduct extends HookWidget {
     final loading = useState<bool>(false);
     final repo = useMemoized(() => ProductRepository());
     final isSwitched = useState(true);
-
-    // Future<void> browseImage() async {
-    //   final res = await FilePicker.platform.pickFiles(
-    //     type: FileType.image,
-    //     allowMultiple: false,
-    //   );
-    //   if (res == null || res.files.isEmpty) return;
-    //   final path = res.files.first.path;
-    //   if (path == null) return;
-    //   pickedImage.value = File(path);
-    // }
 
     Future<void> onAddProduct() async {
       final name = nameCtrl.text.trim();
@@ -251,52 +239,6 @@ class AddProduct extends HookWidget {
                       ),
                     ),
                   ),
-
-                  // Row(
-                  //   children: [
-                  //     Expanded(
-                  //       child: ProductEditField(
-                  //         text: "Product Price",
-                  //         child: TextFormField(
-                  //           controller: priceCtrl,
-                  //           keyboardType: TextInputType.number,
-                  //           style: TextStyle(
-                  //             color: AppColors.sub_heading_text_color,
-                  //           ),
-                  //           decoration: InputDecoration(
-                  //             prefixText: "₹ ",
-                  //             prefixStyle: TextStyle(color: AppColors.sub_heading_text_color),
-                  //             filled: true,
-                  //             fillColor: AppColors.app_blue_color.withOpacity(
-                  //               0.05,
-                  //             ),
-                  //             contentPadding: const EdgeInsets.symmetric(
-                  //               horizontal: 16.0 * 1.5,
-                  //               vertical: 16.0,
-                  //             ),
-                  //             border: const OutlineInputBorder(
-                  //               borderSide: BorderSide.none,
-                  //               borderRadius: BorderRadius.all(
-                  //                 Radius.circular(50),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     const SizedBox(width: 16), // spacing between fields
-                  //     Expanded(
-                  //       child: QuantityField(
-                  //         label: "Stock Qty",
-                  //         initialValue: 0,
-                  //         onChanged: (val) {
-                  //           print("Quantity updated: $val");
-                  //           qty.value = val;
-                  //         },
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
 
                   ProductEditField(
                     text: "SKU",

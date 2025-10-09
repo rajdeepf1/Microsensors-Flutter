@@ -291,6 +291,51 @@ class SalesProductDetails extends HookWidget {
                     ],
                   ),
                 ),
+
+                ProductEditField(
+                  text: "Client Name",
+                  child: TextFormField(
+                    controller: null,
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0 * 1.5,
+                        vertical: 16.0,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(50)),
+                      ),
+                    ),
+                  ),
+                ),
+
+                ProductEditField(
+                  text: "Remarks",
+                  child: TextFormField(
+                    //initialValue: description,
+                    style: TextStyle(color: AppColors.subHeadingTextColor),
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 5,
+                    minLines: 3,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
+                      alignLabelWithHint: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ),
+
               ],
             ),
           ),
