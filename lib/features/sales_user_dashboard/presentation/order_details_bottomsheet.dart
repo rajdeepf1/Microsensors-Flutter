@@ -12,7 +12,7 @@ class OrderDetailsBottomsheet extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = _statusColor(orderItem.currentStatus).withValues(alpha: 0.12);
+    final cardColor = Constants.statusColor(orderItem.currentStatus).withValues(alpha: 0.12);
 
     // canonical steps (same as timeline widget)
     final steps = <String>[
@@ -193,8 +193,8 @@ class OrderDetailsBottomsheet extends HookWidget {
 
 // small status chip with icon
 Widget _buildStatusChip(String status) {
-  final color = _statusColor(status);
-  final icon = _statusIcon(status);
+  final color = Constants.statusColor(status);
+  final icon = Constants.statusIcon(status);
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
     decoration: BoxDecoration(
@@ -208,54 +208,6 @@ Widget _buildStatusChip(String status) {
       Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
     ]),
   );
-}
-
-// pick a color for status
-Color _statusColor(String status) {
-  switch (status.toLowerCase()) {
-    case 'created':
-      return Colors.green;
-    case 'received':
-      return Colors.lightGreen;
-    case 'in production':
-    case 'production':
-      return Colors.blue;
-    case 'production completed':
-      return Colors.teal;
-    case 'dispatched':
-    case 'shipped':
-      return Colors.deepPurple;
-    case 'acknowledged':
-      return Colors.indigo;
-    case 'cancelled':
-      return Colors.red;
-    default:
-      return Colors.grey.shade700;
-  }
-}
-
-// pick an icon for status
-IconData _statusIcon(String status) {
-  switch (status.toLowerCase()) {
-    case 'created':
-      return Icons.add_box;
-    case 'received':
-      return Icons.download_rounded;
-    case 'in production':
-    case 'production':
-      return Icons.construction;
-    case 'production completed':
-      return Icons.done_all;
-    case 'dispatched':
-    case 'shipped':
-      return Icons.local_shipping;
-    case 'acknowledged':
-      return Icons.check_circle;
-    case 'cancelled':
-      return Icons.cancel;
-    default:
-      return Icons.info;
-  }
 }
 
 /// ZigZagTicketClipper unchanged

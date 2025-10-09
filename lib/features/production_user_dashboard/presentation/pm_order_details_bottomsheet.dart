@@ -31,7 +31,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
     // repo instance
     final repo = useMemoized(() => ProductionManagerRepository());
 
-    final Color baseColor = _statusColor(orderItem.currentStatus);
+    final Color baseColor = Constants.statusColor(orderItem.currentStatus);
     final Color cardColor = baseColor.withValues(alpha: 0.12);
 
     // status backed by hook (defaults to order's current status)
@@ -503,8 +503,8 @@ class PmOrderDetailsBottomsheet extends HookWidget {
 // small status chip with icon
 Widget _buildStatusChip(String? status) {
   final s = status ?? '';
-  final color = _statusColor(s);
-  final icon = _statusIcon(s);
+  final color = Constants.statusColor(s);
+  final icon = Constants.statusIcon(s);
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
     decoration: BoxDecoration(
@@ -528,52 +528,6 @@ Widget _buildStatusChip(String? status) {
       ],
     ),
   );
-}
-
-// pick a color for status
-Color _statusColor(String? status) {
-  final s = (status ?? '').toLowerCase();
-  switch (s) {
-    case 'created':
-      return Colors.green;
-    case 'received':
-      return Colors.lightGreen;
-    case 'production started':
-      return Colors.blue;
-    case 'production completed':
-      return Colors.teal;
-    case 'dispatched':
-      return Colors.deepPurple;
-    case 'acknowledged':
-      return Colors.indigo;
-    case 'cancelled':
-      return Colors.red;
-    default:
-      return Colors.grey.shade700;
-  }
-}
-
-// pick an icon for status
-IconData _statusIcon(String? status) {
-  final s = (status ?? '').toLowerCase();
-  switch (s) {
-    case 'created':
-      return Icons.add_box;
-    case 'received':
-      return Icons.download_rounded;
-    case 'production started':
-      return Icons.construction;
-    case 'production completed':
-      return Icons.done_all;
-    case 'dispatched':
-      return Icons.local_shipping;
-    case 'acknowledged':
-      return Icons.check_circle;
-    case 'cancelled':
-      return Icons.cancel;
-    default:
-      return Icons.info;
-  }
 }
 
 /// ZigZagTicketClipper (unchanged logic but fixed types)

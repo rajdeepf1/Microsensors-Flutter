@@ -295,7 +295,7 @@ class Dashboard extends HookWidget {
               const SizedBox(height: 20),
 
               Text(
-                "Orders Activities",
+                "Order Activities",
                 style: TextStyle(
                     color: AppColors.headingTextColor,
                     fontSize: 18,

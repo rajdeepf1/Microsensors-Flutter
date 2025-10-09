@@ -74,7 +74,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                 width: 6,
                 height: 180,
                 decoration: BoxDecoration(
-                  color: _statusColor(
+                  color: Constants.statusColor(
                     orderItem.currentStatus,
                   ).withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(6),
@@ -198,8 +198,8 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
 
 // small status chip with icon
 Widget _buildStatusChip(String status) {
-  final color = _statusColor(status);
-  final icon = _statusIcon(status);
+  final color = Constants.statusColor(status);
+  final icon = Constants.statusIcon(status);
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
@@ -223,42 +223,4 @@ Widget _buildStatusChip(String status) {
       ],
     ),
   );
-}
-
-// pick a color for status
-Color _statusColor(String status) {
-  switch (status.toLowerCase()) {
-    case 'created':
-      return Colors.green;
-    case 'in production':
-    case 'production':
-      return Colors.blue;
-    case 'shipped':
-      return Colors.deepPurple;
-    case 'delivered':
-      return Colors.indigo;
-    case 'cancelled':
-      return Colors.red;
-    default:
-      return Colors.grey.shade700;
-  }
-}
-
-// pick an icon for status
-IconData _statusIcon(String status) {
-  switch (status.toLowerCase()) {
-    case 'created':
-      return Icons.add_box;
-    case 'in production':
-    case 'production':
-      return Icons.construction;
-    case 'shipped':
-      return Icons.local_shipping;
-    case 'delivered':
-      return Icons.check_circle;
-    case 'cancelled':
-      return Icons.cancel;
-    default:
-      return Icons.info;
-  }
 }

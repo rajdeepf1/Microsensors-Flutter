@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+
 class Constants{
 
   // Private URLs (not exposed outside this class)
@@ -33,6 +37,56 @@ class Constants{
     dt=dt!;
     return '${dt.day}/${dt.month}/${dt.year}';
   }
+
+  static Color statusColor(String? status) {
+    final s = (status ?? '').toLowerCase();
+
+    switch (s) {
+      case 'created':
+      // Fresh start – clean blue accent
+        return const Color(0xFF2563EB); // Blue 600
+      case 'received':
+      // Progressing smoothly – calm teal
+        return const Color(0xFF0891B2); // Cyan 700
+      case 'production started':
+      // Active process – vibrant amber
+        return const Color(0xFFF59E0B); // Amber 500
+      case 'production completed':
+      // Success – confident green
+        return const Color(0xFF16A34A); // Green 600
+      case 'dispatched':
+      // Movement / logistics – royal purple
+        return const Color(0xFF7C3AED); // Violet 600
+      case 'rejected':
+      // Negative outcome – strong red
+        return const Color(0xFFDC2626); // Red 600
+      default:
+      // Unknown / neutral
+        return const Color(0xFF6B7280); // Gray 500
+    }
+  }
+
+  static IconData statusIcon(String? status) {
+    final s = (status ?? '').toLowerCase();
+
+    switch (s) {
+      case 'created':
+        return Icons.auto_awesome; // Sparkle icon for new creation
+      case 'received':
+        return Icons.move_to_inbox_outlined; // Incoming goods
+      case 'production started':
+        return Icons.precision_manufacturing_outlined; // Factory/process
+      case 'production completed':
+        return Icons.check_circle_outline; // Done / success
+      case 'dispatched':
+        return Icons.local_shipping_outlined; // Shipped / dispatched
+      case 'rejected':
+        return Icons.cancel_outlined; // Rejected / cancelled
+      default:
+        return Icons.info_outline; // Fallback
+    }
+  }
+
 
 
 }

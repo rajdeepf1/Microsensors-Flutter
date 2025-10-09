@@ -135,35 +135,9 @@ class OrderActivities extends HookWidget {
       });
     }
 
-
-
-
-    // ---------- UI helpers (kept from your original) ----------
-    Color _statusColor(String? status) {
-      final s = (status ?? '').toLowerCase();
-      if (s == 'created') return Colors.green;
-      if (s == 'received') return Colors.blue;
-      if (s == 'production started') return Colors.orange;
-      if (s == 'production completed') return Colors.green.shade700;
-      if (s == 'dispatched') return Colors.purple;
-      if (s == 'acknowledged') return Colors.teal;
-      return Colors.grey.shade700;
-    }
-
-    IconData _statusIcon(String status) {
-      final s = status.toLowerCase();
-      if (s == 'created') return Icons.add_box_outlined;
-      if (s == 'received') return Icons.inbox_outlined;
-      if (s == 'production started') return Icons.play_circle_outline;
-      if (s == 'production completed') return Icons.check_circle_outline;
-      if (s == 'dispatched') return Icons.local_shipping_outlined;
-      if (s == 'acknowledged') return Icons.done_all;
-      return Icons.info_outline;
-    }
-
     Widget _buildStatusChip(String status) {
-      final color = _statusColor(status);
-      final icon = _statusIcon(status);
+      final color = Constants.statusColor(status);
+      final icon = Constants.statusIcon(status);
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
@@ -190,7 +164,7 @@ class OrderActivities extends HookWidget {
     }
 
     Widget orderCard(BuildContext ctx, PmOrderListItem item) {
-      final accent = _statusColor(item.currentStatus);
+      final accent = Constants.statusColor(item.currentStatus);
 
       void openDetailsSheet() async {
         final bool? result = await showModalBottomSheet<bool>(
