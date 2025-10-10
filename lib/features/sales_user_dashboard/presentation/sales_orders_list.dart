@@ -9,6 +9,7 @@ import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_models.dart';
+import '../../../models/orders/order_response_model.dart';
 import '../../../models/orders/paged_response.dart';
 import '../repository/sales_dashboard_repository.dart';
 import 'orders_card.dart';
@@ -36,19 +37,16 @@ class SalesOrdersList extends HookWidget {
       return '$y-$m-$d';
     }
 
-
-
     final pagingController = useMemoized(
-          () => PagingController<int, OrderListItem>(
-        getNextPageKey: (PagingState<int, OrderListItem> state) {
+          () => PagingController<int, OrderResponseModel>(
+        getNextPageKey: (PagingState<int, OrderResponseModel> state) {
           if (state.pages == null || state.pages!.isEmpty) return initialPage;
 
           final lastKey = (state.keys?.isNotEmpty ?? false)
               ? state.keys!.last
               : (initialPage + state.pages!.length - 1);
 
-          if (totalPages.value != null &&
-              lastKey >= (totalPages.value! - 1)) {
+          if (totalPages.value != null && lastKey >= (totalPages.value! - 1)) {
             return null;
           }
 
@@ -62,7 +60,7 @@ class SalesOrdersList extends HookWidget {
           if (storedUser == null) throw Exception('No stored user');
 
           final res = await repo.fetchOrders(
-            salesId: storedUser.userId,
+            userId: storedUser.userId,
             page: pageKey,
             size: pageSize,
             q: searchQuery.value.isNotEmpty ? searchQuery.value : null,
@@ -70,16 +68,15 @@ class SalesOrdersList extends HookWidget {
             dateTo: _formatDateForApi(dateRange.value?.end),
           );
 
-          if (res is ApiError<PagedResponse<OrderListItem>>) {
+          if (res is ApiError<PagedResponse<OrderResponseModel>>) {
             throw Exception(res.message);
           }
 
-          if (res is ApiData<PagedResponse<OrderListItem>>) {
+          if (res is ApiData<PagedResponse<OrderResponseModel>>) {
             final pageResult = res.data;
 
             if (totalPages.value == null) {
-              totalPages.value =
-                  (pageResult.total + pageSize - 1) ~/ pageSize;
+              totalPages.value = (pageResult.total + pageSize - 1) ~/ pageSize;
               debugPrint(
                   'SalesOrdersList: totalPages=${totalPages.value}, total=${pageResult.total}');
             }
@@ -87,7 +84,7 @@ class SalesOrdersList extends HookWidget {
             return pageResult.data;
           }
 
-          return <OrderListItem>[];
+          return <OrderResponseModel>[];
         },
       ),
       [repo, searchQuery.value, dateRange.value],
@@ -136,7 +133,7 @@ class SalesOrdersList extends HookWidget {
       screenType: ScreenType.search_calender,
       onSearchChanged: onSearchChanged,
       onDateRangeChanged: _onDateRangeChanged,
-      child: PagingListener<int, OrderListItem>(
+      child: PagingListener<int, OrderResponseModel>(
         controller: pagingController,
         builder: (context, state, fetchNextPage) {
           if (state.isLoading && (state.pages?.isEmpty ?? true)) {
@@ -157,38 +154,37 @@ class SalesOrdersList extends HookWidget {
           }
 
           return SafeArea(
-            top: false,   // MainLayout already handles top/appbar
+            top: false, // MainLayout already handles top/appbar
             bottom: true, // protect from home indicator / gesture area
-            child:
-          PagedListView<int, OrderListItem>(
-            state: state,
-            fetchNextPage: fetchNextPage,
-            padding: const EdgeInsets.all(16),
-            builderDelegate: PagedChildBuilderDelegate<OrderListItem>(
-              itemBuilder: (context, order, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: orderCardWidget(context, order),
-                );
-              },
-              firstPageProgressIndicatorBuilder: (_) =>
-              const Center(child: CircularProgressIndicator()),
-              newPageProgressIndicatorBuilder: (_) =>
-              const Center(child: CircularProgressIndicator()),
-              firstPageErrorIndicatorBuilder: (_) => Center(
-                child: ElevatedButton(
-                  onPressed: () => fetchNextPage(),
-                  child: const Text('Retry'),
+            child: PagedListView<int, OrderResponseModel>(
+              state: state,
+              fetchNextPage: fetchNextPage,
+              padding: const EdgeInsets.all(16),
+              builderDelegate: PagedChildBuilderDelegate<OrderResponseModel>(
+                itemBuilder: (context, order, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: orderCardWidget(context, order),
+                  );
+                },
+                firstPageProgressIndicatorBuilder: (_) =>
+                const Center(child: CircularProgressIndicator()),
+                newPageProgressIndicatorBuilder: (_) =>
+                const Center(child: CircularProgressIndicator()),
+                firstPageErrorIndicatorBuilder: (_) => Center(
+                  child: ElevatedButton(
+                    onPressed: () => fetchNextPage(),
+                    child: const Text('Retry'),
+                  ),
+                ),
+                noItemsFoundIndicatorBuilder: (_) =>
+                const Center(child: Text('No orders found')),
+                noMoreItemsIndicatorBuilder: (_) => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: Text('No more orders')),
                 ),
               ),
-              noItemsFoundIndicatorBuilder: (_) =>
-              const Center(child: Text('No orders found')),
-              noMoreItemsIndicatorBuilder: (_) => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: Text('No more orders')),
-              ),
             ),
-          ),
           );
         },
       ),

@@ -160,7 +160,6 @@ class OrderActivities extends HookWidget {
 
     // ✅ Same UI (uses OrderResponseModel)
     Widget orderCard(BuildContext ctx, OrderResponseModel item) {
-      //final firstItem = item.items.isNotEmpty ? item.items.first : null;
       final accent = Constants.statusColor(item.status);
 
       void openDetailsSheet() async {

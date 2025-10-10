@@ -10,6 +10,7 @@ import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/features/sales_user_dashboard/presentation/orders_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
+import '../../../models/orders/order_response_model.dart';
 import '../../../models/orders/paged_response.dart';
 import '../../../models/orders/sales_order_stats.dart';
 import '../../../models/user_model/user_model.dart';
@@ -30,16 +31,18 @@ class SalesUserDashboard extends HookWidget {
     final salesUser = useState<UserDataModel?>(null);
     final loadingUser = useState<bool>(true);
 
-    final items = useState<List<OrderListItem>>([]);
+    final items = useState<List<OrderResponseModel>>([]);
     final loadingPreview = useState<bool>(false);
     final previewError = useState<String?>(null);
+    // NEW: total count from server for preview (used to decide "See more")
+    final previewTotal = useState<int?>(null);
 
     // for stats
     final statsState = useState<OrderStats?>(null);
     final loadingStats = useState<bool>(true);
     final statsError = useState<String?>(null);
 
-      // ---------- FCM & token registration (runs when Dashboard mounts) ----------
+    // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
       StreamSubscription<RemoteMessage>? onMessageSub;
       StreamSubscription<String>? tokenRefreshSub;
@@ -105,17 +108,17 @@ class SalesUserDashboard extends HookWidget {
             items,
             loadingPreview,
             previewError,
+            previewTotal,
             );
 
-            await _loadStatsForUser(
-            repo,
-            salesUser.value!.userId,
-            statsState,
-            loadingStats,
-            statsError,
-            context,
-            );
-
+            // await _loadStatsForUser(
+            // repo,
+            // salesUser.value!.userId,
+            // statsState,
+            // loadingStats,
+            // statsError,
+            // context,
+            // );
           }
 
           // 2) initialize the local plugin (safe to call even if main already created channel)
@@ -126,7 +129,6 @@ class SalesUserDashboard extends HookWidget {
             requestAlertPermission: false, // you already request via FirebaseMessaging
             requestBadgePermission: false,
             requestSoundPermission: false,
-            // onDidReceiveLocalNotification: (id, title, body, payload) { ... } // optional older callback
           );
 
           final initSettings = InitializationSettings(
@@ -144,8 +146,7 @@ class SalesUserDashboard extends HookWidget {
 
           // Ensure the Android channel exists (no-op if already created)
           await localNotifications
-              .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+              .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
               ?.createNotificationChannel(androidChannel);
 
           // 3) Request permission for notifications (iOS/Android 13+)
@@ -223,8 +224,6 @@ class SalesUserDashboard extends HookWidget {
         }
       }();
 
-
-
       // cleanup
       return () {
         onMessageSub?.cancel();
@@ -246,15 +245,16 @@ class SalesUserDashboard extends HookWidget {
         items,
         loadingPreview,
         previewError,
+        previewTotal,
       );
-      await _loadStatsForUser(
-        repo,
-        salesUser.value!.userId,
-        statsState,
-        loadingStats,
-        statsError,
-        context,
-      );
+      // await _loadStatsForUser(
+      //   repo,
+      //   salesUser.value!.userId,
+      //   statsState,
+      //   loadingStats,
+      //   statsError,
+      //   context,
+      // );
     }
 
     return Scaffold(
@@ -285,9 +285,7 @@ class SalesUserDashboard extends HookWidget {
                       title: "Active Orders",
                       value: loadingStats.value
                           ? "..."
-                          : (statsState.value != null
-                          ? statsState.value!.active.toString()
-                          : "--"),
+                          : (statsState.value != null ? statsState.value!.active.toString() : "--"),
                       icon: Icons.play_for_work,
                       color: Colors.green,
                       onTap: () {},
@@ -297,9 +295,7 @@ class SalesUserDashboard extends HookWidget {
                       title: "In Production",
                       value: loadingStats.value
                           ? "..."
-                          : (statsState.value != null
-                          ? statsState.value!.inProduction.toString()
-                          : "--"),
+                          : (statsState.value != null ? statsState.value!.inProduction.toString() : "--"),
                       icon: Icons.factory,
                       color: Colors.blue,
                       onTap: () {},
@@ -309,9 +305,7 @@ class SalesUserDashboard extends HookWidget {
                       title: "Dispatched",
                       value: loadingStats.value
                           ? "..."
-                          : (statsState.value != null
-                          ? statsState.value!.dispatched.toString()
-                          : "--"),
+                          : (statsState.value != null ? statsState.value!.dispatched.toString() : "--"),
                       icon: Icons.double_arrow,
                       color: Colors.purple,
                       onTap: () {},
@@ -356,7 +350,6 @@ class SalesUserDashboard extends HookWidget {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else
-              // Card containing preview area
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Column(
@@ -389,7 +382,6 @@ class SalesUserDashboard extends HookWidget {
                           ),
                         )
                       else if (items.value.isEmpty)
-                        // EMPTY -> show Add Order CTA
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 20.0),
                             child: Center(
@@ -422,18 +414,13 @@ class SalesUserDashboard extends HookWidget {
                             children: [
                               ...items.value.map(
                                     (o) => Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
                                   child: orderCardWidget(context, o),
                                 ),
                               ),
-                              if (items.value.length >= 4)
+                              if ((previewTotal.value ?? items.value.length) > items.value.length)
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 6,
-                                    bottom: 8,
-                                  ),
+                                  padding: const EdgeInsets.only(top: 6, bottom: 8),
                                   child: Center(
                                     child: OutlinedButton.icon(
                                       style: OutlinedButton.styleFrom(
@@ -489,29 +476,63 @@ class SalesUserDashboard extends HookWidget {
 }
 
 /// Loads preview items via repo and updates the provided states.
+/// Requests only 4 items from the API to keep the preview lightweight.
 Future<void> _loadPreviewForUser(
     SalesDashboardRepository repo,
     int userId,
-    ValueNotifier<List<OrderListItem>> items,
+    ValueNotifier<List<OrderResponseModel>> items,
     ValueNotifier<bool> loading,
     ValueNotifier<String?> error,
+    ValueNotifier<int?> previewTotal,
     ) async {
   loading.value = true;
   error.value = null;
   try {
-    final res = await repo.fetchOrders(salesId: userId, page: 0, size: 10);
-    if (res is ApiData<PagedResponse<OrderListItem>>) {
-      items.value = res.data.data.take(4).toList();
-    } else if (res is ApiError<PagedResponse<OrderListItem>>) {
-      error.value = res.message;
-      items.value = [];
+    final res = await repo.fetchOrders(userId: userId, page: 0, size: 4);
+
+    if (res is ApiData<PagedResponse<OrderResponseModel>>) {
+      final fetched = res.data.data ?? <OrderResponseModel>[];
+      // ensure we never show more than 4 items
+      items.value = (fetched.length <= 4) ? fetched.toList() : fetched.take(4).toList();
+
+      // defensive: try to read res.data.total, fallback to fetched.length
+      try {
+        final totalFromServer = res.data.total;
+        previewTotal.value = (totalFromServer != null) ? totalFromServer : fetched.length;
+      } catch (_) {
+        previewTotal.value = fetched.length;
+      }
+    } else if (res is ApiError<PagedResponse<OrderResponseModel>>) {
+      final msg = (res.message ?? '').toLowerCase();
+
+      // treat common "no data / not found" messages as benign — don't set previewError
+      final isBenign =
+          msg.contains('not found') || msg.contains('no data') || msg.contains('no items') || msg.contains('404');
+
+      if (isBenign) {
+        // no items available — show empty preview without an error card
+        items.value = [];
+        previewTotal.value = 0;
+        error.value = null; // keep UI quiet
+        debugPrint('Preview: benign empty response for userId=$userId: "${res.message}"');
+      } else {
+        // real error — surface it in the preview area
+        error.value = res.message;
+        items.value = [];
+        previewTotal.value = 0;
+        debugPrint('Preview API error for userId=$userId: ${res.message}');
+      }
     } else {
       error.value = 'Unexpected API state';
       items.value = [];
+      previewTotal.value = 0;
+      debugPrint('Preview unexpected API state for userId=$userId: $res');
     }
-  } catch (e) {
+  } catch (e, st) {
     error.value = e.toString();
     items.value = [];
+    previewTotal.value = 0;
+    debugPrint('Preview load exception for userId=$userId: $e\n$st');
   } finally {
     loading.value = false;
   }

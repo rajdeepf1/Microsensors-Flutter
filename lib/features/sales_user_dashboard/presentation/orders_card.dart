@@ -2,11 +2,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/orders/order_models.dart';
+import '../../../models/orders/order_response_model.dart';
 import '../../../utils/constants.dart';
 import '../../components/smart_image/smart_image.dart';
-import 'order_details_bottomsheet.dart';
+import 'sales_order_details_bottomsheet.dart';
 
-Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
+Widget orderCardWidget(BuildContext context, OrderResponseModel item) {
+  final accent = Constants.statusColor(item.status);
+
   void openDetailsSheet(BuildContext context) async {
     // ignore: unused_local_variable
     final bool? result = await showModalBottomSheet(
@@ -32,7 +35,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                     backgroundColor: Colors.white,
                     iconTheme: const IconThemeData(color: Colors.black),
                     title: Text(
-                      orderItem.productName,
+                      item.clientName!,
                       style: const TextStyle(color: Colors.black),
                     ),
                     leading: IconButton(
@@ -40,7 +43,7 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ),
-                  body: OrderDetailsBottomsheet(orderItem: orderItem),
+                  body: SalesOrderDetailsBottomsheet(orderItem: item),
                 ),
               ),
             ),
@@ -53,136 +56,153 @@ Widget orderCardWidget(BuildContext context, OrderListItem orderItem) {
   return Card(
     elevation: 4,
     color: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(25), // <-- Card radius
-    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     child: Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          openDetailsSheet(context);
-        },
-        child: Container(
+        onTap: () => openDetailsSheet(context),
+        child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left thin accent bar
               Container(
                 width: 6,
                 height: 180,
                 decoration: BoxDecoration(
-                  color: Constants.statusColor(
-                    orderItem.currentStatus,
-                  ).withValues(alpha: 0.18),
+                  color: accent.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(6),
                 ),
               ),
               const SizedBox(width: 12),
-
-              Column(
-                children: [
-                  SmartImage(
-                    imageUrl: orderItem.productImage,
-                    baseUrl: Constants.apiBaseUrl,
-                    username: orderItem.productName,
-                    shape: ImageShape.rectangle,
-                    height: 120,
-                    width: 120,
-                  ),
-                  const SizedBox(height: 12),
-                  // status chip
-                  _buildStatusChip(orderItem.currentStatus),
-                ],
-              ),
-
-              SizedBox(width: 12),
-
-              // Main content
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // title + time
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: orderItem.productName,
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                TextSpan(
-                                  text: ' | ',
-                                  style: TextStyle(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '#${orderItem.orderId}',
-                                  style: TextStyle(
-                                    color: Colors.grey[700],
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                        Column(
+                          children: [
+                            SmartImage(
+                              imageUrl: '',
+                              baseUrl: Constants.apiBaseUrl,
+                              username: item.clientName,
+                              shape: ImageShape.rectangle,
+                              height: 120,
+                              width: 120,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ],
                         ),
-                        SizedBox(width: 8),
-                        Text(
-                          Constants.timeAgo(orderItem.createdAt),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: 6),
-
-                    // subtitle lines
-                    Text(
-                      'SKU: ${orderItem.sku}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                    ),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: item.clientName ?? '',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const WidgetSpan(
+                                            child: SizedBox(width: 8),
+                                          ),
+                                          TextSpan(
+                                            text: '| ',
+                                            style: TextStyle(
+                                              color: Colors.blue.shade700,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: ' #${item.orderId}',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    Constants.timeAgo(item.createdAt),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
                               Text(
-                                'Qty: ${orderItem.quantity}',
-                                maxLines: 1,
+                                'Remarks: ${item?.remarks ?? "-"}',
+                                maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
                                 ),
                               ),
-                              Text(
-                                "Assigned to: ${orderItem.productionManagerName}",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Total No. Products: ${item.items.length ?? 0}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Assigned by: ${item.salesPersonName ?? "Unassigned"}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Assigned to: ${item.productionManagerName ?? "Unassigned"}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildStatusChip(item.status ?? ''),
+                        const SizedBox(width: 12),
+                        _buildStatusChip(item.priority ?? ''),
                       ],
                     ),
                   ],
