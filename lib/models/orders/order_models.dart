@@ -74,31 +74,3 @@ class OrderListItem {
     );
   }
 }
-
-class PagedResponse<T> {
-  final List<T> data;
-  final int total;
-  final int page;
-  final int pageSize;
-  final int totalPages;
-
-  PagedResponse({
-    required this.data,
-    required this.total,
-    required this.page,
-    required this.pageSize,
-    required this.totalPages,
-  });
-
-  factory PagedResponse.fromJson(
-      Map<String, dynamic> j, T Function(Map<String, dynamic>) fromJsonT) {
-    final inner = (j['data'] as List<dynamic>?) ?? <dynamic>[];
-    return PagedResponse<T>(
-      data: inner.map((e) => fromJsonT(e as Map<String, dynamic>)).toList(),
-      total: _toInt(j['total']),
-      page: _toInt(j['page']),
-      pageSize: _toInt(j['pageSize']),
-      totalPages: _toInt(j['totalPages']),
-    );
-  }
-}

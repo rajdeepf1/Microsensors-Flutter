@@ -3,6 +3,7 @@ import 'dart:ui';
 
 class AppColors {
   static const Color appBlueColor = Color(0xFF3C8DEA);
+  static const Color whiteColor = Color(0xFFFFFFFF);
   static const Color buttonColor = Color(0xFF3C8DEA);
   static const Color deleteButtonColor = Color(0xFFEC0606);
   static const Color buttonTextColor = Color(0xFFFFFFFF);

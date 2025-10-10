@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
 import '../../../models/orders/order_models.dart';
+import '../../../models/orders/order_response_model.dart';
+import '../../../models/orders/paged_response.dart';
 import '../../../models/orders/production_manager_order_list.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../models/product/product_list_response.dart';
@@ -82,8 +84,7 @@ class DashboardRepository {
   }
 
   // order activities
-
-  Future<ApiState<PagedResponse<PmOrderListItem>>> fetchOrders({
+  Future<ApiState<PagedResponse<OrderResponseModel>>> fetchOrders({
     String? status,
     int page = 0,
     int size = 20,
@@ -97,12 +98,11 @@ class DashboardRepository {
         'size': size,
       };
 
-      // add optional filters only when provided
       if (status != null && status.isNotEmpty) {
         params['status'] = status;
       }
       if (q != null && q.isNotEmpty) {
-        params['q'] = q;
+        params['search'] = q;
       }
       if (dateFrom != null && dateFrom.isNotEmpty) {
         params['dateFrom'] = dateFrom;
@@ -111,11 +111,10 @@ class DashboardRepository {
         params['dateTo'] = dateTo;
       }
 
-      // debug: print final URI (handy while testing)
-      debugPrint('GET orders/admin/all params: $params');
+      debugPrint('GET orders/admin params: $params');
 
       final response = await _client.get(
-        'orders/admin/all',
+        'orders/admin',
         queryParameters: params,
       );
 
@@ -126,9 +125,9 @@ class DashboardRepository {
         if (raw is Map<String, dynamic>) {
           final dataWrapper = raw['data'];
           if (dataWrapper is Map<String, dynamic>) {
-            final paged = PagedResponse<PmOrderListItem>.fromJson(
+            final paged = PagedResponse<OrderResponseModel>.fromJson(
               dataWrapper,
-                  (m) => PmOrderListItem.fromJson(m),
+                  (m) => OrderResponseModel.fromJson(m),
             );
             return ApiData(paged);
           }
@@ -146,6 +145,53 @@ class DashboardRepository {
       return ApiError('Unexpected error: $e', error: e, stackTrace: st);
     }
   }
+
+
+  /// Approve or reject an order (admin endpoint)
+  Future<ApiState<String>> approveOrRejectOrder({
+    required int orderId,
+    required int adminId,
+    required String action, // "APPROVE" or "REJECT"
+    String? priority, // optional: "Low","Medium","High","Urgent"
+    int? productionManagerId, // optional
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'adminId': adminId,
+        'action': action,
+      };
+      if (priority != null) body['priority'] = priority;
+      if (productionManagerId != null) body['productionManagerId'] = productionManagerId;
+
+      final response = await _client.post(
+        'orders/$orderId/approval',
+        data: body,
+      );
+
+      if (response.statusCode == 200) {
+        final raw = response.data;
+        // expected: { success:true, statusCode:200, data: "Order approved", error: null }
+        if (raw is Map && raw['data'] is String) {
+          return ApiData<String>(raw['data'] as String);
+        } else if (raw is String) {
+          // fallback
+          return ApiData<String>(raw);
+        } else {
+          return const ApiError('Unexpected approval response format');
+        }
+      } else {
+        return ApiError('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (dioErr) {
+      final body = dioErr.response?.data;
+      final msg = (body is Map && body['error'] != null) ? body['error'].toString() : (dioErr.message ?? 'Network error');
+      return ApiError(msg, error: dioErr);
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
+    }
+  }
+
+
 
 
   // for count of total orders in the dashboard

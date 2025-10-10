@@ -60,6 +60,14 @@ class Constants{
       case 'rejected':
       // Negative outcome – strong red
         return const Color(0xFFDC2626); // Red 600
+      case 'low':
+        return Colors.green;
+      case 'medium':
+        return Colors.blueAccent;
+      case 'high':
+        return Colors.orangeAccent;
+      case 'urgent':
+        return Colors.redAccent;
       default:
       // Unknown / neutral
         return const Color(0xFF6B7280); // Gray 500
@@ -82,6 +90,14 @@ class Constants{
         return Icons.local_shipping_outlined; // Shipped / dispatched
       case 'rejected':
         return Icons.cancel_outlined; // Rejected / cancelled
+      case 'low':
+        return Icons.arrow_downward;
+      case 'medium':
+        return Icons.horizontal_rule;
+      case 'high':
+        return Icons.arrow_upward;
+      case 'urgent':
+        return Icons.priority_high;
       default:
         return Icons.info_outline; // Fallback
     }
