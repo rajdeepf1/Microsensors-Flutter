@@ -7,6 +7,7 @@ import 'package:microsensors/features/sales_user_dashboard/repository/sales_dash
 
 import '../../../core/api_state.dart';
 import '../../../models/product/product_list_response.dart';
+import '../../../models/product/selected_products.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
 import '../../add_orders/presentation/product_details.dart';
@@ -147,11 +148,12 @@ class AddOrders extends HookWidget {
               ),
             ),
 
+
             IconButton(
-              icon: const Icon(Icons.add_shopping_cart_outlined),
+              icon: const Icon(Icons.add_shopping_cart_outlined,size: 38,),
               tooltip: 'Add products',
               onPressed: () async {
-                final List<ProductDataModel>? picked = await showModalBottomSheet<List<ProductDataModel>>(
+                final List<SelectedProducts>? picked = await showModalBottomSheet<List<SelectedProducts>>(
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
@@ -159,7 +161,7 @@ class AddOrders extends HookWidget {
                 );
 
                 if (picked != null && picked.isNotEmpty) {
-                  debugPrint('Picked product ids: ${picked.map((p) => p.productId).toList()}');
+                  debugPrint('Picked product ids: ${picked.map((p) => p.product.productId).toList()} & ${picked.map((p) => p.quantity).toList()}');
                   // Use picked (List<ProductDataModel>) — e.g. call API to add them to an order,
                   // or update your UI using picked.
                 } else {

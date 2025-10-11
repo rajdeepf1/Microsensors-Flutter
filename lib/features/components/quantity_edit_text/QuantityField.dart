@@ -7,14 +7,18 @@ import 'package:flutter/services.dart';
 import '../../../utils/colors.dart';
 import '../../add_product/presentation/add_product.dart';
 
+/// Compact QuantityField with optional label.
+/// Left-aligned text, compact +/- buttons on the right, no overflow.
 class QuantityField extends HookWidget {
-  final String label;
+  final String? label;
+  final Color? qytFillColor;
   final int initialValue;
   final ValueChanged<int>? onChanged;
 
   const QuantityField({
     super.key,
-    required this.label,
+    this.label,
+    this.qytFillColor,
     this.initialValue = 0,
     this.onChanged,
   });
@@ -29,25 +33,10 @@ class QuantityField extends HookWidget {
     useEffect(() {
       void listener() {
         final text = controller.text.trim();
-
-        if (text.isEmpty) {
-          if (qty.value != 0) {
-            qty.value = 0;
-            onChanged?.call(0);
-          }
-          return;
-        }
-
-        final parsed = int.tryParse(text);
-        if (parsed == null) {
-          // shouldn't happen due to inputFormatter but ignore if it does
-          return;
-        }
-
-        final clamped = parsed.clamp(0, 9999999);
-        if (clamped != qty.value) {
-          qty.value = clamped;
-          onChanged?.call(clamped);
+        final parsed = int.tryParse(text) ?? 0;
+        if (parsed != qty.value) {
+          qty.value = parsed;
+          onChanged?.call(parsed);
         }
       }
 
@@ -56,84 +45,106 @@ class QuantityField extends HookWidget {
     }, [controller]);
 
     void updateValue(int newVal) {
-      if (newVal < 0) return;
       newVal = newVal.clamp(0, 9999999);
       if (newVal == qty.value) return;
       qty.value = newVal;
-      // update controller and move cursor to end
       controller.text = newVal.toString();
-      controller.selection = TextSelection.collapsed(offset: controller.text.length);
+      controller.selection =
+          TextSelection.collapsed(offset: controller.text.length);
       onChanged?.call(newVal);
     }
 
-    return ProductEditField(
-      text: label,
+    // The compact suffix (two small buttons) — constrained to avoid overflow
+    final Widget suffix = ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: 0,
+        maxWidth: 68, // keeps the suffix compact horizontally
+        maxHeight: 40, // must be <= field height to avoid vertical overflow
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 4.0),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _smallBtn(Icons.remove, () => updateValue(qty.value - 1)),
+              const SizedBox(width: 6),
+              _smallBtn(Icons.add, () => updateValue(qty.value + 1)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final textField = SizedBox(
+      height: 40, // adjust field height if you need larger touch targets
       child: TextFormField(
         controller: controller,
         focusNode: focusNode,
-        readOnly: false,
         keyboardType: TextInputType.number,
+        textAlign: TextAlign.start,
         maxLength: 6,
-        inputFormatters:  [
+        inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(7), // optional max digits
+          LengthLimitingTextInputFormatter(7),
         ],
-        textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.headingTextColor),
-        // Ensure tapping the field always requests focus (helps if a parent widget intercepts taps)
-        onTap: () {
-          if (!focusNode.hasFocus) {
-            FocusScope.of(context).requestFocus(focusNode);
-          }
-        },
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.appBlueColor.withValues(alpha: 0.05),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16.0 * 1.5,
-            vertical: 16.0,
-          ),
-          border: const OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.all(Radius.circular(50)),
-          ),
-          // allow the suffix to be as small as we want (no extra InputDecorator padding)
-          suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-          // Give the suffix area enough width so the two buttons + any internal padding don't overflow
-          suffixIcon: SizedBox(
-            width: 104, // <-- widen this if you use larger touch targets
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  // compact but still accessible 44x44 touch target
-                  constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-                  icon: const Icon(Icons.remove, size: 18),
-                  onPressed: () => updateValue(qty.value - 1),
-                  tooltip: 'Decrease',
-                ),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-                  icon: const Icon(Icons.add, size: 18),
-                  onPressed: () => updateValue(qty.value + 1),
-                  tooltip: 'Increase',
-                ),
-              ],
-            ),
-          ),
+        style: TextStyle(
+          color: AppColors.headingTextColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
         ),
-        // normalize when user finishes typing
+        decoration: InputDecoration(
+          counterText: "",
+          filled: true,
+          fillColor: qytFillColor ?? AppColors.appBlueColor.withValues(alpha: 0.05),
+          isDense: true,
+          // left padding small, right padding zero so text hugs suffix
+          contentPadding: const EdgeInsets.only(left: 8, top: 8, bottom: 8, right: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(50),
+            borderSide: BorderSide.none,
+          ),
+          // Allow very small suffix box and prevent it from growing
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+            maxWidth: 68,
+            maxHeight: 40,
+          ),
+          suffixIcon: suffix,
+        ),
         onFieldSubmitted: (_) {
-          final t = controller.text.trim();
-          if (t.isEmpty) {
-            updateValue(0);
-          } else {
-            final parsed = int.tryParse(t);
-            if (parsed != null) updateValue(parsed);
-          }
+          final val = int.tryParse(controller.text.trim()) ?? 0;
+          updateValue(val);
         },
+      ),
+    );
+
+    // If label present wrap in ProductEditField, otherwise return field directly
+    if (label != null && label!.isNotEmpty) {
+      return ProductEditField(text: label!, child: textField);
+    }
+
+    return textField;
+  }
+
+  /// Small compact button implemented with GestureDetector + Container
+  /// to avoid IconButton's extra padding and to ensure fixed small size.
+  Widget _smallBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        // optional subtle hit/background - keep minimal
+        // decoration: BoxDecoration(
+        //   color: Colors.transparent,
+        //   borderRadius: BorderRadius.circular(6),
+        // ),
+        child: Icon(icon, size: 14, color: AppColors.headingTextColor),
       ),
     );
   }

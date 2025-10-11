@@ -4,8 +4,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../../../core/api_state.dart';
 import '../../../models/product/product_list_response.dart';
+import '../../../models/product/selected_products.dart';
 import '../../../utils/colors.dart';
 import '../../add_orders/repository/product_list_repository.dart';
+import '../../components/quantity_edit_text/QuantityField.dart';
 
 /// Hook-based full-height product picker sheet with multi-select checkboxes.
 /// Returns List<ProductDataModel> when saved (or null if cancelled).
@@ -27,7 +29,11 @@ class ProductPickerSheet extends HookWidget {
 
     final totalPages = useState<int?>(null);
     final selectedIds = useState<Set<int>>(<int>{});
-    final selectedMap = useState<Map<int, ProductDataModel>>(<int, ProductDataModel>{});
+    final selectedMap = useState<Map<int, ProductDataModel>>(
+      <int, ProductDataModel>{},
+    );
+
+    final quantities = useState<Map<int, int>>(<int, int>{});
 
     final searchQuery = useState<String>('');
     final debounceRef = useRef<Timer?>(null);
@@ -60,12 +66,15 @@ class ProductPickerSheet extends HookWidget {
 
     // Paging controller
     final pagingController = useMemoized(
-          () => PagingController<int, ProductDataModel>(
+      () => PagingController<int, ProductDataModel>(
         getNextPageKey: (PagingState<int, ProductDataModel> state) {
           if (state.pages == null || state.pages!.isEmpty) return 1;
           final lastKey =
-          (state.keys?.isNotEmpty ?? false) ? state.keys!.last : state.pages!.length;
-          if (totalPages.value != null && lastKey >= totalPages.value!) return null;
+              (state.keys?.isNotEmpty ?? false)
+                  ? state.keys!.last
+                  : state.pages!.length;
+          if (totalPages.value != null && lastKey >= totalPages.value!)
+            return null;
           return lastKey + 1;
         },
         fetchPage: (int pageKey) async {
@@ -76,7 +85,10 @@ class ProductPickerSheet extends HookWidget {
           final result = await repo.fetchProductsPage(
             page: pageKey,
             pageSize: pageSize,
-            search: searchQuery.value.isNotEmpty ? _normalizeSearch(searchQuery.value) : null,
+            search:
+                searchQuery.value.isNotEmpty
+                    ? _normalizeSearch(searchQuery.value)
+                    : null,
             dateFrom: _formatDateForApi(dateRange.value?.start),
             dateTo: _formatDateForApi(dateRange.value?.end),
           );
@@ -89,10 +101,14 @@ class ProductPickerSheet extends HookWidget {
             final pageResult = result.data;
             if (pageResult.total != null && totalPages.value == null) {
               totalPages.value = (pageResult.total! + pageSize - 1) ~/ pageSize;
-              debugPrint("✅ totalPages = ${totalPages.value}, total = ${pageResult.total}");
+              debugPrint(
+                "✅ totalPages = ${totalPages.value}, total = ${pageResult.total}",
+              );
             }
 
-            debugPrint("📦 fetchPage: page=$pageKey, items=${pageResult.items.length}");
+            debugPrint(
+              "📦 fetchPage: page=$pageKey, items=${pageResult.items.length}",
+            );
             return pageResult.items;
           }
 
@@ -163,7 +179,20 @@ class ProductPickerSheet extends HookWidget {
       selectedMap.value = map;
     }
 
-    bool _isSelected(ProductDataModel p) => selectedIds.value.contains(p.productId);
+    bool _isSelected(ProductDataModel p) =>
+        selectedIds.value.contains(p.productId);
+
+// Quantity change handler (per item)
+    void _onQuantityChanged(int productId, int value) {
+      final qmap = Map<int, int>.from(quantities.value);
+      if (value <= 0) {
+        // optional: remove if zero
+        qmap.remove(productId);
+      } else {
+        qmap[productId] = value;
+      }
+      quantities.value = qmap;
+    }
 
     return FractionallySizedBox(
       heightFactor: 0.97,
@@ -194,25 +223,36 @@ class ProductPickerSheet extends HookWidget {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
 
                           // 🔹 Calendar Button (fixed cancel bug)
                           IconButton(
-                            tooltip: dateRange.value == null ? 'Filter by date' : 'Clear date filter',
-                            icon: dateRange.value == null
-                                ? const Icon(Icons.date_range)
-                                : const Icon(Icons.date_range_outlined),
+                            tooltip:
+                                dateRange.value == null
+                                    ? 'Filter by date'
+                                    : 'Clear date filter',
+                            icon:
+                                dateRange.value == null
+                                    ? const Icon(Icons.date_range)
+                                    : const Icon(Icons.date_range_outlined),
                             onPressed: () async {
                               if (dateRange.value != null) {
-                                _onDateRangeChanged(null); // clear existing filter
+                                _onDateRangeChanged(
+                                  null,
+                                ); // clear existing filter
                                 return;
                               }
                               final dr = await showDateRangePicker(
                                 context: context,
                                 firstDate: DateTime(2000),
-                                lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 3650),
+                                ),
                               );
                               if (dr != null) {
                                 _onDateRangeChanged(dr);
@@ -222,7 +262,10 @@ class ProductPickerSheet extends HookWidget {
                           ),
 
                           IconButton(
-                            onPressed: () => Navigator.of(context).pop<List<ProductDataModel>?>(null),
+                            onPressed:
+                                () => Navigator.of(
+                                  context,
+                                ).pop<List<ProductDataModel>?>(null),
                             icon: const Icon(Icons.close),
                           ),
                         ],
@@ -231,20 +274,26 @@ class ProductPickerSheet extends HookWidget {
 
                     // 🔹 Search field
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8,
+                      ),
                       child: TextField(
                         onChanged: onSearchChanged,
                         textInputAction: TextInputAction.search,
                         decoration: InputDecoration(
                           hintText: 'Search products',
                           prefixIcon: const Icon(Icons.search),
-                          suffixIcon: searchQuery.value.isNotEmpty
-                              ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () => onSearchChanged(''),
-                          )
-                              : null,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          suffixIcon:
+                              searchQuery.value.isNotEmpty
+                                  ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () => onSearchChanged(''),
+                                  )
+                                  : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           isDense: true,
                         ),
                       ),
@@ -257,11 +306,15 @@ class ProductPickerSheet extends HookWidget {
                         child: PagingListener<int, ProductDataModel>(
                           controller: pagingController,
                           builder: (context, state, fetchNextPage) {
-                            if (state.isLoading && (state.pages?.isEmpty ?? true)) {
-                              return const Center(child: CircularProgressIndicator());
+                            if (state.isLoading &&
+                                (state.pages?.isEmpty ?? true)) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
                             }
 
-                            if (state.error != null && (state.pages?.isEmpty ?? true)) {
+                            if (state.error != null &&
+                                (state.pages?.isEmpty ?? true)) {
                               return Center(
                                 child: ElevatedButton(
                                   onPressed: () => fetchNextPage(),
@@ -271,20 +324,34 @@ class ProductPickerSheet extends HookWidget {
                             }
 
                             if (state.pages?.isEmpty ?? true) {
-                              return const Center(child: Text("No products found"));
+                              return const Center(
+                                child: Text("No products found"),
+                              );
                             }
 
                             return PagedListView<int, ProductDataModel>(
                               state: state,
                               fetchNextPage: fetchNextPage,
-                              padding: const EdgeInsets.only(bottom: 80, left: 8, right: 8, top: 8),
-                              builderDelegate: PagedChildBuilderDelegate<ProductDataModel>(
+                              padding: const EdgeInsets.only(
+                                bottom: 80,
+                                left: 8,
+                                right: 8,
+                                top: 8,
+                              ),
+                              builderDelegate: PagedChildBuilderDelegate<
+                                ProductDataModel
+                              >(
                                 itemBuilder: (context, product, index) {
                                   return Card(
+                                    color: AppColors.cardColor,
                                     elevation: 2,
-                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 4,
+                                    ),
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                     child: InkWell(
                                       onTap: () => _toggleSelect(product),
                                       child: Padding(
@@ -293,88 +360,141 @@ class ProductPickerSheet extends HookWidget {
                                           children: [
                                             Checkbox(
                                               value: _isSelected(product),
-                                              onChanged: (_) => _toggleSelect(product),
+                                              onChanged:
+                                                  (_) => _toggleSelect(product),
                                             ),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     product.productName,
                                                     maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                     style: const TextStyle(
-                                                        color: Color(0xFF1B1140),
-                                                        fontSize: 15,
-                                                        fontWeight: FontWeight.w700),
+                                                      color: Color(0xFF1B1140),
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
                                                   ),
                                                   const SizedBox(height: 6),
                                                   Text(
                                                     product.description,
                                                     maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                     style: const TextStyle(
-                                                        color: Colors.black54, fontSize: 13),
+                                                      color: Colors.black54,
+                                                      fontSize: 13,
+                                                    ),
                                                   ),
                                                   const SizedBox(height: 8),
                                                   Row(
                                                     children: [
                                                       Container(
-                                                        padding: const EdgeInsets.symmetric(
-                                                            horizontal: 8, vertical: 4),
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 4,
+                                                            ),
                                                         decoration: BoxDecoration(
-                                                          color: const Color(0xFF7B8CFF)
-                                                              .withOpacity(0.12),
-                                                          borderRadius: BorderRadius.circular(8),
+                                                          color: const Color(
+                                                            0xFF7B8CFF,
+                                                          ).withValues(
+                                                            alpha: 0.12,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
                                                         ),
                                                         child: Text(
                                                           product.sku,
                                                           style: const TextStyle(
-                                                              fontSize: 12,
-                                                              color: Colors.black54),
+                                                            fontSize: 12,
+                                                            color:
+                                                                Colors.black54,
+                                                          ),
                                                         ),
                                                       ),
                                                       const SizedBox(width: 12),
                                                       Text(
-                                                        _formatDate(product.createdAt),
+                                                        _formatDate(
+                                                          product.createdAt,
+                                                        ),
                                                         style: const TextStyle(
-                                                            fontSize: 12, color: Colors.black54),
+                                                          fontSize: 12,
+                                                          color: Colors.black54,
+                                                        ),
                                                       ),
                                                     ],
+                                                  ),
+                                                  SizedBox(height: 12,),
+                                                  SizedBox(
+                                                    width: 150,
+                                                    child: QuantityField(
+                                                      initialValue: 1,
+                                                      qytFillColor: Color(0xFF7B8CFF).withValues(alpha: 0.12),
+                                                      onChanged: (value) {
+                                                        _onQuantityChanged(product.productId, value);
+                                                      },
+                                                    ),
                                                   ),
                                                 ],
                                               ),
                                             ),
                                             const SizedBox(width: 12),
                                             ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                               child: Container(
                                                 width: 80,
                                                 height: 80,
-                                                color: const Color(0xFF7B8CFF).withOpacity(0.12),
+                                                color: const Color(
+                                                  0xFF7B8CFF,
+                                                ).withValues(alpha: 0.12),
                                                 alignment: Alignment.center,
-                                                child: (product.productImage != null &&
-                                                    product.productImage!.isNotEmpty)
-                                                    ? Image.network(
-                                                  '${product.productImage}',
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) =>
-                                                  const Icon(Icons.image, size: 36),
-                                                )
-                                                    : Text(
-                                                  product.productName.isNotEmpty
-                                                      ? product.productName[0]
-                                                      .toUpperCase()
-                                                      : '—',
-                                                  style: const TextStyle(
-                                                      fontSize: 28,
-                                                      fontWeight: FontWeight.bold),
-                                                ),
+                                                child:
+                                                    (product.productImage !=
+                                                                null &&
+                                                            product
+                                                                .productImage!
+                                                                .isNotEmpty)
+                                                        ? Image.network(
+                                                          '${product.productImage}',
+                                                          width: 80,
+                                                          height: 80,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (_, __, ___) =>
+                                                                  const Icon(
+                                                                    Icons.image,
+                                                                    size: 36,
+                                                                  ),
+                                                        )
+                                                        : Text(
+                                                          product
+                                                                  .productName
+                                                                  .isNotEmpty
+                                                              ? product
+                                                                  .productName[0]
+                                                                  .toUpperCase()
+                                                              : '—',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 28,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
                                               ),
                                             ),
+
                                           ],
                                         ),
                                       ),
@@ -396,17 +516,23 @@ class ProductPickerSheet extends HookWidget {
                   right: 16,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     icon: const Icon(Icons.check),
                     label: Text('Save (${selectedIds.value.length})'),
                     onPressed: () {
-                      final out = selectedMap.value.values.toList(growable: false);
-                      Navigator.of(context)
-                          .pop<List<ProductDataModel>>(out);
+                      final List<SelectedProducts> out = selectedMap.value.values.map((p) {
+                        final q = quantities.value[p.productId] ?? 1;
+                        return SelectedProducts(product: p, quantity: q);
+                      }).toList(growable: false);
+
+                      Navigator.of(context).pop<List<SelectedProducts>>(out);
                     },
                   ),
                 ),
@@ -418,3 +544,4 @@ class ProductPickerSheet extends HookWidget {
     );
   }
 }
+
