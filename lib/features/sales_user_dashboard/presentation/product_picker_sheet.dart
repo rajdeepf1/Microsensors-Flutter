@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:microsensors/features/sales_user_dashboard/repository/sales_dashboard_repository.dart';
 import '../../../core/api_state.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/product/selected_products.dart';
 import '../../../utils/colors.dart';
-import '../../add_orders/repository/product_list_repository.dart';
 import '../../components/quantity_edit_text/QuantityField.dart';
 
 /// Hook-based full-height product picker sheet with multi-select checkboxes.
@@ -25,7 +25,7 @@ class ProductPickerSheet extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = useMemoized(() => SalesProductListRepository());
+    final repo = useMemoized(() => SalesDashboardRepository());
 
     final totalPages = useState<int?>(null);
     final selectedIds = useState<Set<int>>(<int>{});
