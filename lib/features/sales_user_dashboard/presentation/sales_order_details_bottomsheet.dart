@@ -6,7 +6,6 @@ import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 import 'package:timelines_plus/timelines_plus.dart';
 import '../../../models/orders/order_response_model.dart';
-import '../../add_orders/presentation/product_details.dart';
 
 /// Bottom sheet showing order details + timeline for PM
 class SalesOrderDetailsBottomsheet extends HookWidget {

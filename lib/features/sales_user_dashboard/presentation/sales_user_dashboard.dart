@@ -466,7 +466,12 @@ class SalesUserDashboard extends HookWidget {
             labelStyle: TextStyle(color: AppColors.headingTextColor),
             backgroundColor: Colors.green,
             onTap: () {
-              context.push("/add-orders");
+              //context.push("/add-orders");
+              context.push("/add-orders").then((result) {
+                if (result == true) {
+                  reloadAll();
+                }
+              });
             },
           ),
         ],
