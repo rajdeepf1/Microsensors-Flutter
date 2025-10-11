@@ -7,7 +7,7 @@ import '../../../models/product/ProductDeleteResponse.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/product/product_request.dart';
 import '../../../models/product/product_response.dart';
-import '../../add_orders/repository/product_list_repository.dart';
+import '../../sales_user_dashboard/repository/sales_dashboard_repository.dart';
 
 class ProductRepository {
   final ApiClient _client;

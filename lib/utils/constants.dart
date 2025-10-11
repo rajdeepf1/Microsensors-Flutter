@@ -38,6 +38,15 @@ class Constants{
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
+
+  static List<String> statuses = [
+    'Created',
+    'Received',
+    'Production Started',
+    'Dispatched',
+  ];
+
+
   static Color statusColor(String? status) {
     final s = (status ?? '').toLowerCase();
 

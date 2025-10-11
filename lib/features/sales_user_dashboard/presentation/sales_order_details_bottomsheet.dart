@@ -45,12 +45,13 @@ class SalesOrderDetailsBottomsheet extends HookWidget {
     final status = useState<String?>(orderItem.status ?? 'Created');
 
     // canonical steps (same as timeline widget)
-    final steps = <String>[
-      'Created',
-      'Received',
-      'Production Started',
-      'Dispatched',
-    ];
+    // final steps = <String>[
+    //   'Created',
+    //   'Received',
+    //   'Production Started',
+    //   'Dispatched',
+    // ];
+    final steps = Constants.statuses;
 
     final List<DropdownMenuItem<String>> statusItems =
     steps

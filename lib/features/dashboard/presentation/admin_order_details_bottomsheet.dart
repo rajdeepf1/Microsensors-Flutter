@@ -8,7 +8,7 @@ import 'package:timelines_plus/timelines_plus.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_response_model.dart';
-import '../../add_orders/presentation/product_details.dart';
+import '../../components/product_edit_field/product_edit_field.dart';
 import '../repository/dashboard_repository.dart';
 
 /// Bottom sheet showing order details + timeline for PM
@@ -163,6 +163,9 @@ class AdminOrderDetailsBottomsheet extends HookWidget {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
       }
     }
+
+    final bool isCreated =
+        (status.value ?? orderItem.status ?? '').toLowerCase() == 'created';
 
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -419,28 +422,30 @@ class AdminOrderDetailsBottomsheet extends HookWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
+                        backgroundColor:
+                        isCreated ? Colors.greenAccent : Colors.grey.shade400,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
                         shape: const StadiumBorder(),
                       ),
-                      onPressed: () => performApproval("APPROVE"),
+                      onPressed: isCreated ? () => performApproval("APPROVE") : null,
                       child: const Text("Approve"),
                     ),
                   ),
                 ),
-                SizedBox(width: 20,),
+                const SizedBox(width: 20),
                 Expanded(
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor:
+                        isCreated ? Colors.redAccent : Colors.grey.shade400,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
                         shape: const StadiumBorder(),
                       ),
-                      onPressed: () => performApproval("REJECT"),
+                      onPressed: isCreated ? () => performApproval("REJECT") : null,
                       child: const Text("Reject"),
                     ),
                   ),
@@ -649,12 +654,13 @@ Widget buildStatusTimelineVerticalWithHook(
   String currentStatus, {
   Map<String, DateTime?>? stepTimes,
 }) {
-  final steps = <String>[
-    'Created',
-    'Received',
-    'Production Started',
-    'Dispatched',
-  ];
+  // final steps = <String>[
+  //   'Created',
+  //   'Received',
+  //   'Production Started',
+  //   'Dispatched',
+  // ];
+  final steps = Constants.statuses;
 
   int activeIndex = steps.indexWhere(
     (s) => s.toLowerCase() == (currentStatus).toLowerCase(),
