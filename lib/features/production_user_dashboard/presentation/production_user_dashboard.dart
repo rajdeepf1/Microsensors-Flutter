@@ -6,7 +6,6 @@ import 'package:microsensors/core/local_storage_service.dart';
 import 'package:microsensors/features/production_user_dashboard/presentation/pm_order_details_bottomsheet.dart';
 import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/services/fcm_service.dart';
-
 import '../../../models/orders/order_response_model.dart';
 import '../../../models/orders/paged_response.dart';
 import '../repository/production_manager_repo.dart';
@@ -23,13 +22,14 @@ class ProductionUserDashboard extends HookWidget {
 
     final productionManager = useState<UserDataModel?>(null);
     final paged = useState<PagedResponse<OrderResponseModel>?>(null);
-    final activeStatus = useState<String>('Received'); // ✅ Default tab
+    final activeStatus = useState<String>('Received'); // Default tab
     final loadingOrders = useState<bool>(true);
     final error = useState<String?>(null);
 
-    // ✅ Use static steps instead of fetching from API
+    // Static status steps
     final steps = Constants.statuses.where((s) => s != 'Created').toList();
 
+    // 🔹 Build a small status chip widget
     Widget _buildStatusChip(String status) {
       final color = Constants.statusColor(status);
       final icon = Constants.statusIcon(status);
@@ -58,7 +58,7 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-    // ----------- Load Orders -----------
+    // 🔹 Fetch orders from API
     Future<void> _loadOrders(String status) async {
       loadingOrders.value = true;
       error.value = null;
@@ -71,9 +71,8 @@ class ProductionUserDashboard extends HookWidget {
         }
 
         debugPrint('🔹 Loading orders for PM ID: $pmId, status=$status');
-
-        final ApiState<PagedResponse<OrderResponseModel>> resp = await repo
-            .fetchOrders(userId: pmId, status: status, page: 0, size: 20);
+        final ApiState<PagedResponse<OrderResponseModel>> resp =
+        await repo.fetchOrders(userId: pmId, status: status, page: 0, size: 20);
 
         if (resp is ApiData<PagedResponse<OrderResponseModel>>) {
           paged.value = resp.data;
@@ -87,7 +86,7 @@ class ProductionUserDashboard extends HookWidget {
       }
     }
 
-    // ----------- Order Card -----------
+    // 🔹 Order Card (list item)
     Widget orderCard(BuildContext ctx, OrderResponseModel item) {
       final accent = Constants.statusColor(item.status);
 
@@ -98,44 +97,19 @@ class ProductionUserDashboard extends HookWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () async {
-            await showModalBottomSheet<bool>(
+            // ✅ Open Hook-based bottom sheet safely
+            final newStatus = await showModalBottomSheet<String>(
               context: ctx,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (BuildContext innerCtx) {
-                return FractionallySizedBox(
-                  heightFactor: 0.95,
-                  child: ClipRRect(
-                    borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Material(
-                      color: Colors.white,
-                      child: SafeArea(
-                        top: false,
-                        child: Scaffold(
-                          appBar: AppBar(
-                            elevation: 0,
-                            backgroundColor: Colors.white,
-                            iconTheme:
-                            const IconThemeData(color: Colors.black),
-                            title: Text(
-                              item.clientName ?? 'Order',
-                              style: const TextStyle(color: Colors.black),
-                            ),
-                            leading: IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () =>
-                                  Navigator.of(innerCtx).pop(),
-                            ),
-                          ),
-                           body: PmOrderDetailsBottomsheet(orderItem: item),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+              builder: (_) => _PmOrderDetailsSheet(item: item),
             );
+
+            // ✅ Refresh dashboard when status changes
+            if (newStatus != null && newStatus.isNotEmpty) {
+              activeStatus.value = newStatus;
+              await _loadOrders(newStatus);
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -169,8 +143,7 @@ class ProductionUserDashboard extends HookWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
@@ -186,25 +159,20 @@ class ProductionUserDashboard extends HookWidget {
                                               ),
                                             ),
                                             const WidgetSpan(
-                                                child:
-                                                SizedBox(width: 8)),
+                                                child: SizedBox(width: 8)),
                                             TextSpan(
                                               text: '| ',
                                               style: TextStyle(
-                                                color:
-                                                Colors.blue.shade700,
-                                                fontWeight:
-                                                FontWeight.w700,
+                                                color: Colors.blue.shade700,
+                                                fontWeight: FontWeight.w700,
                                                 fontSize: 16,
                                               ),
                                             ),
                                             TextSpan(
                                               text: ' #${item.orderId}',
                                               style: TextStyle(
-                                                color:
-                                                Colors.grey.shade700,
-                                                fontWeight:
-                                                FontWeight.w700,
+                                                color: Colors.grey.shade700,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
                                           ],
@@ -280,22 +248,16 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-    // ----------- Build List (with Retry & Empty UI) -----------
+    // 🔹 Build order list
     Widget buildList() {
-      if (loadingOrders.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
+      if (loadingOrders.value) return const Center(child: CircularProgressIndicator());
       if (error.value != null) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'Error: ${error.value}',
-                style: const TextStyle(color: Colors.redAccent, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
+              Text('Error: ${error.value}',
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 14)),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 icon: const Icon(Icons.refresh),
@@ -308,7 +270,6 @@ class ProductionUserDashboard extends HookWidget {
       }
 
       final items = paged.value?.data ?? [];
-
       if (items.isEmpty) {
         return Center(
           child: Column(
@@ -316,11 +277,8 @@ class ProductionUserDashboard extends HookWidget {
             children: [
               const Icon(Icons.inbox_outlined, size: 56, color: Colors.grey),
               const SizedBox(height: 12),
-              Text(
-                'No data found',
-                style:
-                TextStyle(fontSize: 16, color: Colors.grey.shade700),
-              ),
+              Text('No data found',
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade700)),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 icon: const Icon(Icons.refresh),
@@ -343,13 +301,12 @@ class ProductionUserDashboard extends HookWidget {
       );
     }
 
-    // ----------- Build Chips (Static) -----------
+    // 🔹 Build status chips
     Widget buildChips() {
       return SizedBox(
         height: 72,
         child: ListView.separated(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           scrollDirection: Axis.horizontal,
           itemCount: steps.length,
           separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -376,20 +333,18 @@ class ProductionUserDashboard extends HookWidget {
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(25)),
               ),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             );
           },
         ),
       );
     }
 
-    // ----------- ✅ Initial Load (Fix applied) -----------
+    // 🔹 Initial load
     useEffect(() {
       Future.microtask(() async {
         final user = await LocalStorageService().getUser();
         productionManager.value = user;
-
         if (user != null) {
           await _loadOrders(activeStatus.value);
         } else {
@@ -399,7 +354,7 @@ class ProductionUserDashboard extends HookWidget {
       return null;
     }, []);
 
-    // ----------- Final Scaffold -----------
+    // 🔹 Final layout
     return SafeArea(
       top: false,
       bottom: true,
@@ -410,6 +365,56 @@ class ProductionUserDashboard extends HookWidget {
           const Divider(height: 1),
           Expanded(child: buildList()),
         ],
+      ),
+    );
+  }
+}
+
+/// ✅ Hook-safe wrapper for BottomSheet
+class _PmOrderDetailsSheet extends HookWidget {
+  final OrderResponseModel item;
+
+  const _PmOrderDetailsSheet({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final lastUpdatedStatus = useState<String?>(null);
+
+    return FractionallySizedBox(
+      heightFactor: 0.95,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        child: Material(
+          color: Colors.white,
+          child: SafeArea(
+            top: false,
+            child: Scaffold(
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.white,
+                iconTheme: const IconThemeData(color: Colors.black),
+                title: Text(
+                  item.clientName ?? 'Order',
+                  style: const TextStyle(color: Colors.black),
+                ),
+                leading: IconButton(
+                  icon: Icon(
+                    Icons.close,
+                    color: lastUpdatedStatus.value != null
+                        ? Colors.green
+                        : Colors.black,
+                  ),
+                  onPressed: () =>
+                      Navigator.of(context).pop(lastUpdatedStatus.value),
+                ),
+              ),
+              body: PmOrderDetailsBottomSheet(
+                orderItem: item,
+                onStatusChanged: (s) => lastUpdatedStatus.value = s,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

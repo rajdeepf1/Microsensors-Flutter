@@ -13,11 +13,14 @@ import '../../../models/orders/order_response_model.dart';
 import '../../components/product_edit_field/product_edit_field.dart';
 
 /// Bottom sheet showing order details + timeline for PM
-class PmOrderDetailsBottomsheet extends HookWidget {
+class PmOrderDetailsBottomSheet extends HookWidget {
   final OrderResponseModel orderItem;
-  const PmOrderDetailsBottomsheet({
+  final ValueChanged<String>? onStatusChanged;
+
+  const PmOrderDetailsBottomSheet({
     super.key,
     required this.orderItem,
+    this.onStatusChanged,
   });
 
   @override
@@ -142,6 +145,8 @@ class PmOrderDetailsBottomsheet extends HookWidget {
             stepTimesState.value = next2;
             // ✅ remember last updated status (This is for refresh home or dashboard screen)
             lastUpdatedStatus.value = newStatus;
+            // ✅ notify parent (ProductionUserDashboard)
+            onStatusChanged?.call(newStatus);
 
           } else {
             // ❌ server returned failure (e.g., invalid transition)

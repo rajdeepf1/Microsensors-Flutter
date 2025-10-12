@@ -200,7 +200,7 @@ class ProductionManagerHistorySearch extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      body: PmOrderDetailsBottomsheet(
+                      body: PmOrderDetailsBottomSheet(
                         orderItem: item,
                       ),
                     ),
