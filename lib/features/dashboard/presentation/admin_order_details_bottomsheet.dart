@@ -12,9 +12,9 @@ import '../../components/product_edit_field/product_edit_field.dart';
 import '../repository/dashboard_repository.dart';
 
 /// Bottom sheet showing order details + timeline for PM
-class AdminOrderDetailsBottomsheet extends HookWidget {
+class AdminOrderDetailsBottomSheet extends HookWidget {
   final OrderResponseModel orderItem;
-  const AdminOrderDetailsBottomsheet({
+  const AdminOrderDetailsBottomSheet({
     super.key,
     required this.orderItem,
   });
