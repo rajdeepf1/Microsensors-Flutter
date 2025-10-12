@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/core/local_storage_service.dart';
+import 'package:microsensors/features/production_user_dashboard/presentation/pm_order_details_bottomsheet.dart';
 import 'package:microsensors/models/user_model/user_model.dart';
 import 'package:microsensors/services/fcm_service.dart';
 
@@ -127,7 +128,7 @@ class ProductionUserDashboard extends HookWidget {
                                   Navigator.of(innerCtx).pop(),
                             ),
                           ),
-                          // body: OrderDetailsBottomsheet(orderItem: item),
+                           body: PmOrderDetailsBottomsheet(orderItem: item),
                         ),
                       ),
                     ),

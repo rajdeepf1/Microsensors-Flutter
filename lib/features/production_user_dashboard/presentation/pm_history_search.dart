@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/features/dashboard/presentation/admin_order_details_bottomsheet.dart';
+import 'package:microsensors/features/production_user_dashboard/presentation/pm_order_details_bottomsheet.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_response_model.dart';
@@ -199,10 +200,9 @@ class ProductionManagerHistorySearch extends HookWidget {
                           onPressed: () => Navigator.of(innerCtx).pop(),
                         ),
                       ),
-                      // body: OrderDetailsBottomsheet(
-                      //   orderItem: item,
-                      //   isHistorySearchScreen: true,
-                      // ),
+                      body: PmOrderDetailsBottomsheet(
+                        orderItem: item,
+                      ),
                     ),
                   ),
                 ),
