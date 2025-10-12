@@ -17,7 +17,6 @@ import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
 import '../../../core/local_storage_service.dart';
 import '../repository/sales_dashboard_repository.dart';
-import '../../../models/orders/order_models.dart';
 
 class SalesUserDashboard extends HookWidget {
   const SalesUserDashboard({super.key});

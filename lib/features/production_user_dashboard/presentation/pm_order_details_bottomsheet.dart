@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
+import 'package:microsensors/features/production_user_dashboard/repository/production_manager_repo.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 import 'package:timelines_plus/timelines_plus.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
+import '../../../models/orders/change_order_status_model.dart';
 import '../../../models/orders/order_response_model.dart';
 import '../../components/product_edit_field/product_edit_field.dart';
 
@@ -20,6 +22,10 @@ class PmOrderDetailsBottomsheet extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final repo = useMemoized(() => ProductionManagerRepository());
+
+    final lastUpdatedStatus = useState<String?>(null);
 
     final Color baseColor = Constants.statusColor(orderItem.status);
     final Color cardColor = baseColor.withValues(alpha: 0.12);
@@ -81,6 +87,106 @@ class PmOrderDetailsBottomsheet extends HookWidget {
     final stepTimesState = useState<Map<String, DateTime?>>(
       buildInitialStepTimes(),
     );
+
+
+// when user selects a status from dropdown: update status and set timestamp now + call backend
+    Future<void> onStatusSelected(String? newStatus) async {
+      if (newStatus == null) return;
+      if (newStatus == status.value) return;
+
+      final prevStatus = status.value;
+      final prevStepTimes = Map<String, DateTime?>.from(stepTimesState.value);
+
+      // optimistic UI update
+      status.value = newStatus;
+      final now = DateTime.now();
+      final next = Map<String, DateTime?>.from(stepTimesState.value);
+      next[newStatus] = now;
+      stepTimesState.value = next;
+
+      // loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        // get changedBy from local user (fallback to productionManagerId in orderItem)
+        int changedBy = orderItem.productionManagerId ?? -1;
+        final stored = await LocalStorageService().getUser();
+        if (stored != null && stored.userId != null) changedBy = stored.userId;
+
+        final ApiState<ChangeOrderStatusModel> res =
+        await repo.changeOrderStatus(
+          orderId: orderItem.orderId ?? -1,
+          newStatus: newStatus,
+          changedBy: changedBy,
+        );
+
+        // ✅ Always close the loader after the API completes
+        if (Navigator.canPop(context)) Navigator.of(context).pop();
+
+        if (res is ApiData<ChangeOrderStatusModel>) {
+          final model = res.data;
+
+          if (model.isSuccess) {
+            // ✅ success feedback
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(model.data ?? 'Status updated successfully')),
+            );
+
+            // ✅ update timeline with confirmed timestamp
+            final next2 = Map<String, DateTime?>.from(stepTimesState.value);
+            next2[newStatus] = DateTime.now();
+            stepTimesState.value = next2;
+            // ✅ remember last updated status (This is for refresh home or dashboard screen)
+            lastUpdatedStatus.value = newStatus;
+
+          } else {
+            // ❌ server returned failure (e.g., invalid transition)
+            status.value = prevStatus;
+            stepTimesState.value = prevStepTimes;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(model.error ?? 'Status change failed')),
+            );
+          }
+
+        } else if (res is ApiError<ChangeOrderStatusModel>) {
+          // ❌ network or unhandled API error
+          status.value = prevStatus;
+          stepTimesState.value = prevStepTimes;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to change status: ${res.message}')),
+          );
+
+        } else {
+          // ❌ unexpected state
+          status.value = prevStatus;
+          stepTimesState.value = prevStepTimes;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to change status')),
+          );
+        }
+      } catch (e) {
+        // ✅ make sure loader closes even on exception
+        if (Navigator.canPop(context)) Navigator.of(context).pop();
+
+        // rollback optimistic UI
+        status.value = prevStatus;
+        stepTimesState.value = prevStepTimes;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unexpected error: $e')),
+        );
+      }
+    }
+
+
+
 
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -284,7 +390,7 @@ class PmOrderDetailsBottomsheet extends HookWidget {
                               ),
                               items: statusItems,
                               icon: const Icon(Icons.expand_more),
-                              onChanged: (value) => status.value = value,
+                              onChanged: (value) => onStatusSelected(value),
                               style: TextStyle(
                                 color: AppColors.subHeadingTextColor,
                                 fontWeight: FontWeight.bold,

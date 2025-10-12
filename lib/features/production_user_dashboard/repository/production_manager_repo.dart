@@ -1,14 +1,12 @@
 // lib/services/production_manager_repository.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
-import 'package:microsensors/models/orders/production_manager_change_status_response.dart';
+import 'package:microsensors/models/orders/change_order_status_model.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
 import '../../../models/orders/order_response_model.dart';
 import '../../../models/orders/paged_response.dart';
-import '../../../models/orders/production_manager_order_list.dart';
-import '../../../models/orders/order_models.dart';
-import '../../../models/orders/production_manager_stats.dart';
+
 
 class ProductionManagerRepository {
   final ApiClient _client;
@@ -83,40 +81,8 @@ class ProductionManagerRepository {
     }
   }
 
-
-
-  Future<ApiState<PmOrderStats>> fetchStats({
-    required int pmId,
-  }) async {
-    try {
-      final response = await _client.get('orders/pm/$pmId/stats');
-
-      if (response.statusCode == 200) {
-        final raw = response.data;
-        if (raw is Map<String, dynamic>) {
-          final data = raw['data'];
-          if (data is Map<String, dynamic>) {
-            final stats = PmOrderStats.fromJson(data);
-            return ApiData(stats);
-          }
-          return const ApiError('Invalid stats format');
-        }
-        return const ApiError('Unexpected response format');
-      }
-      return ApiError('Server error: ${response.statusCode}');
-    } on DioException catch (e) {
-      final msg = (e.response?.data is Map &&
-          e.response!.data['error'] != null)
-          ? e.response!.data['error'].toString()
-          : e.message ?? 'Network error';
-      return ApiError(msg, error: e);
-    } catch (e, st) {
-      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
-    }
-  }
-
   /// Change order status API call
-  Future<ApiState<ProductionManagerChangeStatusResponse>> changeOrderStatus({
+  Future<ApiState<ChangeOrderStatusModel>> changeOrderStatus({
     required int orderId,
     required String newStatus,
     required int changedBy,
@@ -127,18 +93,18 @@ class ProductionManagerRepository {
         'changedBy': changedBy,
       };
 
-      // POST /api/orders/{orderId}/status
       final response = await _client.post('orders/$orderId/status', data: body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 400) {
+        // accept both 200 and 400 since backend may return handled error
         final raw = response.data;
         if (raw is Map<String, dynamic>) {
-          final data = raw['data'];
-          if (data is Map<String, dynamic>) {
-            final model = ProductionManagerChangeStatusResponse.fromJson(data);
+          final model = ChangeOrderStatusModel.fromJson(raw);
+
+          if (model.isSuccess) {
             return ApiData(model);
           } else {
-            return const ApiError('Invalid response format');
+            return ApiError(model.error ?? 'Failed to change status');
           }
         } else {
           return const ApiError('Unexpected response format from server');
@@ -147,7 +113,8 @@ class ProductionManagerRepository {
         return ApiError('Server error: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      final msg = (e.response?.data is Map && e.response!.data['error'] != null)
+      final msg = (e.response?.data is Map &&
+          e.response!.data['error'] != null)
           ? e.response!.data['error'].toString()
           : e.message ?? 'Network error';
       return ApiError(msg, error: e);

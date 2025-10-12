@@ -1,7 +1,6 @@
 // Drop-in replacement for _buildOrderCard
 import 'package:flutter/material.dart';
 
-import '../../../models/orders/order_models.dart';
 import '../../../models/orders/order_response_model.dart';
 import '../../../utils/constants.dart';
 import '../../components/smart_image/smart_image.dart';
