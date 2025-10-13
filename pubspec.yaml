@@ -80,7 +80,7 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
 
   timelines_plus: ^1.0.7
-
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -113,6 +113,7 @@ flutter:
      - assets/videos/splash.mp4
      - assets/images/auth_image.png
      - assets/images/user.png
+     - assets/icons/m.png
      - assets/animations/adduser.json
      - assets/animations/addproduct.json
      - assets/animations/orderactivity.json

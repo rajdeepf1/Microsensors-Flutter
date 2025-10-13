@@ -52,7 +52,9 @@ class ProfileScreen extends StatelessWidget {
             ProfileMenu(
               text: "Help Center",
               icon: Icons.help_center_outlined,
-              press: () {},
+              press: () {
+                context.push("/help-center");
+              },
             ),
             ProfileMenu(
               text: "Log Out",
