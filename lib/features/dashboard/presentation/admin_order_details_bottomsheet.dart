@@ -167,6 +167,67 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
     final bool isCreated =
         (status.value ?? orderItem.status ?? '').toLowerCase() == 'created';
 
+    Future<void> performDeleteOrder(BuildContext context) async {
+      final repo = DashboardRepository();
+
+      // confirm first
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text('Are you sure you want to delete this order? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      // show loader
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final stored = await LocalStorageService().getUser();
+        final adminId = (stored != null && stored.userId != null && stored.roleName == 'Admin')
+            ? stored.userId!
+            : -1;
+
+        final res = await repo.deleteOrder(
+          orderId: orderItem.orderId ?? -1,
+          adminId: adminId,
+        );
+
+        // hide loader
+        if (Navigator.canPop(context)) Navigator.of(context).pop();
+
+        if (res is ApiData<String>) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data)));
+          Navigator.of(context).pop(true); // close bottomsheet and signal refresh
+        } else if (res is ApiError<String>) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${res.message}')));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unexpected server response')));
+        }
+      } catch (e) {
+        if (Navigator.canPop(context)) Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+      }
+    }
+
+
     return Padding(
       padding: const EdgeInsets.all(10.0),
       child: SingleChildScrollView(
@@ -451,6 +512,51 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                   ),
                 ),
               ],
+            ),
+
+            SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    thickness: 1,
+                    color: AppColors.appBlueColor,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    "OR",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    thickness: 1,
+                    color: AppColors.appBlueColor,
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                   Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: const StadiumBorder(),
+                ),
+                onPressed: () => performDeleteOrder(context),
+                child: const Text("Delete"),
+              ),
             ),
             SizedBox(height: 50,),
 

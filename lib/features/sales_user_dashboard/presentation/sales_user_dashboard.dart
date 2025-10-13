@@ -11,6 +11,7 @@ import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/features/sales_user_dashboard/presentation/orders_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
 import '../../../models/orders/order_response_model.dart';
+import '../../../models/orders/order_status_count_model.dart';
 import '../../../models/orders/paged_response.dart';
 import '../../../models/orders/sales_order_stats.dart';
 import '../../../models/user_model/user_model.dart';
@@ -25,10 +26,14 @@ class SalesUserDashboard extends HookWidget {
   Widget build(BuildContext context) {
     final fcmService = useMemoized(() => FcmService());
     final repo = useMemoized(() => SalesDashboardRepository());
+    final orderStatusCountState = useState<ApiState<OrderStatusCountModel>>(const ApiInitial());
 
     // user + preview states
     final salesUser = useState<UserDataModel?>(null);
     final loadingUser = useState<bool>(true);
+
+    final loading = useState<bool>(false);
+    final error = useState<String?>(null);
 
     final items = useState<List<OrderResponseModel>>([]);
     final loadingPreview = useState<bool>(false);
@@ -36,10 +41,34 @@ class SalesUserDashboard extends HookWidget {
     // NEW: total count from server for preview (used to decide "See more")
     final previewTotal = useState<int?>(null);
 
-    // for stats
-    final statsState = useState<OrderStats?>(null);
-    final loadingStats = useState<bool>(true);
-    final statsError = useState<String?>(null);
+
+    var countModel = useState<OrderStatusCountModel?>(null);
+
+    Future<void> loadOrderCounts() async {
+      loading.value = true;
+      error.value = null;
+
+      try {
+        final storedUser = await LocalStorageService().getUser();
+        final role = storedUser?.roleName.toUpperCase() ?? 'SALES'; // fallback
+
+        orderStatusCountState.value = const ApiLoading();
+        final result = await repo.fetchOrdersCountByStatus(role: role,userId: storedUser!.userId);
+        orderStatusCountState.value = result;
+
+        if (result is ApiData<OrderStatusCountModel>) {
+          countModel.value = result.data;
+        } else {
+          countModel.value = null;
+        }
+      } catch (e, st) {
+        orderStatusCountState.value = ApiError('Error: $e', error: e, stackTrace: st);
+        countModel.value = null;
+      } finally {
+        loading.value = false;
+      }
+    }
+
 
     // ---------- FCM & token registration (runs when Dashboard mounts) ----------
     useEffect(() {
@@ -110,14 +139,6 @@ class SalesUserDashboard extends HookWidget {
             previewTotal,
             );
 
-            // await _loadStatsForUser(
-            // repo,
-            // salesUser.value!.userId,
-            // statsState,
-            // loadingStats,
-            // statsError,
-            // context,
-            // );
           }
 
           // 2) initialize the local plugin (safe to call even if main already created channel)
@@ -246,15 +267,14 @@ class SalesUserDashboard extends HookWidget {
         previewError,
         previewTotal,
       );
-      // await _loadStatsForUser(
-      //   repo,
-      //   salesUser.value!.userId,
-      //   statsState,
-      //   loadingStats,
-      //   statsError,
-      //   context,
-      // );
+
+      loadOrderCounts();
     }
+
+    useEffect(() {
+      loadOrderCounts();
+      return null;
+    }, const []);
 
     return Scaffold(
       body: Scrollbar(
@@ -282,9 +302,9 @@ class SalesUserDashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Active Orders",
-                      value: loadingStats.value
-                          ? "..."
-                          : (statsState.value != null ? statsState.value!.active.toString() : "--"),
+                      value: (countModel.value == null)
+                          ? "--"
+                          : ((countModel.value!.created + countModel.value!.received).toString()),
                       icon: Icons.play_for_work,
                       color: Colors.green,
                       onTap: () {},
@@ -292,9 +312,7 @@ class SalesUserDashboard extends HookWidget {
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "In Production",
-                      value: loadingStats.value
-                          ? "..."
-                          : (statsState.value != null ? statsState.value!.inProduction.toString() : "--"),
+                      value: countModel.value?.productionStarted?.toString() ?? "--",
                       icon: Icons.factory,
                       color: Colors.blue,
                       onTap: () {},
@@ -302,9 +320,7 @@ class SalesUserDashboard extends HookWidget {
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "Dispatched",
-                      value: loadingStats.value
-                          ? "..."
-                          : (statsState.value != null ? statsState.value!.dispatched.toString() : "--"),
+                      value: countModel.value?.dispatched?.toString() ?? "--",
                       icon: Icons.double_arrow,
                       color: Colors.purple,
                       onTap: () {},
@@ -539,39 +555,5 @@ Future<void> _loadPreviewForUser(
     debugPrint('Preview load exception for userId=$userId: $e\n$st');
   } finally {
     loading.value = false;
-  }
-}
-
-/// Loads stats for the given user id and updates provided state notifiers.
-Future<void> _loadStatsForUser(
-    SalesDashboardRepository repo,
-    int userId,
-    ValueNotifier<OrderStats?> statsState,
-    ValueNotifier<bool> loadingStats,
-    ValueNotifier<String?> statsError,
-    BuildContext ctx,
-    ) async {
-  loadingStats.value = true;
-  statsError.value = null;
-  try {
-    final res = await repo.fetchOrderStats(salesId: userId);
-    if (res is ApiData<OrderStats>) {
-      statsState.value = res.data;
-    } else if (res is ApiError<OrderStats>) {
-      statsError.value = res.message;
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        SnackBar(content: Text(statsError.value!)),
-      );
-    } else {
-      statsError.value = 'Unexpected response';
-    }
-  } catch (e, st) {
-    statsError.value = 'Error loading stats';
-    debugPrint('Stats load error: $e\n$st');
-    ScaffoldMessenger.of(ctx).showSnackBar(
-      const SnackBar(content: Text('Failed to load stats')),
-    );
-  } finally {
-    loadingStats.value = false;
   }
 }

@@ -1,5 +1,6 @@
 // === FILE: lib/features/dashboard/presentation/dashboard.dart ===
 import 'dart:async';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
+import '../../../models/orders/order_status_count_model.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../utils/colors.dart';
@@ -27,26 +29,37 @@ class Dashboard extends HookWidget {
 
     final usersState = useState<ApiState<List<UserDataModel>>>(const ApiInitial());
     final productsState = useState<ApiState<List<ProductDataModel>>>(const ApiInitial());
+    final orderStatusCountState = useState<ApiState<OrderStatusCountModel>>(const ApiInitial());
 
-    final countState = useState<int?>(null);
     final loading = useState<bool>(false);
     final error = useState<String?>(null);
+    var countModel = useState<OrderStatusCountModel?>(null);
 
-    Future<void> loadOrders() async {
+    Future<void> loadOrderCounts() async {
       loading.value = true;
       error.value = null;
+
       try {
-        final cnt = await repo.fetchOrdersCount();
-        countState.value = cnt;
-      } catch (e) {
-        error.value = e.toString();
-        countState.value = null;
+        final storedUser = await LocalStorageService().getUser();
+        final role = storedUser?.roleName.toUpperCase() ?? 'ADMIN'; // fallback
+
+        orderStatusCountState.value = const ApiLoading();
+        final result = await repo.fetchOrdersCountByStatus(role: role);
+        orderStatusCountState.value = result;
+
+        if (result is ApiData<OrderStatusCountModel>) {
+          countModel.value = result.data;
+        } else {
+          countModel.value = null;
+        }
+      } catch (e, st) {
+        orderStatusCountState.value = ApiError('Error: $e', error: e, stackTrace: st);
+        countModel.value = null;
       } finally {
         loading.value = false;
       }
     }
 
-    // load both counts
     Future<void> loadAll() async {
       usersState.value = const ApiLoading();
       productsState.value = const ApiLoading();
@@ -54,8 +67,9 @@ class Dashboard extends HookWidget {
       usersState.value = await repo.fetchUsers();
       productsState.value = await repo.fetchProducts();
 
-      loadOrders();
+      await loadOrderCounts();
     }
+
 
 
 
@@ -231,7 +245,7 @@ class Dashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Orders",
-                      value: countState.value.toString(),
+                      value: countModel.value?.total.toString() ?? "-",
                       icon: Icons.shopping_cart,
                       color: Colors.green,
                       onTap: () {},

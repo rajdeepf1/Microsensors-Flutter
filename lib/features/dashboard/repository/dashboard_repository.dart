@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/api_client.dart';
 import '../../../core/api_state.dart';
 import '../../../models/orders/order_response_model.dart';
+import '../../../models/orders/order_status_count_model.dart';
 import '../../../models/orders/paged_response.dart';
 import '../../../models/user_model/user_model.dart';
 import '../../../models/product/product_list_response.dart';
@@ -194,42 +195,83 @@ class DashboardRepository {
 
   // for count of total orders in the dashboard
 
-  Future<int> fetchOrdersCount() async {
+  Future<ApiState<OrderStatusCountModel>> fetchOrdersCountByStatus({
+    required String role,
+    int? userId,
+  }) async {
     try {
-      final response = await _client.get(
-        'orders/all'
-      );
+      final params = <String, dynamic>{
+        'role': role,
+        if (userId != null) 'userId': userId.toString(),
+      };
 
-      // expecting a response shape like:
-      // { success: true, statusCode: 200, data: [ ... ], error: null }
-      final raw = response.data;
-      if (raw is Map && raw['data'] is List) {
-        final list = raw['data'] as List;
-        return list.length;
-      }
+      final response = await _client.get('orders/count', queryParameters: params);
 
-      // Fallback: sometimes API returns paged wrapper with `data` -> { data: [], total: ... }
-      if (raw is Map && raw['data'] is Map) {
-        final inner = raw['data'] as Map;
-        if (inner['data'] is List) {
-          return (inner['data'] as List).length;
+      if (response.statusCode == 200) {
+        final raw = response.data;
+
+        if (raw is Map && raw['data'] is Map<String, dynamic>) {
+          final model = OrderStatusCountModel.fromJson(
+              Map<String, dynamic>.from(raw['data']));
+          return ApiData<OrderStatusCountModel>(model);
+        } else {
+          return const ApiError('Unexpected count response format');
         }
-        // if API returns total in the wrapper, prefer that
-        if (inner['total'] is int) {
-          return inner['total'] as int;
-        }
+      } else {
+        return ApiError('Server error: ${response.statusCode}');
       }
-
-      // Unexpected format -> return 0 (or throw)
-      return 0;
-    } on DioException catch (e) {
-      // handle network error - you might want to rethrow or return -1 to indicate error
-      debugPrint('fetchOrdersCount network error: ${e.message}');
-      return 0;
-    } catch (e) {
-      debugPrint('fetchOrdersCount unexpected error: $e');
-      return 0;
+    } on DioException catch (dioErr, st) {
+      if (dioErr.type == DioExceptionType.connectionTimeout ||
+          dioErr.type == DioExceptionType.receiveTimeout) {
+        return ApiError('Connection timed out', error: dioErr, stackTrace: st);
+      } else if (dioErr.response != null) {
+        final body = dioErr.response?.data;
+        final msg = (body is Map && body['error'] != null)
+            ? body['error'].toString()
+            : 'Request failed';
+        return ApiError(msg, error: dioErr, stackTrace: st);
+      } else {
+        return ApiError(dioErr.message ?? 'Network error',
+            error: dioErr, stackTrace: st);
+      }
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
     }
   }
+
+  /// Delete an order (Admin only)
+  Future<ApiState<String>> deleteOrder({
+    required int orderId,
+    required int adminId,
+  }) async {
+    try {
+      final response = await _client.delete(
+        'orders/$orderId/delete',
+        queryParameters: {'adminId': adminId},
+      );
+
+      if (response.statusCode == 200) {
+        final raw = response.data;
+        if (raw is Map && raw['data'] is String) {
+          return ApiData<String>(raw['data'] as String);
+        } else if (raw is String) {
+          return ApiData<String>(raw);
+        } else {
+          return const ApiError('Unexpected delete response format');
+        }
+      } else {
+        return ApiError('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (dioErr) {
+      final body = dioErr.response?.data;
+      final msg = (body is Map && body['error'] != null)
+          ? body['error'].toString()
+          : (dioErr.message ?? 'Network error');
+      return ApiError(msg, error: dioErr);
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
+    }
+  }
+
 
 }
