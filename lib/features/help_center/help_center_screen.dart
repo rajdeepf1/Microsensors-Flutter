@@ -43,7 +43,7 @@ class HelpCenterScreen extends HookWidget {
     final theme = Theme.of(context);
     final textColor = theme.brightness == Brightness.dark ? Colors.white : Colors.black87;
 
-    final supportEmail = useState("support@microsensors.in");
+    final supportEmail = useState("app.microsensors@gmail.com");
     final supportPhone = useState("+91 00000 00000");
 
     return MainLayout(title: "Help Center", child: Padding(
@@ -59,7 +59,7 @@ class HelpCenterScreen extends HookWidget {
           Text(
             "If you’re facing any issues, our support team is just one message away.",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: textColor.withOpacity(0.7)),
+            style: TextStyle(fontSize: 14, color: textColor.withValues(alpha: 0.7)),
           ),
           const SizedBox(height: 40),
           _ContactCard(
@@ -80,7 +80,7 @@ class HelpCenterScreen extends HookWidget {
           const Spacer(),
           Text(
             "© 2025 Microsensors Technologies",
-            style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.5)),
+            style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.5)),
           ),
         ],
       ),
@@ -130,7 +130,7 @@ class _ContactCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: TextStyle(fontSize: 13, color: textColor.withOpacity(0.7))),
+                        style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.7))),
                     const SizedBox(height: 4),
                     Text(value,
                         style: TextStyle(
@@ -138,7 +138,7 @@ class _ContactCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: textColor.withOpacity(0.5)),
+              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: textColor.withValues(alpha: 0.5)),
             ],
           ),
         ),

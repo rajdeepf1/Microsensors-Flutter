@@ -175,7 +175,7 @@ class Notification extends HookWidget {
               builderDelegate: PagedChildBuilderDelegate<NotificationModel>(
                 itemBuilder: (context, notification, index) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: NotificationCardWidget(notification: notification),
                   );
                 },

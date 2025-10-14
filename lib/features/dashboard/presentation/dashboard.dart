@@ -245,7 +245,7 @@ class Dashboard extends HookWidget {
                   children: [
                     StatsCard(
                       title: "Orders",
-                      value: countModel.value?.total.toString() ?? "-",
+                      value: countModel.value?.total.toString() ?? "--",
                       icon: Icons.shopping_cart,
                       color: Colors.green,
                       onTap: () {},
@@ -364,9 +364,9 @@ class Dashboard extends HookWidget {
   }
 
   String _stateToString(ApiState<List<dynamic>> state) {
-    if (state is ApiInitial) return "-";
-    if (state is ApiLoading) return "...";
-    if (state is ApiError) return "!";
+    if (state is ApiInitial) return "--";
+    if (state is ApiLoading) return "--";
+    if (state is ApiError) return "--";
     if (state is ApiData<List<dynamic>>) return state.data.length.toString();
     return "-";
   }
