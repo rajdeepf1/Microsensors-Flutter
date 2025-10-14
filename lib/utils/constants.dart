@@ -11,7 +11,7 @@ class Constants{
   static const String _apiBaseUrlProduction = "http://195.35.6.190:8080/api/";
 
   // Toggle flag (set to true for production build)
-  static const bool _isProduction = false;
+  static const bool _isProduction = true;
 
   // Publicly exposed base URL
   static  String get apiBaseUrl =>
