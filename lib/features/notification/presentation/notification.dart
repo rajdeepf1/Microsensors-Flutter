@@ -27,7 +27,7 @@ class Notification extends HookWidget {
     final debounceRef = useRef<Timer?>(null);
     final dateRange = useState<DateTimeRange?>(null);
 
-    final userRole = useState<String>('ADMIN');
+    final userRole = useState<String>('');
     final userId = useState<int?>(null);
 
     String? _normalizeSearch(String? q) {
@@ -64,7 +64,13 @@ class Notification extends HookWidget {
 
           // ensure user loaded
           final storedUser = await userFuture;
-          userRole.value = storedUser?.roleName.toUpperCase() ?? 'ADMIN';
+
+          switch(storedUser!.roleName.toUpperCase()){
+            case "ADMIN": userRole.value = "ADMIN";
+            case "SALES": userRole.value = "SALES";
+            case "PRODUCTION MANAGER": userRole.value = "PM";
+          }
+
           userId.value = storedUser?.userId;
 
           final res = await repo.fetchNotificationsPage(

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:microsensors/core/api_client.dart';
 import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/models/notification/notification_model.dart';
@@ -26,6 +27,8 @@ class NotificationRepository {
         if (dateFrom != null && dateFrom.isNotEmpty) 'dateFrom': dateFrom,
         if (dateTo != null && dateTo.isNotEmpty) 'dateTo': dateTo,
       };
+
+      debugPrint("NotificationRepository params------>${params}");
 
       final response = await _client.get('notifications/list', queryParameters: params);
 
