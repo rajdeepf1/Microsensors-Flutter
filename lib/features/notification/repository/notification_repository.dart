@@ -60,4 +60,54 @@ class NotificationRepository {
       return ApiError('Unexpected error: $e', error: e, stackTrace: st);
     }
   }
+
+  Future<ApiState<String>> markAsRead({
+    required int userId,
+    List<int>? notificationIds,
+  }) async {
+    try {
+      final queryParams = {
+        'userId': userId,
+        if (notificationIds != null && notificationIds.isNotEmpty)
+          'notificationIds': notificationIds.join(','),
+      };
+
+      final response = await _client.get(
+        'notifications/mark-read',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return ApiData<String>(response.data['data'] ?? 'Notifications marked as read');
+      }
+
+      return ApiError('Failed to mark as read');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'] ?? e.message ?? 'Network error';
+      return ApiError(msg, error: e);
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
+    }
+  }
+
+  Future<ApiState<int>> getUnreadCount({required int userId}) async {
+    try {
+      final response = await _client.get(
+        'notifications/unread-count',
+        queryParameters: {'userId': userId},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final data = response.data['data'];
+        final count = (data is int) ? data : 0;
+        return ApiData(count);
+      } else {
+        return ApiError('Failed to fetch unread count');
+      }
+    } catch (e, st) {
+      return ApiError('Error fetching unread count: $e', error: e, stackTrace: st);
+    }
+  }
+
+
 }

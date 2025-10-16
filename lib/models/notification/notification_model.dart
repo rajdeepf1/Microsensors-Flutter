@@ -5,7 +5,7 @@ class NotificationModel {
   final String type;
   final String title;
   final String body;
-  final bool isRead;
+  bool isRead;
   final DateTime createdAt;
 
   NotificationModel({

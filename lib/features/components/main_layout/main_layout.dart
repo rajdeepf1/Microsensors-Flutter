@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:microsensors/utils/sizes.dart';
+import '../../../core/api_state.dart';
 import '../../../core/app_state.dart';
 import '../../../utils/colors.dart';
 import '../../../utils/constants.dart';
+import '../../notification/repository/notification_repository.dart';
 import '../smart_image/smart_image.dart';
 
 enum ScreenType {
@@ -14,7 +16,6 @@ enum ScreenType {
   home_search,
   search_calender
 }
-
 
 class MainLayout extends HookWidget {
   final String title;
@@ -41,14 +42,36 @@ class MainLayout extends HookWidget {
     final role = currentUser?.roleName ?? 'Guest';
     final userImage = currentUser?.userImage;
 
+    // Notification dependencies
+    final repo = useMemoized(() => NotificationRepository());
+    final unreadCount = useState<int>(0);
+
+    // fetch unread count once when layout loads
+    useEffect(() {
+      () async {
+        final user = AppState.instance.currentUser.value;
+        if (user?.userId != null) {
+          final res = await repo.getUnreadCount(userId: user!.userId!);
+          if (res is ApiData<int>) unreadCount.value = res.data;
+        }
+      }();
+      return null;
+    }, []);
+
     return Scaffold(
-      appBar: _buildAppBar(context, username, role, userImage),
+      appBar: _buildAppBar(context, username, role, userImage, repo, unreadCount),
       body: child,
     );
   }
 
   PreferredSizeWidget _buildAppBar(
-      BuildContext context, String username, String role, String? userImage) {
+      BuildContext context,
+      String username,
+      String role,
+      String? userImage,
+      NotificationRepository repo,
+      ValueNotifier<int> unreadCount,
+      ) {
     switch (screenType) {
       case ScreenType.home:
         return AppBar(
@@ -81,30 +104,70 @@ class MainLayout extends HookWidget {
                 ],
               ),
               const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.notifications_none_outlined, size: 30),
-                onPressed: () => context.push("/notification"),
+              // 🔔 Notification Bell with Badge
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none_outlined, size: 30),
+                    onPressed: () async {
+                      await context.push("/notification");
+
+                      // refresh unread count after returning
+                      final user = AppState.instance.currentUser.value;
+                      if (user?.userId != null) {
+                        final res =
+                        await repo.getUnreadCount(userId: user!.userId!);
+                        if (res is ApiData<int>) unreadCount.value = res.data;
+                      }
+                    },
+                  ),
+                  if (unreadCount.value > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints:
+                        const BoxConstraints(minWidth: 18, minHeight: 18),
+                        child: Center(
+                          child: Text(
+                            unreadCount.value.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
         );
-        
-      case ScreenType.search:
 
+      case ScreenType.search:
         final isSearching = useState(false);
         final searchController = useTextEditingController();
 
         return AppBar(
           title: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
-            transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
             child: isSearching.value
                 ? Container(
               key: const ValueKey("searchField"),
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15), // background color
-                borderRadius: BorderRadius.circular(28), // rounded corners
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(28),
               ),
               child: TextField(
                 controller: searchController,
@@ -114,8 +177,8 @@ class MainLayout extends HookWidget {
                   hintText: "Search...",
                   hintStyle: TextStyle(color: Colors.white70),
                   border: InputBorder.none,
-                  contentPadding:
-                  EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                 ),
                 style: const TextStyle(color: Colors.white, fontSize: 20),
                 onChanged: (value) {
@@ -141,12 +204,10 @@ class MainLayout extends HookWidget {
               ),
               onPressed: () {
                 if (isSearching.value) {
-                  // closing search
                   isSearching.value = false;
                   searchController.clear();
                   onSearchChanged?.call("");
                 } else {
-                  // opening search
                   isSearching.value = true;
                 }
               },
@@ -157,9 +218,10 @@ class MainLayout extends HookWidget {
 
       case ScreenType.tab:
         return AppBar(
-            title: Text(title, style: TextStyle(color: AppColors.whiteTextColor)),
-            elevation: 5,
-            bottom: tabBar,
+          title:
+          Text(title, style: TextStyle(color: AppColors.whiteTextColor)),
+          elevation: 5,
+          bottom: tabBar,
         );
 
       case ScreenType.home_search:
@@ -195,55 +257,86 @@ class MainLayout extends HookWidget {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.search, size: 30),
-                onPressed: () => context.push("/production-manager-history-search"),
+                onPressed: () =>
+                    context.push("/production-manager-history-search"),
               ),
-              IconButton(
-                icon: const Icon(Icons.notifications_none_outlined, size: 30),
-                onPressed: () => context.push("/notification"),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    icon:
+                    const Icon(Icons.notifications_none_outlined, size: 30),
+                    onPressed: () async {
+                      await context.push("/notification");
+                      final user = AppState.instance.currentUser.value;
+                      if (user?.userId != null) {
+                        final res =
+                        await repo.getUnreadCount(userId: user!.userId!);
+                        if (res is ApiData<int>) unreadCount.value = res.data;
+                      }
+                    },
+                  ),
+                  if (unreadCount.value > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints:
+                        const BoxConstraints(minWidth: 18, minHeight: 18),
+                        child: Center(
+                          child: Text(
+                            unreadCount.value.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
         );
 
       case ScreenType.search_calender:
-
         final isSearching = useState(false);
         final searchController = useTextEditingController();
 
-        // show date range picker and call callback
         Future<void> _openDateRangePicker(BuildContext ctx) async {
           final now = DateTime.now();
-          final last30 = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
+          final last30 = DateTime(now.year, now.month, now.day)
+              .subtract(const Duration(days: 30));
           final picked = await showDateRangePicker(
             context: ctx,
             firstDate: DateTime(2000),
             lastDate: DateTime(now.year + 1),
             initialDateRange: DateTimeRange(start: last30, end: now),
-            builder: (context, child) => Theme(
-              data: Theme.of(context),
-              child: child!,
-            ),
           );
-          // pass the picked range back to parent via callback
-          // note: MainLayout must now accept onDateRangeChanged in constructor
           if (picked != null) {
             onDateRangeChanged?.call(picked);
-          } else {
-            // user cancelled -> no change (or you could call with null to clear)
           }
         }
 
         return AppBar(
           title: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
-            transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
             child: isSearching.value
                 ? Container(
               key: const ValueKey("searchField"),
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15), // background color
-                borderRadius: BorderRadius.circular(28), // rounded corners
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(28),
               ),
               child: TextField(
                 controller: searchController,
@@ -253,8 +346,8 @@ class MainLayout extends HookWidget {
                   hintText: "Search...",
                   hintStyle: TextStyle(color: Colors.white70),
                   border: InputBorder.none,
-                  contentPadding:
-                  EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                 ),
                 style: const TextStyle(color: Colors.white, fontSize: 20),
                 onChanged: (value) {
@@ -280,12 +373,10 @@ class MainLayout extends HookWidget {
               ),
               onPressed: () {
                 if (isSearching.value) {
-                  // closing search
                   isSearching.value = false;
                   searchController.clear();
                   onSearchChanged?.call("");
                 } else {
-                  // opening search
                   isSearching.value = true;
                 }
               },
@@ -297,7 +388,6 @@ class MainLayout extends HookWidget {
           ],
           elevation: 5,
         );
-
     }
   }
 }

@@ -1,13 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:microsensors/core/api_state.dart';
+import 'package:microsensors/core/local_storage_service.dart';
+import 'package:microsensors/features/components/main_layout/main_layout.dart';
 import 'package:microsensors/models/notification/notification_model.dart';
 import 'package:microsensors/utils/colors.dart';
-import 'package:microsensors/core/local_storage_service.dart';
 
 import '../repository/notification_repository.dart';
 
@@ -26,9 +25,10 @@ class Notification extends HookWidget {
     final searchQuery = useState<String>('');
     final debounceRef = useRef<Timer?>(null);
     final dateRange = useState<DateTimeRange?>(null);
-
     final userRole = useState<String>('');
     final userId = useState<int?>(null);
+
+    final allNotifications = useState<List<NotificationModel>>([]);
 
     String? _normalizeSearch(String? q) {
       if (q == null) return null;
@@ -56,22 +56,27 @@ class Notification extends HookWidget {
           if (totalPages.value != null && lastKey >= (totalPages.value! - 1)) {
             return null;
           }
-
           return lastKey + 1;
         },
         fetchPage: (int pageKey) async {
           debugPrint('Notifications.fetchPage: page=$pageKey, q="${searchQuery.value}"');
 
-          // ensure user loaded
           final storedUser = await userFuture;
+          if (storedUser == null) throw Exception("User not found");
 
-          switch(storedUser!.roleName.toUpperCase()){
-            case "ADMIN": userRole.value = "ADMIN";
-            case "SALES": userRole.value = "SALES";
-            case "PRODUCTION MANAGER": userRole.value = "PM";
+          switch (storedUser.roleName.toUpperCase()) {
+            case "ADMIN":
+              userRole.value = "ADMIN";
+              break;
+            case "SALES":
+              userRole.value = "SALES";
+              break;
+            case "PRODUCTION MANAGER":
+              userRole.value = "PM";
+              break;
           }
 
-          userId.value = storedUser?.userId;
+          userId.value = storedUser.userId;
 
           final res = await repo.fetchNotificationsPage(
             role: userRole.value,
@@ -93,9 +98,13 @@ class Notification extends HookWidget {
             final total = pageResult.total ?? 0;
 
             if (totalPages.value == null) {
-              totalPages.value = total > 0 ? ((total + pageSize - 1) ~/ pageSize) : 0;
-              debugPrint('Notifications: totalPages=${totalPages.value}, total=$total');
+              totalPages.value =
+              total > 0 ? ((total + pageSize - 1) ~/ pageSize) : 0;
             }
+
+            // Update state for mark-read useEffect
+            final updatedList = [...allNotifications.value, ...items];
+            allNotifications.value = updatedList;
 
             return items;
           }
@@ -109,25 +118,15 @@ class Notification extends HookWidget {
     void _onDateRangeChanged(DateTimeRange? picked) {
       dateRange.value = picked;
       totalPages.value = null;
-      try {
-        pagingController.refresh();
-      } catch (_) {}
+      allNotifications.value = [];
+      pagingController.refresh();
     }
 
     useEffect(() {
-      try {
-        pagingController.fetchNextPage();
-      } catch (_) {
-        try {
-          pagingController.refresh();
-        } catch (_) {}
-      }
-
+      pagingController.fetchNextPage();
       return () {
         debounceRef.value?.cancel();
-        try {
-          pagingController.dispose();
-        } catch (_) {}
+        pagingController.dispose();
       };
     }, [pagingController]);
 
@@ -139,12 +138,41 @@ class Notification extends HookWidget {
 
         searchQuery.value = trimmed;
         totalPages.value = null;
-
-        try {
-          pagingController.refresh();
-        } catch (_) {}
+        allNotifications.value = [];
+        pagingController.refresh();
       });
     }
+
+    // ✅ Properly placed useEffect for mark-as-read
+    useEffect(() {
+      () async {
+        if (allNotifications.value.isEmpty) return;
+
+        final storedUser = await userFuture;
+        if (storedUser == null || storedUser.userId == null) return;
+
+        final ids = allNotifications.value
+            .map((n) => n.notificationId)
+            .whereType<int>()
+            .toList();
+
+        if (ids.isEmpty) return;
+
+        final res = await repo.markAsRead(
+          userId: storedUser.userId!,
+          notificationIds: ids,
+        );
+
+        if (res is ApiData) {
+          debugPrint("Marked all as read on screen open ✅");
+          for (final n in allNotifications.value) {
+            n.isRead = true;
+          }
+          allNotifications.value = [...allNotifications.value]; // ✅ triggers UI rebuild
+        }
+      }();
+      return null;
+    }, [allNotifications.value]); // Runs when notifications loaded
 
     return MainLayout(
       title: "Notifications",
@@ -185,22 +213,6 @@ class Notification extends HookWidget {
                     child: NotificationCardWidget(notification: notification),
                   );
                 },
-                firstPageProgressIndicatorBuilder: (_) =>
-                const Center(child: CircularProgressIndicator()),
-                newPageProgressIndicatorBuilder: (_) =>
-                const Center(child: CircularProgressIndicator()),
-                firstPageErrorIndicatorBuilder: (_) => Center(
-                  child: ElevatedButton(
-                    onPressed: () => fetchNextPage(),
-                    child: const Text('Retry'),
-                  ),
-                ),
-                noItemsFoundIndicatorBuilder: (_) =>
-                const Center(child: Text('No notifications found')),
-                noMoreItemsIndicatorBuilder: (_) => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Center(child: Text('No more notifications')),
-                ),
               ),
             ),
           );
@@ -219,49 +231,41 @@ class NotificationCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final subtitleColor = Colors.black54;
 
-    return Card(
-      elevation: 2,
-      color: notification.isRead ? Colors.white : AppColors.pillActiveBgColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              notification.title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              notification.body,
-              style: TextStyle(fontSize: 13, color: subtitleColor),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  notification.type,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: notification.isRead ? Colors.white : AppColors.pillActiveBgColor,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+        ],
+      ),
+      padding: const EdgeInsets.all(14.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(notification.title,
+              style:
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(notification.body,
+              style: TextStyle(fontSize: 13, color: subtitleColor)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(notification.type,
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.appBlueColor,
-                  ),
-                ),
-                Text(
-                  notification.formattedCreatedAt,
-                  style: TextStyle(fontSize: 12, color: subtitleColor),
-                ),
-              ],
-            ),
-          ],
-        ),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.appBlueColor)),
+              Text(notification.formattedCreatedAt,
+                  style: TextStyle(fontSize: 12, color: subtitleColor)),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
-
