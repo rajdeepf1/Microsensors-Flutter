@@ -44,6 +44,7 @@ class Constants{
     'Received',
     'Production Started',
     'Dispatched',
+    'Rejected'
   ];
 
 

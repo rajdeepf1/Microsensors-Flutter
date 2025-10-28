@@ -396,6 +396,7 @@ class ProductPickerSheet extends HookWidget {
                                                   Row(
                                                     children: [
                                                       Container(
+                                                        width: 150,
                                                         padding:
                                                             const EdgeInsets.symmetric(
                                                               horizontal: 8,
@@ -421,17 +422,20 @@ class ProductPickerSheet extends HookWidget {
                                                           ),
                                                         ),
                                                       ),
-                                                      const SizedBox(width: 12),
-                                                      Text(
-                                                        _formatDate(
-                                                          product.createdAt,
-                                                        ),
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black54,
-                                                        ),
-                                                      ),
                                                     ],
+                                                  ),
+                                                  SizedBox(height: 12,),
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                    child: Text(
+                                                      _formatDate(
+                                                        product.createdAt,
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.black54,
+                                                      ),
+                                                    ),
                                                   ),
                                                   SizedBox(height: 12,),
                                                   SizedBox(

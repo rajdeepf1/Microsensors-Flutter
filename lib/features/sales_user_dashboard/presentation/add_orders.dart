@@ -371,7 +371,7 @@ class _SelectedProductChip extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: SizedBox(
-        width: 260,
+        width: 360,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -412,6 +412,7 @@ class _SelectedProductChip extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       product.sku,
+                      maxLines: 1,
                       style: const TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                     const SizedBox(height: 8),
