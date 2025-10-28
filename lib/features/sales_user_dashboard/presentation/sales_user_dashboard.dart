@@ -10,6 +10,7 @@ import 'package:microsensors/core/api_state.dart';
 import 'package:microsensors/features/dashboard/presentation/stats_card.dart';
 import 'package:microsensors/features/sales_user_dashboard/presentation/orders_card.dart';
 import 'package:microsensors/services/fcm_service.dart';
+import 'package:microsensors/utils/constants.dart';
 import '../../../models/orders/order_response_model.dart';
 import '../../../models/orders/order_status_count_model.dart';
 import '../../../models/orders/paged_response.dart';
@@ -305,25 +306,25 @@ class SalesUserDashboard extends HookWidget {
                       value: (countModel.value == null)
                           ? "--"
                           : ((countModel.value!.created + countModel.value!.received).toString()),
-                      icon: Icons.play_for_work,
-                      color: Colors.green,
-                      onTap: () {},
+                      icon: Constants.statusIcon(Constants.statuses[0]),
+                      color: Constants.statusColor(Constants.statuses[0]),
+                      onTap: () {context.push('/stats-screen',extra: {'status':Constants.statuses[0]});},
                     ),
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "In Production",
                       value: countModel.value?.productionStarted?.toString() ?? "--",
-                      icon: Icons.factory,
-                      color: Colors.blue,
-                      onTap: () {},
+                      icon: Constants.statusIcon(Constants.statuses[2]),
+                      color: Constants.statusColor(Constants.statuses[2]),
+                      onTap: () {context.push('/stats-screen',extra: {'status':Constants.statuses[2]});},
                     ),
                     const SizedBox(width: 12),
                     StatsCard(
                       title: "Dispatched",
                       value: countModel.value?.dispatched?.toString() ?? "--",
-                      icon: Icons.double_arrow,
-                      color: Colors.purple,
-                      onTap: () {},
+                      icon: Constants.statusIcon(Constants.statuses[3]),
+                      color: Constants.statusColor(Constants.statuses[3]),
+                      onTap: () {context.push('/stats-screen',extra: {'status':Constants.statuses[3]});},
                     ),
                   ],
                 ),

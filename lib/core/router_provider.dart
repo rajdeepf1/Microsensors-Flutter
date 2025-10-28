@@ -9,6 +9,7 @@ import 'package:microsensors/features/notification/presentation/notification.dar
 import 'package:microsensors/features/product_list/presentation/product_list.dart';
 import 'package:microsensors/features/production_user_dashboard/presentation/pm_history_search.dart';
 import 'package:microsensors/features/sales_user_dashboard/presentation/sales_orders_list.dart';
+import 'package:microsensors/features/sales_user_dashboard/presentation/stats_full_screen.dart';
 import 'package:microsensors/features/user_list/presentation/users_list.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
@@ -89,6 +90,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/help-center',
         builder: (context, state) => HelpCenterScreen(),
+      ),
+      GoRoute(
+        path: '/stats-screen',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final status = extra?['status'] as String?;
+          return StatsFullScreen(status: status);
+        },
       ),
     ],
   );
