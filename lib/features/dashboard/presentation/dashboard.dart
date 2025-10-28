@@ -248,7 +248,7 @@ class Dashboard extends HookWidget {
                       value: countModel.value?.total.toString() ?? "--",
                       icon: Icons.shopping_cart,
                       color: Colors.green,
-                      onTap: () {},
+                      onTap: () {context.push('/order-activities');},
                     ),
                     const SizedBox(width: 12),
                     StatsCard(
@@ -256,7 +256,7 @@ class Dashboard extends HookWidget {
                       value: _stateToString(usersState.value),
                       icon: Icons.person,
                       color: Colors.blue,
-                      onTap: () {},
+                      onTap: () {context.push("/users");},
                     ),
                     const SizedBox(width: 12),
                     StatsCard(
@@ -264,7 +264,7 @@ class Dashboard extends HookWidget {
                       value: _stateToString(productsState.value),
                       icon: Icons.inventory,
                       color: Colors.purple,
-                      onTap: () {},
+                      onTap: () {context.push("/products");},
                     ),
                   ],
                 ),
