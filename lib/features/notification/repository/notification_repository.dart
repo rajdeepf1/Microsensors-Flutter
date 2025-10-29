@@ -109,5 +109,47 @@ class NotificationRepository {
     }
   }
 
+  Future<ApiState<String>> deleteNotifications({
+    required int userId,
+    required List<int> notificationIds,
+  }) async {
+    try {
+      // Build query parameters
+      final queryParams = {
+        'userId': userId,
+        'notificationIds': notificationIds.join(','), // comma-separated IDs
+      };
+
+      debugPrint("DELETE notifications params -> $queryParams");
+
+      // Use DELETE method from ApiClient
+      final response = await _client.delete(
+        'notifications/delete',
+        queryParameters: queryParams,
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      debugPrint("DELETE notifications response -> ${response.data}");
+
+      // Expected response: { "success": true, "data": "..." }
+      if (response.statusCode == 200 &&
+          response.data is Map &&
+          response.data['success'] == true) {
+        final message =
+            response.data['data'] ?? 'Notifications deleted successfully';
+        return ApiData<String>(message);
+      }
+
+      // Handle API structure mismatch
+      return ApiError('Failed to delete notifications');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'] ?? e.message ?? 'Network error';
+      return ApiError(msg, error: e);
+    } catch (e, st) {
+      return ApiError('Unexpected error: $e', error: e, stackTrace: st);
+    }
+  }
+
+
 
 }
