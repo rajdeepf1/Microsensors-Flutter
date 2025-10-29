@@ -26,6 +26,9 @@ class ProductionManagerHistorySearch extends HookWidget {
     final searchQuery = useState<String>('');
     final debounceRef = useRef<Timer?>(null);
     final dateRange = useState<DateTimeRange?>(null);
+    final selectedStatus = useState<String?>(null);
+
+    final List<String> items = Constants.statuses.where((s) => s != 'Created').toList();
 
     String? _formatDateForApi(DateTime? dt) {
       if (dt == null) return null;
@@ -66,6 +69,7 @@ class ProductionManagerHistorySearch extends HookWidget {
             q: searchQuery.value.isNotEmpty ? searchQuery.value : null,
             dateFrom: _formatDateForApi(dateRange.value?.start),
             dateTo: _formatDateForApi(dateRange.value?.end),
+            status: selectedStatus.value
           );
 
           if (res is ApiError<PagedResponse<OrderResponseModel>>) {
@@ -96,7 +100,7 @@ class ProductionManagerHistorySearch extends HookWidget {
           return <OrderResponseModel>[];
         },
       ),
-      [repo, searchQuery.value, dateRange.value],
+      [repo, searchQuery.value, dateRange.value,selectedStatus.value],
     );
 
     void _onDateRangeChanged(DateTimeRange? picked) {
@@ -138,15 +142,26 @@ class ProductionManagerHistorySearch extends HookWidget {
     }
 
     // ---------- UI helpers ----------
-    Widget _buildStatusChip(String status) {
+// 🔹 Small status chip widget
+    Widget _buildStatusChip(String status, {bool isSelected = false}) {
       final color = Constants.statusColor(status);
       final icon = Constants.statusIcon(status);
-      return Container(
+
+      final bgColor =
+      isSelected
+          ? color.withValues(alpha: 0.25)
+          : color.withValues(alpha: 0.12);
+
+      final borderColor =
+      isSelected ? color.withValues(alpha: 0.5) : color.withValues(alpha: 0.16);
+
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.16)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -158,13 +173,14 @@ class ProductionManagerHistorySearch extends HookWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],
         ),
       );
     }
+
 
     Widget orderCard(BuildContext ctx, OrderResponseModel item) {
       final accent = Constants.statusColor(item.status);
@@ -379,61 +395,108 @@ class ProductionManagerHistorySearch extends HookWidget {
       screenType: ScreenType.search_calender,
       onSearchChanged: onSearchChanged,
       onDateRangeChanged: _onDateRangeChanged,
-      child: PagingListener<int, OrderResponseModel>(
-        controller: pagingController,
-        builder: (context, state, fetchNextPage) {
-          if (state.isLoading && (state.pages?.isEmpty ?? true)) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      child: Column(
+        children: [
+          // 🔹 Horizontal chip list
+          Material(
+            color: Colors.white,
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: SizedBox(
+                height: 40,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: items.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final status = items[index];
+                    final isSelected = selectedStatus.value == status;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          // ✅ toggle behavior
+                          if (selectedStatus.value == status) {
+                            selectedStatus.value = null; // deselect
+                          } else {
+                            selectedStatus.value = status; // select new
+                          }
 
-          if (state.error != null && (state.pages?.isEmpty ?? true)) {
-            return Center(
-              child: ElevatedButton(
-                onPressed: () => fetchNextPage(),
-                child: const Text('Retry'),
-              ),
-            );
-          }
-
-          if (state.pages?.isEmpty ?? true) {
-            return const Center(child: Text('No orders found'));
-          }
-
-          return SafeArea(
-            top: false,
-            bottom: true,
-            child: PagedListView<int, OrderResponseModel>(
-              state: state,
-              fetchNextPage: fetchNextPage,
-              padding: const EdgeInsets.all(12),
-              builderDelegate: PagedChildBuilderDelegate<OrderResponseModel>(
-                itemBuilder:
-                    (context, order, index) => orderCard(context, order),
-                firstPageProgressIndicatorBuilder:
-                    (_) => const Center(child: CircularProgressIndicator()),
-                newPageProgressIndicatorBuilder:
-                    (_) => const Center(child: CircularProgressIndicator()),
-                firstPageErrorIndicatorBuilder: (_) => Center(
-                  child: ElevatedButton(
-                    onPressed: () => fetchNextPage(),
-                    child: const Text('Retry'),
-                  ),
-                ),
-                noItemsFoundIndicatorBuilder:
-                    (_) => const Center(child: Text('No orders found')),
-                noMoreItemsIndicatorBuilder: (_) => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Center(
-                    child: SizedBox(
-                      height: 80,
-                      child: Text('No more orders'),
-                    ),
-                  ),
+                          totalPages.value = null;
+                          try {
+                            pagingController.refresh();
+                          } catch (_) {}
+                        },
+                        child: _buildStatusChip(status, isSelected: isSelected),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
-          );
-        },
+          ),
+
+          // 🔹 Orders list
+          Expanded(
+            child: PagingListener<int, OrderResponseModel>(
+              controller: pagingController,
+              builder: (context, state, fetchNextPage) {
+                if (state.isLoading && (state.pages?.isEmpty ?? true)) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (state.error != null && (state.pages?.isEmpty ?? true)) {
+                  return Center(
+                    child: ElevatedButton(
+                      onPressed: () => fetchNextPage(),
+                      child: const Text('Retry'),
+                    ),
+                  );
+                }
+
+                if (state.pages?.isEmpty ?? true) {
+                  return const Center(child: Text('No orders found'));
+                }
+
+                return SafeArea(
+                  top: false,
+                  bottom: true,
+                  child: PagedListView<int, OrderResponseModel>(
+                    state: state,
+                    fetchNextPage: fetchNextPage,
+                    padding: const EdgeInsets.all(12),
+                    builderDelegate: PagedChildBuilderDelegate<OrderResponseModel>(
+                      itemBuilder:
+                          (context, order, index) => orderCard(context, order),
+                      firstPageProgressIndicatorBuilder:
+                          (_) => const Center(child: CircularProgressIndicator()),
+                      newPageProgressIndicatorBuilder:
+                          (_) => const Center(child: CircularProgressIndicator()),
+                      firstPageErrorIndicatorBuilder: (_) => Center(
+                        child: ElevatedButton(
+                          onPressed: () => fetchNextPage(),
+                          child: const Text('Retry'),
+                        ),
+                      ),
+                      noItemsFoundIndicatorBuilder:
+                          (_) => const Center(child: Text('No orders found')),
+                      noMoreItemsIndicatorBuilder: (_) => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            height: 80,
+                            child: Text('No more orders'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
