@@ -144,7 +144,6 @@ class SalesOrdersList extends HookWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 🔹 Horizontal chip list
-          //const SizedBox(height: 12),
           Material(
             color: Colors.white,
             elevation: 4,
