@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class Constants{
 
@@ -110,6 +111,16 @@ class Constants{
         return Icons.priority_high;
       default:
         return Icons.info_outline; // Fallback
+    }
+  }
+
+  static String safeFormatDate(dynamic value) {
+    try {
+      if (value == null) return '';
+      final parsed = value is DateTime ? value : DateTime.parse(value.toString());
+      return DateFormat('dd/MM/yyyy').format(parsed.toLocal());
+    } catch (_) {
+      return '';
     }
   }
 

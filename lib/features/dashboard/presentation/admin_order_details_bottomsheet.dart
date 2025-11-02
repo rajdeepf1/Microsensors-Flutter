@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:intl/intl.dart';
-import 'package:microsensors/features/components/edit_text_field/EditTextField.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
@@ -27,7 +26,11 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
     final Color baseColor = Constants.statusColor(orderItem.status);
     final Color cardColor = baseColor.withValues(alpha: 0.12);
-    final dateController = useTextEditingController();
+
+    final dateController = useTextEditingController(
+      text: Constants.safeFormatDate(orderItem.dispatchOn),
+    );
+
     final dispatchOnDate = useState<String>('');
 
     final Map<String, String> priorityMap = {

@@ -271,13 +271,55 @@ class OrderActivities extends HookWidget {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      Constants.timeAgo(item.createdAt),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[500],
-                                      ),
-                                    ),
+
+                                    Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              'Order Dt.:',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[500],
+                                              ),
+                                            ),
+                                            SizedBox(width: 2,),
+                                            Text(
+                                              Constants.timeAgo(item.createdAt),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[500],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        SizedBox(height: 5,),
+                                        if (item.dispatchOn!=null) Row(
+                                          children: [
+                                            Text(
+                                              'Dispatch Dt.:',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[500],
+                                              ),
+                                            ),
+                                            SizedBox(width: 2,),
+                                            Text(
+                                              Constants.timeAgo(item.dispatchOn),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[500],
+                                              ),
+                                            ),
+                                          ],
+                                        )
+
+
+                                      ],
+                                    )
+
+
                                   ],
                                 ),
                                 const SizedBox(height: 8),
