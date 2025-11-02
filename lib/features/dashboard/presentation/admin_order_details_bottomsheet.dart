@@ -120,7 +120,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
       // action: "APPROVE" or "REJECT"
       final repoAdmin = DashboardRepository(); // or use existing repo variable if you put method elsewhere
 
-      if (dispatchOnDate.value.isEmpty) {
+      if (dispatchOnDate.value.isEmpty && action == 'APPROVE') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please enter the dispatch date.")),
         );
@@ -159,7 +159,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
           action: action,
           priority: priority.value,
           productionManagerId: orderItem.productionManagerId,
-          dispatchOn: dispatchOnDate.value
+          dispatchOn: dispatchOnDate.value??''
         );
 
         // hide loader

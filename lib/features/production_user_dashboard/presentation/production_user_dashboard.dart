@@ -197,7 +197,7 @@ class ProductionUserDashboard extends HookWidget {
     }, const []); // run once on mount
 
     // Static status steps
-    final steps = Constants.statuses.where((s) => s != 'Created').toList();
+    final steps = Constants.statuses.where((s) => (s != 'Created' && s != 'Rejected')).toList();
 
     // 🔹 Build a small status chip widget
     Widget _buildStatusChip(String status) {

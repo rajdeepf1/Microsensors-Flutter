@@ -31,6 +31,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
     final repo = useMemoized(() => ProductionManagerRepository());
 
     final lastUpdatedStatus = useState<String?>(null);
+    // in-flight flag for submit button
+    final submitting = useState<bool>(false);
 
     final Color baseColor = Constants.statusColor(orderItem.status);
     final Color cardColor = baseColor.withValues(alpha: 0.12);
@@ -39,7 +41,7 @@ class PmOrderDetailsBottomSheet extends HookWidget {
     final status = useState<String?>(orderItem.status ?? 'Received');
 
     // canonical steps (same as timeline widget)
-    final steps = Constants.statuses.where((s) => s != 'Created').toList();
+    final steps = Constants.statuses.where((s) => (s != 'Created' && s != 'Rejected')).toList();
 
     final List<DropdownMenuItem<String>> statusItems =
         steps
@@ -97,7 +99,7 @@ class PmOrderDetailsBottomSheet extends HookWidget {
       text: Constants.safeFormatDate(orderItem.dispatchOn),
     );
 
-    final dispatchOnDate = useState<String>('');
+    final statusDropDown = useState<String>('');
 
 
 // when user selects a status from dropdown: update status and set timestamp now + call backend
@@ -394,8 +396,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
 
                           const SizedBox(height: 12),
 
-                          const SizedBox(height: 12),
-
                           if(orderItem.dispatchOn != null && orderItem
                               .dispatchOn
                               .toString()
@@ -482,7 +482,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                               ),
                               items: statusItems,
                               icon: const Icon(Icons.expand_more),
-                              onChanged: (value) => onStatusSelected(value),
+                              // onChanged: (value) => onStatusSelected(value),
+                               onChanged: (value) => statusDropDown.value = value!,
                               style: TextStyle(
                                 color: AppColors.subHeadingTextColor,
                                 fontWeight: FontWeight.bold,
@@ -538,6 +539,32 @@ class PmOrderDetailsBottomSheet extends HookWidget {
               ),
             ),
 
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: const StadiumBorder(),
+                ),
+                onPressed: submitting.value ? null : () async {
+                  submitting.value = true;
+                  await onStatusSelected(statusDropDown.value);
+                  submitting.value = false;
+                },
+                child: submitting.value
+                    ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+                    : const Text(
+                  "Submit Status",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
 
           ],
         ),
@@ -736,14 +763,14 @@ class AnimatedIndicatorHook extends HookWidget {
 
 /// Timeline builder that uses timelines_plus; hook-friendly indicators are used
 Widget buildStatusTimelineVerticalWithHook(
-  String currentStatus, {
-  Map<String, DateTime?>? stepTimes,
-}) {
+    String currentStatus, {
+      Map<String, DateTime?>? stepTimes,
+    }) {
 
-  final steps = Constants.statuses.where((s) => s != 'Created').toList();
+  final steps = Constants.statuses.where((s) => (s != 'Created' && s != 'Rejected')).toList();
 
   int activeIndex = steps.indexWhere(
-    (s) => s.toLowerCase() == (currentStatus).toLowerCase(),
+        (s) => s.toLowerCase() == (currentStatus).toLowerCase(),
   );
   if (activeIndex < 0) activeIndex = 0;
 
@@ -800,7 +827,7 @@ Widget buildStatusTimelineVerticalWithHook(
           if (ts != null) {
             final dt = ts.toLocal();
             tsText =
-                '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+            '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
           }
           //final double extraTop = index == 0 ? 12.0 : 0.0;
           return Padding(
@@ -818,9 +845,9 @@ Widget buildStatusTimelineVerticalWithHook(
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight:
-                        index == activeIndex
-                            ? FontWeight.w700
-                            : FontWeight.w600,
+                    index == activeIndex
+                        ? FontWeight.w700
+                        : FontWeight.w600,
                     color: index == activeIndex ? activeColor : Colors.black87,
                   ),
                 ),
@@ -840,6 +867,8 @@ Widget buildStatusTimelineVerticalWithHook(
     ),
   );
 }
+
+
 
 Widget _buildProductList(List<OrderProductItem> products) {
   if (products.isEmpty) {
