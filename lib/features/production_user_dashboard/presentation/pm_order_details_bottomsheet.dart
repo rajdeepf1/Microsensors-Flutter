@@ -1,4 +1,5 @@
 // lib/features/production_user_dashboard/presentation/admin_order_details_bottomsheet.dart
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,7 @@ import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/change_order_status_model.dart';
 import '../../../models/orders/order_response_model.dart';
+import '../../components/image_picker/image_picker_field.dart';
 import '../../components/product_edit_field/product_edit_field.dart';
 import '../../components/user/user_info_edit_field.dart';
 
@@ -27,7 +29,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final repo = useMemoized(() => ProductionManagerRepository());
 
     final lastUpdatedStatus = useState<String?>(null);
@@ -41,7 +42,10 @@ class PmOrderDetailsBottomSheet extends HookWidget {
     final status = useState<String?>(orderItem.status ?? 'Received');
 
     // canonical steps (same as timeline widget)
-    final steps = Constants.statuses.where((s) => (s != 'Created' && s != 'Rejected')).toList();
+    final steps =
+        Constants.statuses
+            .where((s) => (s != 'Created' && s != 'Rejected'))
+            .toList();
 
     final List<DropdownMenuItem<String>> statusItems =
         steps
@@ -50,7 +54,7 @@ class PmOrderDetailsBottomSheet extends HookWidget {
 
     // compute timeline height (spacious)
     final double timelineHeight =
-        (steps.length * 120).clamp(220.0, 400.0).toDouble();
+        (steps.length * 120).clamp(220.0, 300.0).toDouble();
 
     // build initial stepTimes map from existing history (defensive parsing)
     Map<String, DateTime?> buildInitialStepTimes() {
@@ -101,8 +105,9 @@ class PmOrderDetailsBottomSheet extends HookWidget {
 
     final statusDropDown = useState<String>('');
 
+    final imageFile = useState<MultipartFile?>(null);
 
-// when user selects a status from dropdown: update status and set timestamp now + call backend
+    // when user selects a status from dropdown: update status and set timestamp now + call backend
     Future<void> onStatusSelected(String? newStatus) async {
       if (newStatus == null) return;
       if (newStatus == status.value) return;
@@ -130,12 +135,12 @@ class PmOrderDetailsBottomSheet extends HookWidget {
         final stored = await LocalStorageService().getUser();
         if (stored != null && stored.userId != null) changedBy = stored.userId;
 
-        final ApiState<ChangeOrderStatusModel> res =
-        await repo.changeOrderStatus(
-          orderId: orderItem.orderId ?? -1,
-          newStatus: newStatus,
-          changedBy: changedBy,
-        );
+        final ApiState<ChangeOrderStatusModel> res = await repo
+            .changeOrderStatus(
+              orderId: orderItem.orderId ?? -1,
+              newStatus: newStatus,
+              changedBy: changedBy,
+            );
 
         // ✅ Always close the loader after the API completes
         if (Navigator.canPop(context)) Navigator.of(context).pop();
@@ -146,7 +151,9 @@ class PmOrderDetailsBottomSheet extends HookWidget {
           if (model.isSuccess) {
             // ✅ success feedback
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(model.data ?? 'Status updated successfully')),
+              SnackBar(
+                content: Text(model.data ?? 'Status updated successfully'),
+              ),
             );
 
             // ✅ update timeline with confirmed timestamp
@@ -157,7 +164,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
             lastUpdatedStatus.value = newStatus;
             // ✅ notify parent (ProductionUserDashboard)
             onStatusChanged?.call(newStatus);
-
           } else {
             // ❌ server returned failure (e.g., invalid transition)
             status.value = prevStatus;
@@ -167,7 +173,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
               SnackBar(content: Text(model.error ?? 'Status change failed')),
             );
           }
-
         } else if (res is ApiError<ChangeOrderStatusModel>) {
           // ❌ network or unhandled API error
           status.value = prevStatus;
@@ -176,7 +181,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to change status: ${res.message}')),
           );
-
         } else {
           // ❌ unexpected state
           status.value = prevStatus;
@@ -194,14 +198,11 @@ class PmOrderDetailsBottomSheet extends HookWidget {
         status.value = prevStatus;
         stepTimesState.value = prevStepTimes;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unexpected error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
       }
     }
-
-
-
 
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -220,7 +221,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-
                     _buildProductList(orderItem.items),
 
                     const SizedBox(height: 12),
@@ -396,16 +396,15 @@ class PmOrderDetailsBottomSheet extends HookWidget {
 
                           const SizedBox(height: 12),
 
-                          if(orderItem.dispatchOn != null && orderItem
-                              .dispatchOn
-                              .toString()
-                              .isNotEmpty)
+                          if (orderItem.dispatchOn != null &&
+                              orderItem.dispatchOn.toString().isNotEmpty)
                             UserInfoEditField(
                               text: "Dispatch Date: ",
                               child: TextFormField(
                                 controller: dateController,
                                 style: TextStyle(
-                                    color: AppColors.subHeadingTextColor),
+                                  color: AppColors.subHeadingTextColor,
+                                ),
                                 readOnly: true,
                                 // onTap: () async {
                                 //   final DateTime? pickedDate = await showDatePicker(
@@ -457,7 +456,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                                   filled: true,
                                   fillColor: AppColors.whiteColor,
                                   icon: const Icon(
-                                      Icons.calendar_month_outlined),
+                                    Icons.calendar_month_outlined,
+                                  ),
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16.0 * 1.5,
                                     vertical: 16.0,
@@ -465,7 +465,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                                   border: const OutlineInputBorder(
                                     borderSide: BorderSide.none,
                                     borderRadius: BorderRadius.all(
-                                        Radius.circular(50)),
+                                      Radius.circular(50),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -477,13 +478,16 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                             text: "Change status",
                             child: DropdownButtonFormField<String>(
                               initialValue: steps.firstWhere(
-                                    (s) => s.toLowerCase() == (status.value ?? '').toLowerCase(),
+                                (s) =>
+                                    s.toLowerCase() ==
+                                    (status.value ?? '').toLowerCase(),
                                 orElse: () => steps.first,
                               ),
                               items: statusItems,
                               icon: const Icon(Icons.expand_more),
                               // onChanged: (value) => onStatusSelected(value),
-                               onChanged: (value) => statusDropDown.value = value!,
+                              onChanged:
+                                  (value) => statusDropDown.value = value!,
                               style: TextStyle(
                                 color: AppColors.subHeadingTextColor,
                                 fontWeight: FontWeight.bold,
@@ -491,20 +495,22 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                               decoration: InputDecoration(
                                 hintText: 'Change status',
                                 filled: true,
-                                fillColor: AppColors.whiteColor.withValues(alpha: 1),
+                                fillColor: AppColors.whiteColor.withValues(
+                                  alpha: 1,
+                                ),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16.0 * 1.5,
                                   vertical: 16.0,
                                 ),
                                 border: const OutlineInputBorder(
                                   borderSide: BorderSide.none,
-                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(50),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-
-
                         ],
                       ),
                     ),
@@ -539,6 +545,36 @@ class PmOrderDetailsBottomSheet extends HookWidget {
               ),
             ),
 
+            if (statusDropDown.value == Constants.statuses[3])
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Optionally you can upload an image while dispatching an order.',
+                      style: TextStyle(fontSize: 12,color: Colors.grey.shade500),
+                    ),
+                    SizedBox(height: 5,),
+                    ImagePickerField(
+                      onImageSelected: (file) {
+                        imageFile.value = file;
+                        debugPrint('Selected image: ${file?.filename}');
+                      },
+                    ),
+                    // const SizedBox(height: 24),
+                    // ElevatedButton(
+                    //   onPressed: imageFile.value != null
+                    //       ? () {
+                    //     // You can now send imageFile.value in your API call
+                    //     debugPrint('Ready to upload: ${imageFile.value!.filename}');
+                    //   }
+                    //       : null,
+                    //   child: const Text('Continue'),
+                    // ),
+                  ],
+                ),
+              ),
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
@@ -548,24 +584,34 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                   minimumSize: const Size(double.infinity, 50),
                   shape: const StadiumBorder(),
                 ),
-                onPressed: submitting.value ? null : () async {
-                  submitting.value = true;
-                  await onStatusSelected(statusDropDown.value);
-                  submitting.value = false;
-                },
-                child: submitting.value
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-                    : const Text(
-                  "Submit Status",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
+                onPressed:
+                    submitting.value
+                        ? null
+                        : () async {
+                          submitting.value = true;
+                          await onStatusSelected(statusDropDown.value);
+                          submitting.value = false;
+                        },
+                child:
+                    submitting.value
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Text(
+                          "Submit Status",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
               ),
             ),
-
+            SizedBox(height: 50,)
           ],
         ),
       ),
@@ -763,14 +809,16 @@ class AnimatedIndicatorHook extends HookWidget {
 
 /// Timeline builder that uses timelines_plus; hook-friendly indicators are used
 Widget buildStatusTimelineVerticalWithHook(
-    String currentStatus, {
-      Map<String, DateTime?>? stepTimes,
-    }) {
-
-  final steps = Constants.statuses.where((s) => (s != 'Created' && s != 'Rejected')).toList();
+  String currentStatus, {
+  Map<String, DateTime?>? stepTimes,
+}) {
+  final steps =
+      Constants.statuses
+          .where((s) => (s != 'Created' && s != 'Rejected'))
+          .toList();
 
   int activeIndex = steps.indexWhere(
-        (s) => s.toLowerCase() == (currentStatus).toLowerCase(),
+    (s) => s.toLowerCase() == (currentStatus).toLowerCase(),
   );
   if (activeIndex < 0) activeIndex = 0;
 
@@ -781,7 +829,7 @@ Widget buildStatusTimelineVerticalWithHook(
   final Color pendingColor = Colors.grey.shade400;
 
   return Padding(
-    padding: const EdgeInsets.only(left: 16.0,),
+    padding: const EdgeInsets.only(left: 16.0),
     child: Timeline.tileBuilder(
       theme: TimelineThemeData(
         direction: Axis.vertical,
@@ -827,7 +875,7 @@ Widget buildStatusTimelineVerticalWithHook(
           if (ts != null) {
             final dt = ts.toLocal();
             tsText =
-            '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
           }
           //final double extraTop = index == 0 ? 12.0 : 0.0;
           return Padding(
@@ -845,9 +893,9 @@ Widget buildStatusTimelineVerticalWithHook(
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight:
-                    index == activeIndex
-                        ? FontWeight.w700
-                        : FontWeight.w600,
+                        index == activeIndex
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                     color: index == activeIndex ? activeColor : Colors.black87,
                   ),
                 ),
@@ -867,8 +915,6 @@ Widget buildStatusTimelineVerticalWithHook(
     ),
   );
 }
-
-
 
 Widget _buildProductList(List<OrderProductItem> products) {
   if (products.isEmpty) {
@@ -955,5 +1001,4 @@ Widget _buildProductList(List<OrderProductItem> products) {
       ),
     ),
   );
-
 }
