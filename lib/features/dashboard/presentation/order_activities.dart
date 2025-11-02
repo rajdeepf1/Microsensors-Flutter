@@ -21,6 +21,7 @@ class OrderActivities extends HookWidget {
     const int pageSize = 20;
     const int initialPage = 0;
 
+    // filters/state
     final totalPages = useState<int?>(null);
     final searchQuery = useState<String>('');
     final dateRange = useState<DateTimeRange?>(null);
@@ -37,14 +38,19 @@ class OrderActivities extends HookWidget {
       return '$y-$m-$d';
     }
 
-    // ✅ PagingController recreated automatically on status change
+    // --- Stable PagingController (do NOT re-create on filter change) ---
     final pagingController = useMemoized(() {
       final controller = PagingController<int, OrderResponseModel>(
         getNextPageKey: (state) {
+          // first page when empty
           if (state.pages == null || state.pages!.isEmpty) return initialPage;
+
+          // compute next key from last loaded key
           final lastKey = (state.keys?.isNotEmpty ?? false)
               ? state.keys!.last
               : (initialPage + state.pages!.length - 1);
+
+          // stop when we know we're at the end
           if (totalPages.value != null && lastKey >= (totalPages.value! - 1)) {
             return null;
           }
@@ -52,7 +58,8 @@ class OrderActivities extends HookWidget {
         },
         fetchPage: (pageKey) async {
           debugPrint(
-              '🔹 fetchPage: page=$pageKey, status="${selectedStatus.value}", q="${searchQuery.value}"');
+              '🔹 fetchPage: page=$pageKey, status="${selectedStatus.value}", q="${searchQuery.value}", '
+                  'dateFrom=${_formatDateForApi(dateRange.value?.start)}, dateTo=${_formatDateForApi(dateRange.value?.end)}');
 
           final storedUser = await LocalStorageService().getUser();
           if (storedUser == null) throw Exception('No stored user');
@@ -73,16 +80,14 @@ class OrderActivities extends HookWidget {
           if (res is ApiData<PagedResponse<OrderResponseModel>>) {
             final pageResult = res.data;
 
-            if (totalPages.value == null) {
+            // set totalPages from server's "total" count once per first fetch
+            if (pageKey == initialPage) {
               final tot = pageResult.total;
-              totalPages.value =
-              tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
-              debugPrint(
-                  '✅ totalPages=${totalPages.value}, total=${pageResult.total}');
+              totalPages.value = tot > 0 ? ((tot + pageSize - 1) ~/ pageSize) : 0;
+              debugPrint('✅ total=${pageResult.total}, totalPages=${totalPages.value}');
             }
 
-            debugPrint(
-                '✅ fetched ${pageResult.data.length} items for ${selectedStatus.value ?? "All"}');
+            debugPrint('✅ fetched ${pageResult.data.length} items');
             return pageResult.data;
           }
 
@@ -90,12 +95,23 @@ class OrderActivities extends HookWidget {
         },
       );
 
-      // Trigger initial fetch
+      // initial load
       Future.microtask(() => controller.fetchNextPage());
       return controller;
-    }, [selectedStatus.value, searchQuery.value, dateRange.value]);
+    }, []); // NO deps — stays stable
 
-    // ✅ Debounced search
+    // helper: force a full reload (used by filters and modal close)
+    void triggerReload() {
+      // reset pagination meta so next getNextPageKey can advance normally
+      totalPages.value = null;
+
+      // clear pages and re-fetch first page
+      pagingController.refresh();
+      // some implementations require explicit first fetch after refresh
+      Future.microtask(() => pagingController.fetchNextPage());
+    }
+
+    // 🔎 Debounced search
     void onSearchChanged(String q) {
       debounceRef.value?.cancel();
       debounceRef.value = Timer(const Duration(milliseconds: 400), () {
@@ -105,28 +121,32 @@ class OrderActivities extends HookWidget {
       });
     }
 
-    // ✅ Date range change
+    // 📆 Date range change
     void _onDateRangeChanged(DateTimeRange? picked) {
       dateRange.value = picked;
     }
 
-    // ✅ Cleanup when controller changes
+    // ♻️ React to filters: always reload with current filters
+    useEffect(() {
+      triggerReload();
+      return null;
+    }, [selectedStatus.value, searchQuery.value, dateRange.value]);
+
+    // cleanup
     useEffect(() {
       return () {
         debounceRef.value?.cancel();
         pagingController.dispose();
       };
-    }, [pagingController]);
+    }, []);
 
     // ---------- UI helpers ----------
     Widget _buildStatusChip(String status, {bool isSelected = false}) {
       final color = Constants.statusColor(status);
       final icon = Constants.statusIcon(status);
 
-      final bgColor = isSelected
-          ? color.withValues(alpha: 0.25)
-          : color.withValues(alpha: 0.12);
-
+      final bgColor =
+      isSelected ? color.withValues(alpha: 0.25) : color.withValues(alpha: 0.12);
       final borderColor =
       isSelected ? color.withValues(alpha: 0.5) : color.withValues(alpha: 0.16);
 
@@ -169,7 +189,8 @@ class OrderActivities extends HookWidget {
         );
 
         if (result == true) {
-          pagingController.refresh(); // ✅ refresh after approval/rejection
+          // after APPROVE/REJECT
+          triggerReload();
         }
       }
 
@@ -227,8 +248,7 @@ class OrderActivities extends HookWidget {
                                                 fontSize: 16,
                                               ),
                                             ),
-                                            const WidgetSpan(
-                                                child: SizedBox(width: 8)),
+                                            const WidgetSpan(child: SizedBox(width: 8)),
                                             TextSpan(
                                               text: '| ',
                                               style: TextStyle(
@@ -325,7 +345,7 @@ class OrderActivities extends HookWidget {
       onDateRangeChanged: _onDateRangeChanged,
       child: Column(
         children: [
-          // 🔹 Horizontal chip list
+          // 🔹 Horizontal chip list (status filter)
           Material(
             color: Colors.white,
             elevation: 4,
@@ -344,11 +364,8 @@ class OrderActivities extends HookWidget {
                       padding: const EdgeInsets.only(right: 8),
                       child: GestureDetector(
                         onTap: () {
-                          if (selectedStatus.value == status) {
-                            selectedStatus.value = null; // deselect
-                          } else {
-                            selectedStatus.value = status; // select new
-                          }
+                          selectedStatus.value =
+                          isSelected ? null : status; // toggle
                         },
                         child: _buildStatusChip(status, isSelected: isSelected),
                       ),
@@ -383,7 +400,8 @@ class OrderActivities extends HookWidget {
                     state: state,
                     fetchNextPage: fetchNextPage,
                     padding: const EdgeInsets.all(12),
-                    builderDelegate: PagedChildBuilderDelegate<OrderResponseModel>(
+                    builderDelegate:
+                    PagedChildBuilderDelegate<OrderResponseModel>(
                       itemBuilder: (context, order, index) =>
                           orderCard(context, order),
                       firstPageProgressIndicatorBuilder: (_) =>

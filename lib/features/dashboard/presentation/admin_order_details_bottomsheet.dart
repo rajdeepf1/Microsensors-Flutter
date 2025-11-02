@@ -1,6 +1,8 @@
 // lib/features/production_user_dashboard/presentation/admin_order_details_bottomsheet.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:intl/intl.dart';
+import 'package:microsensors/features/components/edit_text_field/EditTextField.dart';
 import 'package:microsensors/features/components/smart_image/smart_image.dart';
 import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
@@ -9,6 +11,7 @@ import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_response_model.dart';
 import '../../components/product_edit_field/product_edit_field.dart';
+import '../../components/user/user_info_edit_field.dart';
 import '../repository/dashboard_repository.dart';
 
 /// Bottom sheet showing order details + timeline for PM
@@ -24,7 +27,8 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
     final Color baseColor = Constants.statusColor(orderItem.status);
     final Color cardColor = baseColor.withValues(alpha: 0.12);
-
+    final dateController = useTextEditingController();
+    final dispatchOnDate = useState<String>('');
 
     final Map<String, String> priorityMap = {
       "Low": "Low",
@@ -63,7 +67,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
     // compute timeline height (spacious)
     final double timelineHeight =
-        (steps.length * 120).clamp(220.0, 400.0).toDouble();
+        (steps.length * 120).clamp(220.0, 500.0).toDouble();
 
     // build initial stepTimes map from existing history (defensive parsing)
     Map<String, DateTime?> buildInitialStepTimes() {
@@ -112,6 +116,14 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
     Future<void> performApproval(String action) async {
       // action: "APPROVE" or "REJECT"
       final repoAdmin = DashboardRepository(); // or use existing repo variable if you put method elsewhere
+
+      if (dispatchOnDate.value.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter the dispatch date.")),
+        );
+        return;
+      }
+
       // show confirmation dialog
       final confirmed = await showDialog<bool>(
         context: context,
@@ -144,6 +156,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
           action: action,
           priority: priority.value,
           productionManagerId: orderItem.productionManagerId,
+          dispatchOn: dispatchOnDate.value
         );
 
         // hide loader
@@ -441,13 +454,77 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                               ),
                             ),
                           ),
-                          
+
+                          const SizedBox(height: 12),
+
+                          UserInfoEditField(
+                            text: "Dispatch Date: ",
+                            child: TextFormField(
+                              controller: dateController,
+                              style: TextStyle(color: AppColors.subHeadingTextColor),
+                              readOnly: true,
+                              onTap: () async {
+                                final DateTime? pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.light(
+                                          primary: Colors.blue, // header color
+                                          onPrimary: Colors.white,
+                                          onSurface: Colors.black,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+
+                                if (pickedDate != null) {
+                                  // Show only date in field
+                                  dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+
+                                  // Save full datetime string for API
+                                  final utcDate = DateTime.utc(
+                                    pickedDate.year,
+                                    pickedDate.month,
+                                    pickedDate.day,
+                                    0, 0, 0,
+                                  );
+
+                                  final formattedDateIso = utcDate.toIso8601String(); // "2025-10-30T00:00:00Z"
+
+                                  debugPrint('📅 API date string: $formattedDateIso');
+                                  dispatchOnDate.value = formattedDateIso;
+
+                                  // TODO: store or send this to your API, for example:
+                                   dispatchOnDate.value = formattedDateIso;
+                                }
+                              },
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.whiteColor,
+                                icon: const Icon(Icons.calendar_month_outlined),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0 * 1.5,
+                                  vertical: 16.0,
+                                ),
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                ),
+                              ),
+                            ),
+                          ),
+
+
+                          const SizedBox(height: 30),
                         ],
                       ),
                     ),
-
-                    // bottom spacing to expose zig-zag nicely
-                    const SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -462,7 +539,6 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
               padding: const EdgeInsets.only(
                 left: 18.0,
                 right: 12.0,
-                //top: 16.0,
               ),
               child: SizedBox(
                 height: timelineHeight,
@@ -760,12 +836,7 @@ Widget buildStatusTimelineVerticalWithHook(
   String currentStatus, {
   Map<String, DateTime?>? stepTimes,
 }) {
-  // final steps = <String>[
-  //   'Created',
-  //   'Received',
-  //   'Production Started',
-  //   'Dispatched',
-  // ];
+
   final steps = Constants.statuses;
 
   int activeIndex = steps.indexWhere(
@@ -832,7 +903,7 @@ Widget buildStatusTimelineVerticalWithHook(
           return Padding(
             padding: EdgeInsets.only(
               left: 14.0,
-              bottom: 30.0,
+              bottom:30.0,
               top: 30.0,
               //right: 8.0,
             ),

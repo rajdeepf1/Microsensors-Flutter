@@ -153,6 +153,7 @@ class DashboardRepository {
     required String action, // "APPROVE" or "REJECT"
     String? priority, // optional: "Low","Medium","High","Urgent"
     int? productionManagerId, // optional
+    String? dispatchOn
   }) async {
     try {
       final body = <String, dynamic>{
@@ -161,6 +162,7 @@ class DashboardRepository {
       };
       if (priority != null) body['priority'] = priority;
       if (productionManagerId != null) body['productionManagerId'] = productionManagerId;
+      if (dispatchOn != null && dispatchOn.isNotEmpty) body['dispatchOn'] = dispatchOn;
 
       final response = await _client.post(
         'orders/$orderId/approval',

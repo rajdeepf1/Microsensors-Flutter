@@ -61,7 +61,7 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.logout_outlined,
               press: () async {
                 await LocalStorageService().removeUser();
-                context.go("/login");
+                context.go("/email-login");
               },
             ),
             const SizedBox(height: 12),
