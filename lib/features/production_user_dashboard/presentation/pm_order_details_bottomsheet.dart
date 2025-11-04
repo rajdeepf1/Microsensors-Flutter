@@ -141,7 +141,7 @@ class PmOrderDetailsBottomSheet extends HookWidget {
               newStatus: newStatus,
               changedBy: changedBy,
               file: imageFile.value,
-        );
+            );
 
         // ✅ Always close the loader after the API completes
         if (Navigator.canPop(context)) Navigator.of(context).pop();
@@ -364,6 +364,7 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                                     username:
                                         orderItem.productionManagerName ?? '',
                                     fit: BoxFit.cover,
+                                    useCached: true,
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
@@ -488,11 +489,15 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                               icon: const Icon(Icons.expand_more),
                               // onChanged: (value) => onStatusSelected(value),
                               onChanged:
-                                  (value) => statusDropDown.value = value!,
+                                  orderItem.status == Constants.statuses[3]
+                                      ? null
+                                      : (value) =>
+                                          statusDropDown.value = value!,
                               style: TextStyle(
                                 color: AppColors.subHeadingTextColor,
                                 fontWeight: FontWeight.bold,
                               ),
+                              dropdownColor: AppColors.whiteColor,
                               decoration: InputDecoration(
                                 hintText: 'Change status',
                                 filled: true,
@@ -512,12 +517,33 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                               ),
                             ),
                           ),
+
+                          Text('Order Image:'),
+                          SizedBox(height: 12),
+                          (orderItem.orderImage != null &&
+                                  orderItem.orderImage!.isNotEmpty)
+                              ? SmartImage(
+                                imageUrl: orderItem.orderImage,
+                                width: double.infinity,
+                                height: 200,
+                                baseUrl: Constants.apiBaseUrl,
+                                shape: ImageShape.rounded,
+                                borderRadius: 20,
+                                fit: BoxFit.fill,
+                                useCached: true,
+                              )
+                              : Center(
+                                child: Text(
+                                  'No image found!',
+                                  style: TextStyle(color: Colors.white,fontSize: 18),
+                                ),
+                              ),
                         ],
                       ),
                     ),
 
                     // bottom spacing to expose zig-zag nicely
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -553,9 +579,12 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                   children: [
                     Text(
                       'Optionally you can upload an image while dispatching an order.',
-                      style: TextStyle(fontSize: 12,color: Colors.grey.shade500),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
-                    SizedBox(height: 5,),
+                    SizedBox(height: 5),
                     ImagePickerField(
                       onImageSelected: (file) {
                         imageFile.value = file;
@@ -586,7 +615,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                   shape: const StadiumBorder(),
                 ),
                 onPressed:
-                    submitting.value
+                    (submitting.value ||
+                            orderItem.status == Constants.statuses[3])
                         ? null
                         : () async {
                           submitting.value = true;
@@ -612,7 +642,7 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                         ),
               ),
             ),
-            SizedBox(height: 50,)
+            SizedBox(height: 50),
           ],
         ),
       ),
@@ -958,6 +988,7 @@ Widget _buildProductList(List<OrderProductItem> products) {
                     baseUrl: Constants.apiBaseUrl,
                     username: p.productName,
                     borderRadius: 12,
+                    useCached: true,
                   ),
                 ),
                 const SizedBox(height: 8),

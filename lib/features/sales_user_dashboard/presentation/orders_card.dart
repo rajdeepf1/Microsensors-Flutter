@@ -90,6 +90,7 @@ Widget orderCardWidget(BuildContext context, OrderResponseModel item) {
                               shape: ImageShape.rectangle,
                               height: 120,
                               width: 120,
+                              useCached: true,
                             ),
                           ],
                         ),

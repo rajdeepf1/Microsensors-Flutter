@@ -53,6 +53,7 @@ class ProfilePic extends StatelessWidget {
         shape: ImageShape.circle,
         username: userName,
         placeholder: placeHolder,
+        useCached: true,
       );
     }
 

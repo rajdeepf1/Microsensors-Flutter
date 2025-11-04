@@ -213,6 +213,7 @@ class SalesOrderDetailsBottomsheet extends HookWidget {
                                     shape: ImageShape.circle,
                                     username: orderItem.salesPersonName ?? '',
                                     fit: BoxFit.cover,
+                                    useCached: true,
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
@@ -265,6 +266,7 @@ class SalesOrderDetailsBottomsheet extends HookWidget {
                                     username:
                                     orderItem.productionManagerName ?? '',
                                     fit: BoxFit.cover,
+                                    useCached: true,
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
@@ -373,12 +375,33 @@ class SalesOrderDetailsBottomsheet extends HookWidget {
                               ),
                             ),
 
+                          Text('Order Image:'),
+                          SizedBox(height: 12),
+                          (orderItem.orderImage != null &&
+                              orderItem.orderImage!.isNotEmpty)
+                              ? SmartImage(
+                            imageUrl: orderItem.orderImage,
+                            width: double.infinity,
+                            height: 200,
+                            baseUrl: Constants.apiBaseUrl,
+                            shape: ImageShape.rounded,
+                            borderRadius: 20,
+                            fit: BoxFit.fill,
+                            useCached: true,
+                          )
+                              : Center(
+                            child: Text(
+                              'No image found!',
+                              style: TextStyle(color: Colors.white,fontSize: 18),
+                            ),
+                          ),
+
                         ],
                       ),
                     ),
 
                     // bottom spacing to expose zig-zag nicely
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
                   ],
                 ),

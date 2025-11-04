@@ -12,6 +12,7 @@ class OrderResponseModel {
   final String? priority;
   final DateTime? createdAt;
   final DateTime? dispatchOn;
+  final String? orderImage;
 
   final List<OrderProductItem> items;
   final List<OrderHistoryItem> history;
@@ -30,6 +31,7 @@ class OrderResponseModel {
     this.priority,
     this.createdAt,
     this.dispatchOn,
+    this.orderImage,
     this.items = const [],
     this.history = const [],
   });
@@ -49,6 +51,7 @@ class OrderResponseModel {
       priority: json['priority'],
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       dispatchOn: json['dispatchOn'] != null ? DateTime.parse(json['dispatchOn']) : null,
+      orderImage: json['orderImage'],
       items: (json['items'] as List<dynamic>?)
           ?.map((e) => OrderProductItem.fromJson(Map<String, dynamic>.from(e)))
           .toList() ??

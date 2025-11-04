@@ -309,6 +309,7 @@ class ProductionUserDashboard extends HookWidget {
                             shape: ImageShape.rectangle,
                             height: 120,
                             width: 120,
+                            useCached: true,
                           ),
                           const SizedBox(width: 12),
                           Expanded(

@@ -524,7 +524,28 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                           ),
 
 
-                          const SizedBox(height: 30),
+                          Text('Order Image:'),
+                          SizedBox(height: 12),
+                          (orderItem.orderImage != null &&
+                              orderItem.orderImage!.isNotEmpty)
+                              ? SmartImage(
+                            imageUrl: orderItem.orderImage,
+                            width: double.infinity,
+                            height: 200,
+                            baseUrl: Constants.apiBaseUrl,
+                            shape: ImageShape.rounded,
+                            borderRadius: 20,
+                            fit: BoxFit.fill,
+                            useCached: true,
+                          )
+                              : Center(
+                            child: Text(
+                              'No image found!',
+                              style: TextStyle(color: Colors.white,fontSize: 18),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -982,6 +1003,7 @@ Widget _buildProductList(List<OrderProductItem> products) {
                     baseUrl: Constants.apiBaseUrl,
                     username: p.productName,
                     borderRadius: 12,
+                    useCached: true,
                   ),
                 ),
                 const SizedBox(height: 8),

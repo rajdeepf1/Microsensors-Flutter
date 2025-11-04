@@ -155,6 +155,7 @@ class ProfilePic extends HookWidget {
                 height: 115,
                 shape: ImageShape.circle,
                 username: username,
+                useCached: true,
               ),
             Positioned(
               right: -10,
