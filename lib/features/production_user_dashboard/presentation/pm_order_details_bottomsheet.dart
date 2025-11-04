@@ -140,7 +140,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
               orderId: orderItem.orderId ?? -1,
               newStatus: newStatus,
               changedBy: changedBy,
-            );
+              file: imageFile.value,
+        );
 
         // ✅ Always close the loader after the API completes
         if (Navigator.canPop(context)) Navigator.of(context).pop();

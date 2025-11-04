@@ -86,17 +86,23 @@ class ProductionManagerRepository {
     required int orderId,
     required String newStatus,
     required int changedBy,
+    MultipartFile? file, // optional image
   }) async {
     try {
-      final body = {
+      // ✅ Always send as FormData
+      final formData = FormData.fromMap({
         'newStatus': newStatus,
-        'changedBy': changedBy,
-      };
+        'changedBy': changedBy.toString(),
+        if (file != null) 'file': file,
+      });
 
-      final response = await _client.post('orders/$orderId/status', data: body);
+      final response = await _client.post(
+        'orders/$orderId/status',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
 
       if (response.statusCode == 200 || response.statusCode == 400) {
-        // accept both 200 and 400 since backend may return handled error
         final raw = response.data;
         if (raw is Map<String, dynamic>) {
           final model = ChangeOrderStatusModel.fromJson(raw);
@@ -122,5 +128,7 @@ class ProductionManagerRepository {
       return ApiError('Unexpected error: $e', error: e, stackTrace: st);
     }
   }
+
+
 
 }
