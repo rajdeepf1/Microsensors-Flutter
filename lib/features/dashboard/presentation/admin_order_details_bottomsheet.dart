@@ -120,12 +120,12 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
       // action: "APPROVE" or "REJECT"
       final repoAdmin = DashboardRepository(); // or use existing repo variable if you put method elsewhere
 
-      if (dispatchOnDate.value.isEmpty && action == 'APPROVE') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter the dispatch date.")),
-        );
-        return;
-      }
+      // if (dispatchOnDate.value.isEmpty && action == 'APPROVE') {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(content: Text("Please enter the dispatch date.")),
+      //   );
+      //   return;
+      // }
 
       // show confirmation dialog
       final confirmed = await showDialog<bool>(
@@ -458,14 +458,15 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                             ),
                           ),
 
+                          if(orderItem.dispatchOn != null && orderItem.dispatchOn!.toIso8601String().isNotEmpty)...[
                           const SizedBox(height: 12),
-
                           UserInfoEditField(
                             text: "Dispatch Date: ",
                             child: TextFormField(
+                              enabled: false,
+                              readOnly: true,
                               controller: dateController,
                               style: TextStyle(color: AppColors.subHeadingTextColor),
-                              readOnly: true,
                               onTap: () async {
                                 final DateTime? pickedDate = await showDatePicker(
                                   context: context,
@@ -522,7 +523,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                               ),
                             ),
                           ),
-
+],
 
                           Text('Order Image:'),
                           SizedBox(height: 12),

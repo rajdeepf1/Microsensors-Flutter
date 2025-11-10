@@ -86,6 +86,7 @@ class ProductionManagerRepository {
     required int orderId,
     required String newStatus,
     required int changedBy,
+    required String changeDispatchOn,
     MultipartFile? file, // optional image
   }) async {
     try {
@@ -93,8 +94,11 @@ class ProductionManagerRepository {
       final formData = FormData.fromMap({
         'newStatus': newStatus,
         'changedBy': changedBy.toString(),
+        'changeDispatchOn': changeDispatchOn,
         if (file != null) 'file': file,
       });
+
+      debugPrint('check---params------->${changeDispatchOn}');
 
       final response = await _client.post(
         'orders/$orderId/status',

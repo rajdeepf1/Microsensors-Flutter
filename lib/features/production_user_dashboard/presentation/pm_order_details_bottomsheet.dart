@@ -41,6 +41,8 @@ class PmOrderDetailsBottomSheet extends HookWidget {
     // status backed by hook (defaults to order's current status)
     final status = useState<String?>(orderItem.status ?? 'Received');
 
+    final dispatchOnDate = useState<String>('');
+
     // canonical steps (same as timeline widget)
     final steps =
         Constants.statuses
@@ -140,6 +142,10 @@ class PmOrderDetailsBottomSheet extends HookWidget {
               orderId: orderItem.orderId ?? -1,
               newStatus: newStatus,
               changedBy: changedBy,
+              changeDispatchOn:
+                  dispatchOnDate.value != ''
+                      ? dispatchOnDate.value
+                      : orderItem.dispatchOn!.toIso8601String(),
               file: imageFile.value,
             );
 
@@ -398,84 +404,6 @@ class PmOrderDetailsBottomSheet extends HookWidget {
 
                           const SizedBox(height: 12),
 
-                          if (orderItem.dispatchOn != null &&
-                              orderItem.dispatchOn.toString().isNotEmpty)
-                            UserInfoEditField(
-                              text: "Dispatch Date: ",
-                              child: TextFormField(
-                                controller: dateController,
-                                style: TextStyle(
-                                  color: AppColors.subHeadingTextColor,
-                                ),
-                                readOnly: true,
-                                // onTap: () async {
-                                //   final DateTime? pickedDate = await showDatePicker(
-                                //     context: context,
-                                //     initialDate: DateTime.now(),
-                                //     firstDate: DateTime(2000),
-                                //     lastDate: DateTime(2100),
-                                //     builder: (context, child) {
-                                //       return Theme(
-                                //         data: Theme.of(context).copyWith(
-                                //           colorScheme: const ColorScheme.light(
-                                //             primary: Colors.blue,
-                                //             // header color
-                                //             onPrimary: Colors.white,
-                                //             onSurface: Colors.black,
-                                //           ),
-                                //         ),
-                                //         child: child!,
-                                //       );
-                                //     },
-                                //   );
-                                //
-                                //   if (pickedDate != null) {
-                                //     // Show only date in field
-                                //     dateController.text =
-                                //         DateFormat('dd/MM/yyyy').format(
-                                //             pickedDate);
-                                //
-                                //     // Save full datetime string for API
-                                //     final utcDate = DateTime.utc(
-                                //       pickedDate.year,
-                                //       pickedDate.month,
-                                //       pickedDate.day,
-                                //       0, 0, 0,
-                                //     );
-                                //
-                                //     final formattedDateIso = utcDate
-                                //         .toIso8601String(); // "2025-10-30T00:00:00Z"
-                                //
-                                //     debugPrint(
-                                //         '📅 API date string: $formattedDateIso');
-                                //     dispatchOnDate.value = formattedDateIso;
-                                //
-                                //     // TODO: store or send this to your API, for example:
-                                //     dispatchOnDate.value = formattedDateIso;
-                                //   }
-                                // },
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: AppColors.whiteColor,
-                                  icon: const Icon(
-                                    Icons.calendar_month_outlined,
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0 * 1.5,
-                                    vertical: 16.0,
-                                  ),
-                                  border: const OutlineInputBorder(
-                                    borderSide: BorderSide.none,
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(50),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                          const SizedBox(height: 12),
-
                           ProductEditField(
                             text: "Change status",
                             child: DropdownButtonFormField<String>(
@@ -518,6 +446,156 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                             ),
                           ),
 
+                          if(statusDropDown.value == Constants.statuses[2] && orderItem.status == Constants.statuses[1])
+                            UserInfoEditField(
+                              text: "Dispatch Date: ",
+                              child: TextFormField(
+                                controller: dateController,
+                                style: TextStyle(
+                                  color: AppColors.subHeadingTextColor,
+                                ),
+                                onTap: () async {
+                                  final DateTime? pickedDate =
+                                      await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime(2100),
+                                        builder: (context, child) {
+                                          return Theme(
+                                            data: Theme.of(context).copyWith(
+                                              colorScheme:
+                                                  const ColorScheme.light(
+                                                    primary: Colors.blue,
+                                                    // header color
+                                                    onPrimary: Colors.white,
+                                                    onSurface: Colors.black,
+                                                  ),
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
+                                      );
+
+                                  if (pickedDate != null) {
+                                    // Show only date in field
+                                    dateController.text = DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(pickedDate);
+
+                                    // Save full datetime string for API
+                                    final utcDate = DateTime.utc(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      0,
+                                      0,
+                                      0,
+                                    );
+
+                                    final formattedDateIso =
+                                        utcDate
+                                            .toIso8601String(); // "2025-10-30T00:00:00Z"
+
+                                    debugPrint(
+                                      '📅 API date string: $formattedDateIso',
+                                    );
+                                    dispatchOnDate.value = formattedDateIso;
+
+                                    // TODO: store or send this to your API, for example:
+                                    dispatchOnDate.value = formattedDateIso;
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: AppColors.whiteColor,
+                                  icon: const Icon(
+                                    Icons.calendar_month_outlined,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0 * 1.5,
+                                    vertical: 16.0,
+                                  ),
+                                  border: const OutlineInputBorder(
+                                    borderSide: BorderSide.none,
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(50),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+
+                          if((statusDropDown.value == Constants.statuses[2]
+                              || orderItem.status == Constants.statuses[2])
+                          ||
+                              (statusDropDown.value == Constants.statuses[3]
+                                  || orderItem.status == Constants.statuses[3])
+                          )...[
+                          const SizedBox(height: 12),
+                          UserInfoEditField(
+                            text: "Dispatch Date: ",
+                            child: TextFormField(
+                              enabled: false,
+                              readOnly: true,
+                              controller: dateController,
+                              style: TextStyle(color: AppColors.subHeadingTextColor),
+                              onTap: () async {
+                                final DateTime? pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.light(
+                                          primary: Colors.blue, // header color
+                                          onPrimary: Colors.white,
+                                          onSurface: Colors.black,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+
+                                if (pickedDate != null) {
+                                  dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+
+                                  final utcDate = DateTime.utc(
+                                    pickedDate.year,
+                                    pickedDate.month,
+                                    pickedDate.day,
+                                  );
+
+                                  final formattedDateIso = utcDate.toIso8601String();
+                                  debugPrint('📅 API date string: $formattedDateIso');
+
+                                  dispatchOnDate.value = formattedDateIso;
+                                }
+                              },
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.whiteColor,
+                                icon: const Icon(Icons.calendar_month_outlined),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 16,
+                                ),
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                ),
+                              ),
+                            ),
+                          ),
+                          ],
+
+
+                          const SizedBox(height: 12),
+
                           Text('Order Image:'),
                           SizedBox(height: 12),
                           (orderItem.orderImage != null &&
@@ -535,7 +613,10 @@ class PmOrderDetailsBottomSheet extends HookWidget {
                               : Center(
                                 child: Text(
                                   'No image found!',
-                                  style: TextStyle(color: Colors.white,fontSize: 18),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
                                 ),
                               ),
                         ],
