@@ -311,52 +311,53 @@ class SalesOrderDetailsBottomsheet extends HookWidget {
                                 style: TextStyle(
                                     color: AppColors.subHeadingTextColor),
                                 readOnly: true,
-                                // onTap: () async {
-                                //   final DateTime? pickedDate = await showDatePicker(
-                                //     context: context,
-                                //     initialDate: DateTime.now(),
-                                //     firstDate: DateTime(2000),
-                                //     lastDate: DateTime(2100),
-                                //     builder: (context, child) {
-                                //       return Theme(
-                                //         data: Theme.of(context).copyWith(
-                                //           colorScheme: const ColorScheme.light(
-                                //             primary: Colors.blue,
-                                //             // header color
-                                //             onPrimary: Colors.white,
-                                //             onSurface: Colors.black,
-                                //           ),
-                                //         ),
-                                //         child: child!,
-                                //       );
-                                //     },
-                                //   );
-                                //
-                                //   if (pickedDate != null) {
-                                //     // Show only date in field
-                                //     dateController.text =
-                                //         DateFormat('dd/MM/yyyy').format(
-                                //             pickedDate);
-                                //
-                                //     // Save full datetime string for API
-                                //     final utcDate = DateTime.utc(
-                                //       pickedDate.year,
-                                //       pickedDate.month,
-                                //       pickedDate.day,
-                                //       0, 0, 0,
-                                //     );
-                                //
-                                //     final formattedDateIso = utcDate
-                                //         .toIso8601String(); // "2025-10-30T00:00:00Z"
-                                //
-                                //     debugPrint(
-                                //         '📅 API date string: $formattedDateIso');
-                                //     dispatchOnDate.value = formattedDateIso;
-                                //
-                                //     // TODO: store or send this to your API, for example:
-                                //     dispatchOnDate.value = formattedDateIso;
-                                //   }
-                                // },
+                                enabled: false,
+                                onTap: () async {
+                                  final DateTime? pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: const ColorScheme.light(
+                                            primary: Colors.blue,
+                                            // header color
+                                            onPrimary: Colors.white,
+                                            onSurface: Colors.black,
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+
+                                  if (pickedDate != null) {
+                                    // Show only date in field
+                                    dateController.text =
+                                        DateFormat('dd/MM/yyyy').format(
+                                            pickedDate);
+
+                                    // Save full datetime string for API
+                                    final utcDate = DateTime.utc(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      0, 0, 0,
+                                    );
+
+                                    final formattedDateIso = utcDate
+                                        .toIso8601String(); // "2025-10-30T00:00:00Z"
+
+                                    debugPrint(
+                                        '📅 API date string: $formattedDateIso');
+                                    dispatchOnDate.value = formattedDateIso;
+
+                                    // TODO: store or send this to your API, for example:
+                                    dispatchOnDate.value = formattedDateIso;
+                                  }
+                                },
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: AppColors.whiteColor,
