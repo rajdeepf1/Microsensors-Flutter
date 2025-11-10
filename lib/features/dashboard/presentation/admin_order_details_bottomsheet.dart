@@ -9,6 +9,7 @@ import 'package:timelines_plus/timelines_plus.dart';
 import '../../../core/api_state.dart';
 import '../../../core/local_storage_service.dart';
 import '../../../models/orders/order_response_model.dart';
+import '../../components/photo_viewer_page/PhotoViewerPage.dart';
 import '../../components/product_edit_field/product_edit_field.dart';
 import '../../components/user/user_info_edit_field.dart';
 import '../repository/dashboard_repository.dart';
@@ -16,14 +17,11 @@ import '../repository/dashboard_repository.dart';
 /// Bottom sheet showing order details + timeline for PM
 class AdminOrderDetailsBottomSheet extends HookWidget {
   final OrderResponseModel orderItem;
-  const AdminOrderDetailsBottomSheet({
-    super.key,
-    required this.orderItem,
-  });
+
+  const AdminOrderDetailsBottomSheet({super.key, required this.orderItem});
 
   @override
   Widget build(BuildContext context) {
-
     final Color baseColor = Constants.statusColor(orderItem.status);
     final Color cardColor = baseColor.withValues(alpha: 0.12);
 
@@ -42,15 +40,15 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
     final priority = useState<String?>(orderItem.priority);
 
-
-    List<DropdownMenuItem<String>> dropDownPriority = priorityMap.entries
-        .map(
-          (entry) => DropdownMenuItem<String>(
-        value: entry.value,
-        child: Text(entry.key),
-      ),
-    )
-        .toList();
+    List<DropdownMenuItem<String>> dropDownPriority =
+        priorityMap.entries
+            .map(
+              (entry) => DropdownMenuItem<String>(
+                value: entry.value,
+                child: Text(entry.key),
+              ),
+            )
+            .toList();
 
     // status backed by hook (defaults to order's current status)
     final status = useState<String?>(orderItem.status ?? 'Created');
@@ -115,10 +113,10 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
       buildInitialStepTimes(),
     );
 
-
     Future<void> performApproval(String action) async {
       // action: "APPROVE" or "REJECT"
-      final repoAdmin = DashboardRepository(); // or use existing repo variable if you put method elsewhere
+      final repoAdmin =
+          DashboardRepository(); // or use existing repo variable if you put method elsewhere
 
       // if (dispatchOnDate.value.isEmpty && action == 'APPROVE') {
       //   ScaffoldMessenger.of(context).showSnackBar(
@@ -130,14 +128,25 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
       // show confirmation dialog
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (_) => AlertDialog(
-          title: Text(action == 'APPROVE' ? 'Confirm Approve' : 'Confirm Reject'),
-          content: Text('Are you sure you want to ${action.toLowerCase()} this order?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Yes')),
-          ],
-        ),
+        builder:
+            (_) => AlertDialog(
+              title: Text(
+                action == 'APPROVE' ? 'Confirm Approve' : 'Confirm Reject',
+              ),
+              content: Text(
+                'Are you sure you want to ${action.toLowerCase()} this order?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Yes'),
+                ),
+              ],
+            ),
       );
 
       if (confirmed != true) return;
@@ -151,7 +160,12 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
       try {
         final stored = await LocalStorageService().getUser();
-        final adminId = (stored != null && stored.userId != null && stored.roleName == 'Admin') ? stored.userId! : -1;
+        final adminId =
+            (stored != null &&
+                    stored.userId != null &&
+                    stored.roleName == 'Admin')
+                ? stored.userId!
+                : -1;
 
         final res = await repoAdmin.approveOrRejectOrder(
           orderId: orderItem.orderId ?? -1,
@@ -159,7 +173,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
           action: action,
           priority: priority.value,
           productionManagerId: orderItem.productionManagerId,
-          dispatchOn: dispatchOnDate.value??''
+          dispatchOn: dispatchOnDate.value ?? '',
         );
 
         // hide loader
@@ -167,16 +181,26 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
         if (res is ApiData<String>) {
           // success — show message & close bottomsheet with true to signal refresh
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data)));
-          Navigator.of(context).pop(true); // return true to caller to trigger refresh
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(res.data)));
+          Navigator.of(
+            context,
+          ).pop(true); // return true to caller to trigger refresh
         } else if (res is ApiError<String>) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${res.message}')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed: ${res.message}')));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unexpected server response')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unexpected server response')),
+          );
         }
       } catch (e) {
         if (Navigator.canPop(context)) Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
       }
     }
 
@@ -189,21 +213,26 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
       // confirm first
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Confirm Deletion'),
-          content: const Text('Are you sure you want to delete this order? This action cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+        builder:
+            (_) => AlertDialog(
+              title: const Text('Confirm Deletion'),
+              content: const Text(
+                'Are you sure you want to delete this order? This action cannot be undone.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                  ),
+                  child: const Text('Delete'),
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-              child: const Text('Delete'),
-            ),
-          ],
-        ),
       );
 
       if (confirmed != true) return;
@@ -217,9 +246,12 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
       try {
         final stored = await LocalStorageService().getUser();
-        final adminId = (stored != null && stored.userId != null && stored.roleName == 'Admin')
-            ? stored.userId!
-            : -1;
+        final adminId =
+            (stored != null &&
+                    stored.userId != null &&
+                    stored.roleName == 'Admin')
+                ? stored.userId!
+                : -1;
 
         final res = await repo.deleteOrder(
           orderId: orderItem.orderId ?? -1,
@@ -230,19 +262,28 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
         if (Navigator.canPop(context)) Navigator.of(context).pop();
 
         if (res is ApiData<String>) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data)));
-          Navigator.of(context).pop(true); // close bottomsheet and signal refresh
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(res.data)));
+          Navigator.of(
+            context,
+          ).pop(true); // close bottomsheet and signal refresh
         } else if (res is ApiError<String>) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${res.message}')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed: ${res.message}')));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unexpected server response')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unexpected server response')),
+          );
         }
       } catch (e) {
         if (Navigator.canPop(context)) Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
       }
     }
-
 
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -261,7 +302,6 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-
                     _buildProductList(orderItem.items),
 
                     const SizedBox(height: 12),
@@ -444,105 +484,169 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                               items: dropDownPriority,
                               icon: const Icon(Icons.expand_more),
                               onChanged: (value) => priority.value = value,
-                              style: TextStyle(color: AppColors.subHeadingTextColor, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: AppColors.subHeadingTextColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                               decoration: InputDecoration(
                                 hintText: 'Priority',
                                 filled: true,
-                                fillColor: AppColors.whiteColor.withValues(alpha: 1),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0 * 1.5, vertical: 16.0),
-                                border: const OutlineInputBorder(
-                                  borderSide: BorderSide.none,
-                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                fillColor: AppColors.whiteColor.withValues(
+                                  alpha: 1,
                                 ),
-                              ),
-                            ),
-                          ),
-
-                          if(orderItem.dispatchOn != null && orderItem.dispatchOn!.toIso8601String().isNotEmpty)...[
-                          const SizedBox(height: 12),
-                          UserInfoEditField(
-                            text: "Dispatch Date: ",
-                            child: TextFormField(
-                              enabled: false,
-                              readOnly: true,
-                              controller: dateController,
-                              style: TextStyle(color: AppColors.subHeadingTextColor),
-                              onTap: () async {
-                                final DateTime? pickedDate = await showDatePicker(
-                                  context: context,
-                                  initialDate: DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime(2100),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: const ColorScheme.light(
-                                          primary: Colors.blue, // header color
-                                          onPrimary: Colors.white,
-                                          onSurface: Colors.black,
-                                        ),
-                                      ),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-
-                                if (pickedDate != null) {
-                                  // Show only date in field
-                                  dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
-
-                                  // Save full datetime string for API
-                                  final utcDate = DateTime.utc(
-                                    pickedDate.year,
-                                    pickedDate.month,
-                                    pickedDate.day,
-                                    0, 0, 0,
-                                  );
-
-                                  final formattedDateIso = utcDate.toIso8601String(); // "2025-10-30T00:00:00Z"
-
-                                  debugPrint('📅 API date string: $formattedDateIso');
-                                  dispatchOnDate.value = formattedDateIso;
-
-                                  // TODO: store or send this to your API, for example:
-                                   dispatchOnDate.value = formattedDateIso;
-                                }
-                              },
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.whiteColor,
-                                icon: const Icon(Icons.calendar_month_outlined),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16.0 * 1.5,
                                   vertical: 16.0,
                                 ),
                                 border: const OutlineInputBorder(
                                   borderSide: BorderSide.none,
-                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(50),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-],
+
+                          if (orderItem.dispatchOn != null &&
+                              orderItem.dispatchOn!
+                                  .toIso8601String()
+                                  .isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            UserInfoEditField(
+                              text: "Dispatch Date: ",
+                              child: TextFormField(
+                                enabled: false,
+                                readOnly: true,
+                                controller: dateController,
+                                style: TextStyle(
+                                  color: AppColors.subHeadingTextColor,
+                                ),
+                                onTap: () async {
+                                  final DateTime? pickedDate =
+                                      await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime(2100),
+                                        builder: (context, child) {
+                                          return Theme(
+                                            data: Theme.of(context).copyWith(
+                                              colorScheme:
+                                                  const ColorScheme.light(
+                                                    primary: Colors.blue,
+                                                    // header color
+                                                    onPrimary: Colors.white,
+                                                    onSurface: Colors.black,
+                                                  ),
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
+                                      );
+
+                                  if (pickedDate != null) {
+                                    // Show only date in field
+                                    dateController.text = DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(pickedDate);
+
+                                    // Save full datetime string for API
+                                    final utcDate = DateTime.utc(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      0,
+                                      0,
+                                      0,
+                                    );
+
+                                    final formattedDateIso =
+                                        utcDate
+                                            .toIso8601String(); // "2025-10-30T00:00:00Z"
+
+                                    debugPrint(
+                                      '📅 API date string: $formattedDateIso',
+                                    );
+                                    dispatchOnDate.value = formattedDateIso;
+
+                                    // TODO: store or send this to your API, for example:
+                                    dispatchOnDate.value = formattedDateIso;
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: AppColors.whiteColor,
+                                  icon: const Icon(
+                                    Icons.calendar_month_outlined,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0 * 1.5,
+                                    vertical: 16.0,
+                                  ),
+                                  border: const OutlineInputBorder(
+                                    borderSide: BorderSide.none,
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(50),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
 
                           Text('Order Image:'),
                           SizedBox(height: 12),
-                          (orderItem.orderImage != null &&
-                              orderItem.orderImage!.isNotEmpty)
-                              ? SmartImage(
-                            imageUrl: orderItem.orderImage,
-                            width: double.infinity,
-                            height: 200,
-                            baseUrl: Constants.apiBaseUrl,
-                            shape: ImageShape.rounded,
-                            borderRadius: 20,
-                            fit: BoxFit.fill,
-                            useCached: true,
+                          (orderItem.orderImage != null && orderItem.orderImage!.isNotEmpty)
+                              ? GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PhotoViewerPage(
+                                    imageUrl: orderItem.orderImage!,
+                                    baseUrl: Constants.apiBaseUrl,
+                                    title: "Order Image",
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Hero(
+                              tag: orderItem.orderImage!,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: SmartImage(
+                                  imageUrl: orderItem.orderImage,
+                                  width: double.infinity,
+                                  height: 200,
+                                  baseUrl: Constants.apiBaseUrl,
+                                  shape: ImageShape.rounded,
+                                  borderRadius: 20,
+                                  fit: BoxFit.cover,
+                                  useCached: true,
+                                ),
+                              ),
+                            ),
                           )
-                              : Center(
-                            child: Text(
-                              'No image found!',
-                              style: TextStyle(color: Colors.white,fontSize: 18),
+                              : const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                'No image found!',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
                             ),
                           ),
 
@@ -561,10 +665,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
 
             // timeline area (reacts to status.value and stepTimesState.value)
             Padding(
-              padding: const EdgeInsets.only(
-                left: 18.0,
-                right: 12.0,
-              ),
+              padding: const EdgeInsets.only(left: 18.0, right: 12.0),
               child: SizedBox(
                 height: timelineHeight,
                 child: AbsorbPointer(
@@ -585,12 +686,15 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                        isCreated ? Colors.greenAccent : Colors.grey.shade400,
+                            isCreated
+                                ? Colors.greenAccent
+                                : Colors.grey.shade400,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
                         shape: const StadiumBorder(),
                       ),
-                      onPressed: isCreated ? () => performApproval("APPROVE") : null,
+                      onPressed:
+                          isCreated ? () => performApproval("APPROVE") : null,
                       child: const Text("Approve"),
                     ),
                   ),
@@ -602,12 +706,13 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                        isCreated ? Colors.redAccent : Colors.grey.shade400,
+                            isCreated ? Colors.redAccent : Colors.grey.shade400,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
                         shape: const StadiumBorder(),
                       ),
-                      onPressed: isCreated ? () => performApproval("REJECT") : null,
+                      onPressed:
+                          isCreated ? () => performApproval("REJECT") : null,
                       child: const Text("Reject"),
                     ),
                   ),
@@ -619,26 +724,17 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
             Row(
               children: [
                 Expanded(
-                  child: Divider(
-                    thickness: 1,
-                    color: AppColors.appBlueColor,
-                  ),
+                  child: Divider(thickness: 1, color: AppColors.appBlueColor),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     "OR",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textColor,
-                    ),
+                    style: TextStyle(fontSize: 16, color: AppColors.textColor),
                   ),
                 ),
                 Expanded(
-                  child: Divider(
-                    thickness: 1,
-                    color: AppColors.appBlueColor,
-                  ),
+                  child: Divider(thickness: 1, color: AppColors.appBlueColor),
                 ),
               ],
             ),
@@ -649,8 +745,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                   Colors.redAccent,
+                  backgroundColor: Colors.redAccent,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 48),
                   shape: const StadiumBorder(),
@@ -659,8 +754,7 @@ class AdminOrderDetailsBottomSheet extends HookWidget {
                 child: const Text("Delete"),
               ),
             ),
-            SizedBox(height: 50,),
-
+            SizedBox(height: 50),
           ],
         ),
       ),
@@ -861,7 +955,6 @@ Widget buildStatusTimelineVerticalWithHook(
   String currentStatus, {
   Map<String, DateTime?>? stepTimes,
 }) {
-
   final steps = Constants.statuses;
 
   int activeIndex = steps.indexWhere(
@@ -876,7 +969,7 @@ Widget buildStatusTimelineVerticalWithHook(
   final Color pendingColor = Colors.grey.shade400;
 
   return Padding(
-    padding: const EdgeInsets.only(left: 16.0,),
+    padding: const EdgeInsets.only(left: 16.0),
     child: Timeline.tileBuilder(
       theme: TimelineThemeData(
         direction: Axis.vertical,
@@ -928,7 +1021,7 @@ Widget buildStatusTimelineVerticalWithHook(
           return Padding(
             padding: EdgeInsets.only(
               left: 14.0,
-              bottom:30.0,
+              bottom: 30.0,
               top: 30.0,
               //right: 8.0,
             ),
@@ -1049,5 +1142,4 @@ Widget _buildProductList(List<OrderProductItem> products) {
       ),
     ),
   );
-
 }

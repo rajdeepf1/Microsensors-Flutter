@@ -7,6 +7,7 @@ import 'package:microsensors/utils/colors.dart';
 import 'package:microsensors/utils/constants.dart';
 import 'package:timelines_plus/timelines_plus.dart';
 import '../../../models/orders/order_response_model.dart';
+import '../../components/photo_viewer_page/PhotoViewerPage.dart';
 import '../../components/user/user_info_edit_field.dart';
 
 /// Bottom sheet showing order details + timeline for PM
@@ -378,22 +379,56 @@ class SalesOrderDetailsBottomsheet extends HookWidget {
 
                           Text('Order Image:'),
                           SizedBox(height: 12),
-                          (orderItem.orderImage != null &&
-                              orderItem.orderImage!.isNotEmpty)
-                              ? SmartImage(
-                            imageUrl: orderItem.orderImage,
-                            width: double.infinity,
-                            height: 200,
-                            baseUrl: Constants.apiBaseUrl,
-                            shape: ImageShape.rounded,
-                            borderRadius: 20,
-                            fit: BoxFit.fill,
-                            useCached: true,
+                          (orderItem.orderImage != null && orderItem.orderImage!.isNotEmpty)
+                              ? GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PhotoViewerPage(
+                                    imageUrl: orderItem.orderImage!,
+                                    baseUrl: Constants.apiBaseUrl,
+                                    title: "Order Image",
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Hero(
+                              tag: orderItem.orderImage!,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: SmartImage(
+                                  imageUrl: orderItem.orderImage,
+                                  width: double.infinity,
+                                  height: 200,
+                                  baseUrl: Constants.apiBaseUrl,
+                                  shape: ImageShape.rounded,
+                                  borderRadius: 20,
+                                  fit: BoxFit.cover,
+                                  useCached: true,
+                                ),
+                              ),
+                            ),
                           )
-                              : Center(
-                            child: Text(
-                              'No image found!',
-                              style: TextStyle(color: Colors.white,fontSize: 18),
+                              : const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                'No image found!',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
                             ),
                           ),
 
