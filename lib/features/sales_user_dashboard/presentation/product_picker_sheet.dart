@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:microsensors/features/components/smart_image/smart_image.dart';
 import 'package:microsensors/features/sales_user_dashboard/repository/sales_dashboard_repository.dart';
+import 'package:microsensors/utils/constants.dart';
 import '../../../core/api_state.dart';
 import '../../../models/product/product_list_response.dart';
 import '../../../models/product/selected_products.dart';
@@ -182,7 +184,7 @@ class ProductPickerSheet extends HookWidget {
     bool _isSelected(ProductDataModel p) =>
         selectedIds.value.contains(p.productId);
 
-// Quantity change handler (per item)
+    // Quantity change handler (per item)
     void _onQuantityChanged(int productId, int value) {
       final qmap = Map<int, int>.from(quantities.value);
       if (value <= 0) {
@@ -342,6 +344,9 @@ class ProductPickerSheet extends HookWidget {
                                 ProductDataModel
                               >(
                                 itemBuilder: (context, product, index) {
+                                  debugPrint(
+                                    '${Constants.apiBaseUrl}${product.productImage}',
+                                  );
                                   return Card(
                                     color: AppColors.cardColor,
                                     elevation: 2,
@@ -424,9 +429,12 @@ class ProductPickerSheet extends HookWidget {
                                                       ),
                                                     ],
                                                   ),
-                                                  SizedBox(height: 12,),
+                                                  SizedBox(height: 12),
                                                   Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8.0,
+                                                        ),
                                                     child: Text(
                                                       _formatDate(
                                                         product.createdAt,
@@ -437,14 +445,19 @@ class ProductPickerSheet extends HookWidget {
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(height: 12,),
+                                                  SizedBox(height: 12),
                                                   SizedBox(
                                                     width: 150,
                                                     child: QuantityField(
                                                       initialValue: 1,
-                                                      qytFillColor: Color(0xFF7B8CFF).withValues(alpha: 0.12),
+                                                      qytFillColor: Color(
+                                                        0xFF7B8CFF,
+                                                      ).withValues(alpha: 0.12),
                                                       onChanged: (value) {
-                                                        _onQuantityChanged(product.productId, value);
+                                                        _onQuantityChanged(
+                                                          product.productId,
+                                                          value,
+                                                        );
                                                       },
                                                     ),
                                                   ),
@@ -468,17 +481,42 @@ class ProductPickerSheet extends HookWidget {
                                                             product
                                                                 .productImage!
                                                                 .isNotEmpty)
-                                                        ? Image.network(
-                                                          '${product.productImage}',
-                                                          width: 80,
+                                                        ?
+                                                        // Image.network(
+                                                        //       '${Constants.apiBaseUrl}${product.productImage}',
+                                                        //       width: 80,
+                                                        //       height: 80,
+                                                        //       fit: BoxFit.cover,
+                                                        //       errorBuilder:
+                                                        //           (_, __, ___) =>
+                                                        //               const Icon(
+                                                        //                 Icons.image,
+                                                        //                 size: 36,
+                                                        //               ),
+                                                        //     )
+                                                        SmartImage(
+                                                          imageUrl:
+                                                              product
+                                                                  .productImage,
+                                                          baseUrl:
+                                                              Constants
+                                                                  .apiBaseUrl,
                                                           height: 80,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder:
-                                                              (_, __, ___) =>
-                                                                  const Icon(
-                                                                    Icons.image,
-                                                                    size: 36,
-                                                                  ),
+                                                          width: 80,
+                                                          fit: BoxFit.contain,
+                                                          shape:
+                                                              ImageShape
+                                                                  .rectangle,
+                                                          useCached: true,
+                                                          errorWidget:
+                                                              const Icon(
+                                                                Icons.image,
+                                                                size: 36,
+                                                              ),
+                                                          borderRadius: 4,
+                                                          username:
+                                                              product
+                                                                  .productName,
                                                         )
                                                         : Text(
                                                           product
@@ -498,7 +536,6 @@ class ProductPickerSheet extends HookWidget {
                                                         ),
                                               ),
                                             ),
-
                                           ],
                                         ),
                                       ),
@@ -531,10 +568,14 @@ class ProductPickerSheet extends HookWidget {
                     icon: const Icon(Icons.check),
                     label: Text('Save (${selectedIds.value.length})'),
                     onPressed: () {
-                      final List<SelectedProducts> out = selectedMap.value.values.map((p) {
-                        final q = quantities.value[p.productId] ?? 1;
-                        return SelectedProducts(product: p, quantity: q);
-                      }).toList(growable: false);
+                      final List<SelectedProducts> out = selectedMap
+                          .value
+                          .values
+                          .map((p) {
+                            final q = quantities.value[p.productId] ?? 1;
+                            return SelectedProducts(product: p, quantity: q);
+                          })
+                          .toList(growable: false);
 
                       Navigator.of(context).pop<List<SelectedProducts>>(out);
                     },
@@ -548,4 +589,3 @@ class ProductPickerSheet extends HookWidget {
     );
   }
 }
-

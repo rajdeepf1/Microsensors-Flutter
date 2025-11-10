@@ -432,7 +432,7 @@ class UploadBox extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (imageFile != null)
-              Image.file(imageFile!, width: 100, height: 100, fit: BoxFit.cover)
+              Image.file(imageFile!, width: 300, height: 300, fit: BoxFit.contain)
             else
               const Icon(Icons.image_outlined, size: 60, color: Colors.blueAccent),
             const SizedBox(height: 12),
